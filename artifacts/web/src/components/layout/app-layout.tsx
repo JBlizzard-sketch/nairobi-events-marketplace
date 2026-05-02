@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
@@ -220,6 +220,12 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     </>
   );
 
+  // Scroll the main content to top whenever the route changes
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: 0 });
+  }, [location]);
+
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
       {/* Command palette */}
@@ -278,7 +284,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* ── Main content ────────────────────────────────────────────────── */}
         <main className="flex-1 overflow-hidden">
-          <div className="h-full overflow-y-auto p-5 md:p-8">
+          <div ref={scrollRef} className="h-full overflow-y-auto p-5 md:p-8">
             <div className="max-w-6xl mx-auto">{children}</div>
           </div>
         </main>

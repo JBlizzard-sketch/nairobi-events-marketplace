@@ -275,7 +275,7 @@ export default function VendorBookings() {
                       {b.status === "completed" && (
                         <p className="text-xs text-emerald-600 font-medium mt-1">Released ✓</p>
                       )}
-                      <Link href={`/bookings/${b.id}`}>
+                      <Link href={`/vendor/bookings/${b.id}`}>
                         <button className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
                           View details <ChevronRight className="h-3 w-3" />
                         </button>
