@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp, Printer, ExternalLink, ShieldCheck, Copy, LayoutGrid, LayoutList } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp, Printer, ExternalLink, ShieldCheck, Copy, LayoutGrid, LayoutList, CalendarPlus, Link2, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
@@ -551,6 +551,46 @@ export default function EventDetail() {
   const rejectQuote = useRejectQuote();
   const [acting, setActing] = useState<string | null>(null);
 
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  };
+
+  const handleAddToCalendar = () => {
+    const e = event as any;
+    const dateStr = new Date(e.eventDate).toISOString().slice(0, 10).replace(/-/g, "");
+    const desc = [
+      `${(e.eventType ?? "").replace(/_/g, " ")} · ${e.guestCount} guests`,
+      e.budgetMax ? `Budget: KES ${Number(e.budgetMax).toLocaleString()}` : "",
+      `Ref: Nairobi Events Marketplace`,
+    ].filter(Boolean).join("\\n");
+    const ics = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Nairobi Events//EN",
+      "BEGIN:VEVENT",
+      `DTSTART;VALUE=DATE:${dateStr}`,
+      `DTEND;VALUE=DATE:${dateStr}`,
+      `SUMMARY:${e.title}`,
+      `DESCRIPTION:${desc}`,
+      `LOCATION:${[e.venue, e.city ?? "Nairobi"].filter(Boolean).join("\\, ")}`,
+      `UID:nairobi-events-${e.id}`,
+      "END:VEVENT",
+      "END:VCALENDAR",
+    ].join("\r\n");
+    const blob = new Blob([ics], { type: "text/calendar;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(e.title ?? "event").replace(/\s+/g, "-").toLowerCase()}.ics`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleDuplicateEvent = () => {
     const e = event as any;
     const prefill = {
@@ -695,6 +735,14 @@ export default function EventDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleCopyLink}>
+            {linkCopied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Link2 className="h-3.5 w-3.5" />}
+            {linkCopied ? "Copied!" : "Copy Link"}
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleAddToCalendar}>
+            <CalendarPlus className="h-3.5 w-3.5" />
+            Add to Calendar
+          </Button>
           <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrintBrief}>
             <Printer className="h-3.5 w-3.5" />
             Print Brief

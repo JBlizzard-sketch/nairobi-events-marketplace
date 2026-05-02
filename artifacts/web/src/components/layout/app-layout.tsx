@@ -78,6 +78,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/bookings", label: "Bookings", icon: Briefcase },
     { href: "/analytics", label: "Analytics", icon: PieChart },
     { href: "/budget", label: "Budget AI", icon: Sparkles },
+    { href: "/notifications", label: "Notifications", icon: Bell },
     { href: "/account", label: "Account", icon: UserCog },
   ];
 
