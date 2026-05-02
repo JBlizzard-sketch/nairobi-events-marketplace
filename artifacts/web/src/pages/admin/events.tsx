@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "wouter";
 import { useAdminListEvents } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -129,9 +130,9 @@ export default function AdminEvents() {
             const isPast = new Date(ev.eventDate) < new Date();
 
             return (
+              <Link key={ev.id} href={`/admin/events/${ev.id}`}>
               <Card
-                key={ev.id}
-                className={`shadow-sm transition-all hover:shadow-md ${isEmergency ? "border-red-200" : ""}`}
+                className={`shadow-sm transition-all hover:shadow-md cursor-pointer ${isEmergency ? "border-red-200" : ""}`}
               >
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
@@ -201,6 +202,7 @@ export default function AdminEvents() {
                   </div>
                 </CardContent>
               </Card>
+              </Link>
             );
           })}
         </div>

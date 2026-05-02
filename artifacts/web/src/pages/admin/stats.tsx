@@ -1,5 +1,6 @@
-import { useAdminGetStats, useAdminListBookings } from "@workspace/api-client-react";
+import { useAdminGetStats, useAdminListBookings, useAdminListVendors } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
@@ -9,8 +10,30 @@ import {
 } from "recharts";
 import {
   Users, Building2, Calendar, Briefcase, TrendingUp, Clock,
-  CheckCircle2, XCircle, ChevronRight,
+  CheckCircle2, XCircle, ChevronRight, AlertTriangle, ShieldCheck,
+  UserCheck, UserX,
 } from "lucide-react";
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-KE", { day: "numeric", month: "short" });
+}
+
+type ActivityItem = {
+  id: string;
+  type: "booking_disputed" | "booking_completed" | "booking_in_escrow" | "booking_created" | "vendor_pending" | "vendor_approved" | "vendor_rejected";
+  title: string;
+  subtitle: string;
+  href: string;
+  createdAt: string;
+};
 
 export default function AdminStats() {
   const { data: stats, isLoading } = useAdminGetStats();
@@ -21,6 +44,46 @@ export default function AdminStats() {
     const raw = bookingsRaw as any;
     return (Array.isArray(raw) ? raw : raw?.bookings ?? []) as any[];
   }, [bookingsRaw]);
+
+  const { data: vendorsRaw } = useAdminListVendors({ limit: 200 });
+  const allVendors = useMemo(() => {
+    const raw = vendorsRaw as any;
+    return (Array.isArray(raw) ? raw : raw?.vendors ?? []) as any[];
+  }, [vendorsRaw]);
+
+  const recentActivity = useMemo((): ActivityItem[] => {
+    const items: ActivityItem[] = [];
+
+    allBookings.forEach((b: any) => {
+      if (!b.createdAt) return;
+      const vendor = b.vendorBusinessName ?? "a vendor";
+      const planner = b.plannerName ?? "a planner";
+      const ref = `#${(b.id ?? "").slice(0, 8).toUpperCase()}`;
+      if (b.status === "disputed") {
+        items.push({ id: `b-disp-${b.id}`, type: "booking_disputed", title: `Dispute raised on booking ${ref}`, subtitle: `${planner} · KES ${Number(b.totalAmount ?? 0).toLocaleString()}`, href: "/admin/bookings", createdAt: b.updatedAt ?? b.createdAt });
+      } else if (b.status === "completed") {
+        items.push({ id: `b-comp-${b.id}`, type: "booking_completed", title: `Booking ${ref} completed`, subtitle: `${vendor} → ${planner}`, href: "/admin/bookings", createdAt: b.updatedAt ?? b.createdAt });
+      } else if (b.status === "in_escrow") {
+        items.push({ id: `b-esc-${b.id}`, type: "booking_in_escrow", title: `Payment in escrow for ${ref}`, subtitle: `${planner} paid KES ${Number(b.totalAmount ?? 0).toLocaleString()}`, href: "/admin/bookings", createdAt: b.updatedAt ?? b.createdAt });
+      } else {
+        items.push({ id: `b-new-${b.id}`, type: "booking_created", title: `New booking ${ref}`, subtitle: `${planner} booked ${vendor}`, href: "/admin/bookings", createdAt: b.createdAt });
+      }
+    });
+
+    allVendors.forEach((v: any) => {
+      if (!v.createdAt) return;
+      const name = v.businessName ?? v.name ?? "Unknown vendor";
+      if (v.approvalStatus === "pending") {
+        items.push({ id: `v-pend-${v.id}`, type: "vendor_pending", title: `New vendor application`, subtitle: name, href: "/admin/vendors", createdAt: v.createdAt });
+      } else if (v.approvalStatus === "approved") {
+        items.push({ id: `v-appr-${v.id}`, type: "vendor_approved", title: `Vendor approved`, subtitle: name, href: "/admin/vendors", createdAt: v.updatedAt ?? v.createdAt });
+      } else if (v.approvalStatus === "rejected") {
+        items.push({ id: `v-rej-${v.id}`, type: "vendor_rejected", title: `Vendor application rejected`, subtitle: name, href: "/admin/vendors", createdAt: v.updatedAt ?? v.createdAt });
+      }
+    });
+
+    return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
+  }, [allBookings, allVendors]);
 
   const monthlyRevenue = useMemo(() => {
     const now = new Date();
@@ -216,6 +279,64 @@ export default function AdminStats() {
                     </div>
                     <span className="text-xs text-muted-foreground w-8 text-right flex-shrink-0">{pct}%</span>
                   </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* ── Recent Activity Feed ─────────────────────────────────────────── */}
+      <Card className="shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between pb-3">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="h-5 w-5 text-primary" />
+              Recent Activity
+            </CardTitle>
+            <CardDescription>Latest platform events across all users</CardDescription>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {isLoading || recentActivity.length === 0 ? (
+            isLoading ? (
+              <div className="space-y-3">
+                {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-14 w-full rounded-lg" />)}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-muted-foreground text-sm">
+                No activity yet — bookings and vendor events will appear here.
+              </div>
+            )
+          ) : (
+            <div className="space-y-1">
+              {recentActivity.map((item) => {
+                const cfg = {
+                  booking_disputed:  { icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
+                  booking_completed: { icon: CheckCircle2,  color: "text-emerald-600", bg: "bg-emerald-50" },
+                  booking_in_escrow: { icon: ShieldCheck,   color: "text-primary",     bg: "bg-primary/10" },
+                  booking_created:   { icon: Briefcase,     color: "text-blue-600",    bg: "bg-blue-50" },
+                  vendor_pending:    { icon: Clock,         color: "text-amber-600",   bg: "bg-amber-50" },
+                  vendor_approved:   { icon: UserCheck,     color: "text-emerald-600", bg: "bg-emerald-50" },
+                  vendor_rejected:   { icon: UserX,         color: "text-red-500",     bg: "bg-red-50" },
+                }[item.type] ?? { icon: Briefcase, color: "text-muted-foreground", bg: "bg-muted" };
+                const Icon = cfg.icon;
+                return (
+                  <Link key={item.id} href={item.href}>
+                    <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/40 transition-colors cursor-pointer group">
+                      <div className={`${cfg.bg} p-2 rounded-lg flex-shrink-0`}>
+                        <Icon className={`h-4 w-4 ${cfg.color}`} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-tight truncate">{item.title}</p>
+                        <p className="text-xs text-muted-foreground truncate mt-0.5">{item.subtitle}</p>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className="text-xs text-muted-foreground whitespace-nowrap">{timeAgo(item.createdAt)}</span>
+                        <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
+                      </div>
+                    </div>
+                  </Link>
                 );
               })}
             </div>

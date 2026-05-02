@@ -48,6 +48,7 @@ import VendorBookingDetail from "@/pages/vendor/booking-detail";
 
 // Pages — admin
 import AdminStats from "@/pages/admin/stats";
+import AdminEventDetail from "@/pages/admin/event-detail";
 import AdminVendors from "@/pages/admin/vendors";
 import AdminEvents from "@/pages/admin/events";
 import AdminBookings from "@/pages/admin/bookings";
@@ -262,7 +263,7 @@ function Router() {
         <ProtectedRoute component={BookingsList} allowedRoles={["planner"]} />
       </Route>
       <Route path="/notifications">
-        <ProtectedRoute component={Notifications} allowedRoles={["planner"]} />
+        <ProtectedRoute component={Notifications} allowedRoles={["planner", "vendor"]} />
       </Route>
       <Route path="/budget">
         <ProtectedRoute component={BudgetOptimizer} allowedRoles={["planner"]} />
@@ -308,6 +309,9 @@ function Router() {
       {/* Admin routes */}
       <Route path="/admin/vendors">
         <ProtectedRoute component={AdminVendors} allowedRoles={["admin"]} />
+      </Route>
+      <Route path="/admin/events/:id">
+        <ProtectedRoute component={AdminEventDetail} allowedRoles={["admin"]} />
       </Route>
       <Route path="/admin/events">
         <ProtectedRoute component={AdminEvents} allowedRoles={["admin"]} />
