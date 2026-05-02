@@ -331,12 +331,12 @@ function QuoteCountdown({ submittedAt }: { submittedAt: string }) {
   const isUrgent = diff < 60 * 60_000;
 
   const borderBg = isCritical
-    ? "border-red-200 bg-red-50"
+    ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20"
     : isUrgent
-    ? "border-amber-200 bg-amber-50"
-    : "border-emerald-200 bg-emerald-50";
+    ? "border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/20"
+    : "border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/20";
 
-  const monoColor = isCritical ? "text-red-700" : isUrgent ? "text-amber-700" : "text-emerald-700";
+  const monoColor = isCritical ? "text-red-700 dark:text-red-400" : isUrgent ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400";
   const dotColor = isCritical ? "bg-red-500" : isUrgent ? "bg-amber-500" : "bg-emerald-500";
   const pingColor = isCritical ? "bg-red-400" : isUrgent ? "bg-amber-400" : "bg-emerald-400";
   const labelColor = isCritical ? "text-red-600" : isUrgent ? "text-amber-600" : "text-emerald-600";
@@ -454,7 +454,7 @@ function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, ac
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         {(isBest || isLowest) && (
-                          <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isBest ? "bg-primary/10 text-primary" : "bg-emerald-100 text-emerald-700"}`}>
+                          <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isBest ? "bg-primary/10 text-primary" : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"}`}>
                             {isBest ? "Best" : "Lowest"}
                           </span>
                         )}
@@ -884,7 +884,7 @@ export default function EventDetail() {
               </div>
 
               {isOver && (
-                <p className="text-xs text-red-600 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                <p className="text-xs text-red-600 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2 dark:text-red-400 dark:bg-red-950/30 dark:border-red-900/50">
                   Committed spend exceeds your stated budget. Consider revising your brief or adjusting the budget.
                 </p>
               )}

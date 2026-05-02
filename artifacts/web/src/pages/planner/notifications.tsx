@@ -27,7 +27,7 @@ const TYPE_CONFIG: Record<
   quote_requested: {
     label: "Quote Request",
     icon: <FileText className="h-4 w-4" />,
-    color: "text-blue-600 bg-blue-50 border-blue-100",
+    color: "text-blue-600 bg-blue-50 border-blue-100 dark:text-blue-400 dark:bg-blue-950/40 dark:border-blue-900/50",
     getLink: (n) => {
       const match = (n.body ?? n.message ?? "").match(/[a-f0-9-]{36}/i);
       return match ? `/events/${match[0]}` : "/events";
@@ -45,7 +45,7 @@ const TYPE_CONFIG: Record<
   booking_confirmed: {
     label: "Booking Confirmed",
     icon: <ShieldCheck className="h-4 w-4" />,
-    color: "text-green-700 bg-green-50 border-green-100",
+    color: "text-green-700 bg-green-50 border-green-100 dark:text-green-400 dark:bg-green-950/40 dark:border-green-900/50",
     getLink: (n) => {
       const match = (n.body ?? n.message ?? "").match(/[a-f0-9-]{36}/i);
       return match ? `/bookings/${match[0]}` : "/bookings";
@@ -54,19 +54,19 @@ const TYPE_CONFIG: Record<
   payment_received: {
     label: "Payment",
     icon: <CreditCard className="h-4 w-4" />,
-    color: "text-emerald-700 bg-emerald-50 border-emerald-100",
+    color: "text-emerald-700 bg-emerald-50 border-emerald-100 dark:text-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-900/50",
     getLink: () => "/bookings",
   },
   payment_released: {
     label: "Payment Released",
     icon: <Unlock className="h-4 w-4" />,
-    color: "text-emerald-700 bg-emerald-50 border-emerald-100",
+    color: "text-emerald-700 bg-emerald-50 border-emerald-100 dark:text-emerald-400 dark:bg-emerald-950/40 dark:border-emerald-900/50",
     getLink: () => "/bookings",
   },
   review_reminder: {
     label: "Review",
     icon: <Star className="h-4 w-4" />,
-    color: "text-amber-700 bg-amber-50 border-amber-100",
+    color: "text-amber-700 bg-amber-50 border-amber-100 dark:text-amber-400 dark:bg-amber-950/40 dark:border-amber-900/50",
     getLink: (n) => {
       const match = (n.body ?? n.message ?? "").match(/[a-f0-9-]{36}/i);
       return match ? `/bookings/${match[0]}` : "/bookings";

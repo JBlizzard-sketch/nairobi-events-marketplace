@@ -79,7 +79,7 @@ function SavedVendorCard({ id, onRemove }: { id: string; onRemove: () => void })
                 {v.businessName}
               </h3>
               {v.isPremium && (
-                <Badge className="text-xs gap-1 bg-amber-100 text-amber-800 border-amber-200 py-0">
+                <Badge className="text-xs gap-1 bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50 py-0">
                   <Award className="h-2.5 w-2.5" />Premium
                 </Badge>
               )}
@@ -97,7 +97,7 @@ function SavedVendorCard({ id, onRemove }: { id: string; onRemove: () => void })
           </div>
           <button
             onClick={onRemove}
-            className="flex-shrink-0 p-1.5 rounded-md hover:bg-rose-50 text-rose-400 hover:text-rose-600 transition-colors"
+            className="flex-shrink-0 p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             aria-label="Remove from saved"
           >
             <Heart className="h-4 w-4 fill-rose-400" />
@@ -117,7 +117,7 @@ function SavedVendorCard({ id, onRemove }: { id: string; onRemove: () => void })
             {v.totalBookings ?? 0} events
           </div>
           {v.averageRating > 4.5 && (
-            <Badge variant="outline" className="text-xs gap-1 text-emerald-700 border-emerald-200 bg-emerald-50">
+            <Badge variant="outline" className="text-xs gap-1 text-emerald-700 border-emerald-200 bg-emerald-50 dark:text-emerald-400 dark:border-emerald-800/50 dark:bg-emerald-950/30">
               <ShieldCheck className="h-3 w-3" />Top Rated
             </Badge>
           )}
@@ -176,8 +176,8 @@ export default function SavedVendors() {
       {/* Empty state */}
       {savedIds.length === 0 && (
         <div className="flex flex-col items-center justify-center py-24 text-center space-y-4">
-          <div className="bg-rose-50 p-6 rounded-full">
-            <Heart className="h-12 w-12 text-rose-300" />
+          <div className="bg-rose-50 dark:bg-rose-950/30 p-6 rounded-full">
+            <Heart className="h-12 w-12 text-rose-300 dark:text-rose-700" />
           </div>
           <div className="space-y-2">
             <h2 className="text-xl font-semibold">No saved vendors yet</h2>

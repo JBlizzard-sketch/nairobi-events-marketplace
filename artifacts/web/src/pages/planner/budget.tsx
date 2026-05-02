@@ -285,7 +285,7 @@ export default function BudgetOptimizer() {
                 <ul className="space-y-3">
                   {result.tips.map((tip: string, i: number) => (
                     <li key={i} className="flex gap-3 text-sm">
-                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center text-xs font-bold mt-0.5">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 flex items-center justify-center text-xs font-bold mt-0.5">
                         {i + 1}
                       </span>
                       <span className="text-foreground">{tip}</span>
