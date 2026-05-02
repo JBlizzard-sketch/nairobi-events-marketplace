@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle } from "lucide-react";
 import { useState } from "react";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -18,6 +18,81 @@ const STATUS_COLORS: Record<string, string> = {
   completed: "secondary",
   cancelled: "destructive",
 };
+
+// ── Event lifecycle stepper ───────────────────────────────────────────────────
+const EVENT_STEPS = [
+  { key: "draft",           label: "Draft",           sub: "Brief created" },
+  { key: "brief_submitted", label: "Brief Sent",       sub: "Vendors notified" },
+  { key: "quotes_received", label: "Quotes In",        sub: "Compare & choose" },
+  { key: "vendor_selected", label: "Vendor Chosen",    sub: "Ready to book" },
+  { key: "booked",          label: "Booked",           sub: "Payment secured" },
+  { key: "completed",       label: "Done",             sub: "Event complete" },
+];
+
+const STEP_ORDER = [
+  "draft", "brief_submitted", "quotes_requested", "quotes_received",
+  "vendor_selected", "booked", "completed",
+];
+
+function EventStepper({ status }: { status: string }) {
+  const isCancelled = status === "cancelled";
+  const currentIdx = STEP_ORDER.indexOf(status);
+
+  return (
+    <div className={`rounded-xl border p-5 ${isCancelled ? "border-destructive/30 bg-destructive/5" : "bg-muted/20"}`}>
+      {isCancelled ? (
+        <div className="flex items-center gap-2 text-destructive font-semibold">
+          <XCircle className="h-5 w-5" />
+          This event has been cancelled.
+        </div>
+      ) : (
+        <div className="flex items-center gap-0 overflow-x-auto pb-1">
+          {EVENT_STEPS.map((step, i) => {
+            const stepOrderIdx = STEP_ORDER.indexOf(step.key);
+            const isDone = stepOrderIdx < currentIdx;
+            const isActive = stepOrderIdx === currentIdx || (
+              step.key === "quotes_received" && status === "quotes_requested"
+            );
+            const isFuture = !isDone && !isActive;
+
+            return (
+              <div key={step.key} className="flex items-center flex-shrink-0">
+                <div className="flex flex-col items-center gap-1.5 px-1">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    isDone
+                      ? "bg-primary text-primary-foreground"
+                      : isActive
+                      ? "bg-primary text-primary-foreground ring-4 ring-primary/20 scale-110"
+                      : "bg-muted border-2 border-border text-muted-foreground"
+                  }`}>
+                    {isDone ? (
+                      <CheckCircle2 className="h-4 w-4" />
+                    ) : isActive ? (
+                      <span className="text-xs font-bold">{i + 1}</span>
+                    ) : (
+                      <Circle className="h-3.5 w-3.5" />
+                    )}
+                  </div>
+                  <div className="text-center min-w-0">
+                    <p className={`text-xs font-semibold whitespace-nowrap ${
+                      isDone || isActive ? "text-foreground" : "text-muted-foreground"
+                    }`}>{step.label}</p>
+                    <p className="text-xs text-muted-foreground whitespace-nowrap hidden sm:block">{step.sub}</p>
+                  </div>
+                </div>
+                {i < EVENT_STEPS.length - 1 && (
+                  <div className={`h-0.5 w-8 flex-shrink-0 mx-1 -mt-5 transition-all ${
+                    isDone ? "bg-primary" : "bg-border"
+                  }`} />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValue, isLowest }: any) {
   return (
@@ -271,6 +346,8 @@ export default function EventDetail() {
           </Card>
         )}
       </div>
+
+      <EventStepper status={e.status} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
