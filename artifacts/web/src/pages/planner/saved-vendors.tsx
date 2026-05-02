@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { useGetVendor } from "@workspace/api-client-react";
 import { useSavedVendors } from "@/hooks/use-saved-vendors";
@@ -5,6 +6,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Star, MapPin, Heart, Briefcase, MessageSquare,
   ArrowRight, ShieldCheck, Award, Search,
@@ -29,6 +34,7 @@ function OverallStars({ value }: { value: number }) {
 
 function SavedVendorCard({ id, onRemove }: { id: string; onRemove: () => void }) {
   const { data: vendor, isLoading } = useGetVendor(id);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   if (isLoading) {
     return (
@@ -69,6 +75,7 @@ function SavedVendorCard({ id, onRemove }: { id: string; onRemove: () => void })
   const serviceParam = v.category ? `?service=${v.category}` : "";
 
   return (
+    <>
     <Card className="shadow-sm hover:shadow-md transition-all group border-border hover:border-primary/30">
       <CardContent className="p-5 space-y-4">
         {/* Header */}
@@ -96,9 +103,10 @@ function SavedVendorCard({ id, onRemove }: { id: string; onRemove: () => void })
             </div>
           </div>
           <button
-            onClick={onRemove}
+            onClick={() => setConfirmOpen(true)}
             className="flex-shrink-0 p-1.5 rounded-md hover:bg-rose-50 dark:hover:bg-rose-950/30 text-rose-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors"
             aria-label="Remove from saved"
+            type="button"
           >
             <Heart className="h-4 w-4 fill-rose-400" />
           </button>
@@ -147,6 +155,27 @@ function SavedVendorCard({ id, onRemove }: { id: string; onRemove: () => void })
         </div>
       </CardContent>
     </Card>
+
+    <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Remove from saved?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This vendor will be removed from your saved list. You can save them again from the vendor directory.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Keep saved</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={onRemove}
+          >
+            Remove
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 

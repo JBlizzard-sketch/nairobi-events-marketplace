@@ -12,6 +12,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -102,6 +106,7 @@ function EventStepper({ status }: { status: string }) {
 
 function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValue, isLowest }: any) {
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [rejectConfirmOpen, setRejectConfirmOpen] = useState(false);
   const depositPct = Number(quote.depositPercent ?? 30);
   const total = Number(quote.totalAmount ?? 0);
   const depositAmount = Math.round((total * depositPct) / 100);
@@ -227,7 +232,7 @@ function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValu
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onReject(quote.id)}
+            onClick={() => setRejectConfirmOpen(true)}
             disabled={rejecting}
             className="flex-1"
           >
@@ -297,6 +302,27 @@ function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValu
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* ── Decline confirmation dialog ───────────────────────────────────── */}
+      <AlertDialog open={rejectConfirmOpen} onOpenChange={setRejectConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Decline this quote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The vendor will be notified that their quote was declined. You can still accept quotes from other vendors.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { setRejectConfirmOpen(false); onReject(quote.id); }}
+            >
+              Decline quote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
@@ -376,6 +402,7 @@ function QuoteCountdown({ submittedAt }: { submittedAt: string }) {
 
 function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, acceptIsPending, rejectIsPending }: any) {
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
 
   const submitted = quotes.filter((q: any) => q.status === "submitted");
   const lowestAmount = submitted.length > 0
@@ -500,7 +527,7 @@ function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, ac
                           <Button
                             size="sm"
                             variant="outline"
-                            onClick={() => onReject(q.id)}
+                            onClick={() => setRejectTarget(q.id)}
                             disabled={acting === q.id && rejectIsPending}
                             className="h-7 px-2 text-xs"
                           >
@@ -539,6 +566,26 @@ function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, ac
           ))}
         </div>
       )}
+
+      <AlertDialog open={!!rejectTarget} onOpenChange={open => { if (!open) setRejectTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Decline this quote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The vendor will be notified that their quote was declined. You can still accept quotes from other vendors.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep it</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { const id = rejectTarget; setRejectTarget(null); if (id) onReject(id); }}
+            >
+              Decline quote
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
