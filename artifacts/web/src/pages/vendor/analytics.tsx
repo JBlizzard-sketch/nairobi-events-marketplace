@@ -368,6 +368,87 @@ export default function VendorAnalytics() {
         </Card>
       </div>
 
+      {/* Performance insights */}
+      {bookings.length > 0 && (() => {
+        const avgBookingValue = earningBookings.length > 0
+          ? Math.round(earningBookings.reduce((s, b) => s + Number(b.totalAmount), 0) / earningBookings.length)
+          : 0;
+
+        const thisMonthRevenue = monthlyRevenue[monthlyRevenue.length - 1]?.Revenue ?? 0;
+        const lastMonthRevenue = monthlyRevenue[monthlyRevenue.length - 2]?.Revenue ?? 0;
+        const trendPct = lastMonthRevenue > 0
+          ? Math.round(((thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue) * 100)
+          : null;
+
+        const acceptanceRate = requests.length > 0
+          ? Math.round((completedCount / requests.length) * 100)
+          : null;
+
+        const insights: Array<{ icon: any; color: string; bg: string; text: string }> = [];
+
+        if (avgBookingValue > 0) {
+          insights.push({
+            icon: DollarSign,
+            color: "text-primary",
+            bg: "bg-primary/10",
+            text: `Average booking value: ${formatKES(avgBookingValue)}`,
+          });
+        }
+        if (trendPct !== null) {
+          const up = trendPct >= 0;
+          insights.push({
+            icon: TrendingUp,
+            color: up ? "text-emerald-600" : "text-red-500",
+            bg: up ? "bg-emerald-50" : "bg-red-50",
+            text: up
+              ? `Revenue up ${trendPct}% vs last month`
+              : `Revenue down ${Math.abs(trendPct)}% vs last month`,
+          });
+        }
+        if (acceptanceRate !== null) {
+          insights.push({
+            icon: Target,
+            color: "text-violet-600",
+            bg: "bg-violet-50",
+            text: `${acceptanceRate}% of received requests converted to completed bookings`,
+          });
+        }
+        if (bestMonth && bestMonth.Revenue > 0) {
+          insights.push({
+            icon: Trophy,
+            color: "text-amber-600",
+            bg: "bg-amber-50",
+            text: `Best month: ${bestMonth.label} (${formatKES(bestMonth.Revenue)})`,
+          });
+        }
+
+        if (insights.length === 0) return null;
+
+        return (
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Performance Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              {insights.map((ins, i) => {
+                const Icon = ins.icon;
+                return (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                    <div className={`${ins.bg} p-2 rounded-lg flex-shrink-0`}>
+                      <Icon className={`h-4 w-4 ${ins.color}`} />
+                    </div>
+                    <p className="text-sm font-medium">{ins.text}</p>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Quick stats */}
       {pendingCount > 0 && (
         <Card className="shadow-sm border-primary/20 bg-primary/5">

@@ -65,6 +65,7 @@ function formatDate(d: string) {
 export default function AdminEvents() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [dateRange, setDateRange] = useState<"all" | "upcoming" | "past">("all");
 
   const { data, isLoading } = useAdminListEvents({
     status: statusFilter !== "all" ? statusFilter : undefined,
@@ -74,13 +75,22 @@ export default function AdminEvents() {
 
   const events = (data?.events ?? []) as any[];
 
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const dateFiltered = dateRange === "upcoming"
+    ? events.filter(e => new Date(e.eventDate) >= today)
+    : dateRange === "past"
+    ? events.filter(e => new Date(e.eventDate) < today)
+    : events;
+
   const filtered = search.trim()
-    ? events.filter(e =>
+    ? dateFiltered.filter(e =>
         e.title.toLowerCase().includes(search.toLowerCase()) ||
         e.plannerName?.toLowerCase().includes(search.toLowerCase()) ||
         e.city?.toLowerCase().includes(search.toLowerCase())
       )
-    : events;
+    : dateFiltered;
 
   const totalByStatus = STATUS_OPTIONS.reduce((acc, s) => {
     acc[s] = events.filter(e => e.status === s).length;
@@ -108,6 +118,33 @@ export default function AdminEvents() {
           </Button>
         )}
       </div>
+
+      {/* Date range toggle */}
+      {!isLoading && events.length > 0 && (
+        <div className="flex items-center gap-2">
+          {(["all", "upcoming", "past"] as const).map((range) => {
+            const labels = { all: "All Dates", upcoming: "Upcoming", past: "Past" };
+            const counts = {
+              all: events.length,
+              upcoming: events.filter(e => new Date(e.eventDate) >= today).length,
+              past: events.filter(e => new Date(e.eventDate) < today).length,
+            };
+            return (
+              <button
+                key={range}
+                onClick={() => setDateRange(range)}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  dateRange === range
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-card text-muted-foreground border-border hover:border-primary/40 hover:text-foreground"
+                }`}
+              >
+                {labels[range]} · {counts[range]}
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* Status summary chips */}
       {!isLoading && events.length > 0 && (

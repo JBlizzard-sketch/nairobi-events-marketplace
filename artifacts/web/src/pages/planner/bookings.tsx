@@ -80,6 +80,9 @@ export default function BookingsList() {
     .filter(b => b.status === "in_escrow")
     .reduce((s, b) => s + Number(b.totalAmount), 0);
   const reviewDueCount = list.filter(b => b.status === "completed").length;
+  const totalSpent = list
+    .filter(b => ["confirmed", "in_escrow", "completed"].includes(b.status))
+    .reduce((s, b) => s + Number(b.totalAmount), 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -126,7 +129,7 @@ export default function BookingsList() {
 
       {/* Summary stats bar */}
       {!isLoading && list.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className={`rounded-xl border p-4 ${pendingCount > 0 ? "border-amber-200 bg-amber-50" : "border-border bg-card"}`}>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Payment</p>
             <p className={`text-2xl font-bold mt-1 ${pendingCount > 0 ? "text-amber-700" : "text-foreground"}`}>
@@ -153,6 +156,13 @@ export default function BookingsList() {
             {reviewDueCount > 0 && (
               <p className="text-xs text-amber-600 font-medium mt-0.5">Help future planners</p>
             )}
+          </div>
+          <div className="rounded-xl border p-4 border-emerald-100 bg-emerald-50/40">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Committed</p>
+            <p className="text-2xl font-bold mt-1 text-emerald-700">
+              {totalSpent > 0 ? `KES ${(totalSpent / 1000).toFixed(0)}K` : "—"}
+            </p>
+            <p className="text-xs text-emerald-600/80 font-medium mt-0.5">confirmed + escrow + done</p>
           </div>
         </div>
       )}
