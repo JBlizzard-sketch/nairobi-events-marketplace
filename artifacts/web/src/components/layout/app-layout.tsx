@@ -18,18 +18,33 @@ import {
   Menu,
   X,
   SlidersHorizontal,
+  Search,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
+import { CommandPalette } from "@/components/command-palette";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { role, logout } = useAuth();
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   // Close drawer whenever the route changes
   useEffect(() => {
     setMobileOpen(false);
   }, [location]);
+
+  // Global Cmd+K / Ctrl+K keyboard shortcut
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, []);
 
   const handleLogout = async () => {
     await logout();
@@ -124,7 +139,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         )}
       </nav>
 
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-border space-y-1">
+        {/* Search shortcut */}
+        <button
+          onClick={() => { setPaletteOpen(true); setMobileOpen(false); }}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm"
+        >
+          <span className="flex items-center gap-2">
+            <Search className="h-4 w-4" />
+            Search
+          </span>
+          <kbd className="hidden md:inline-flex text-[10px] bg-muted px-1.5 py-0.5 rounded border border-border font-mono">
+            ⌘K
+          </kbd>
+        </button>
         <Button
           variant="ghost"
           size="sm"
@@ -140,18 +168,30 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-background font-sans text-foreground">
+      {/* Command palette */}
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
+
       {/* ── Mobile top bar ─────────────────────────────────────────────────── */}
       <header className="md:hidden sticky top-0 z-40 flex items-center justify-between px-4 py-3 bg-card border-b border-border">
         <Link href="/">
           <span className="text-base font-bold text-primary tracking-tight">Nairobi Events</span>
         </Link>
-        <button
-          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          onClick={() => setMobileOpen(true)}
-          aria-label="Open menu"
-        >
-          <Menu className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onClick={() => setPaletteOpen(true)}
+            aria-label="Search"
+          >
+            <Search className="h-4.5 w-4.5 h-5 w-5" />
+          </button>
+          <button
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onClick={() => setMobileOpen(true)}
+            aria-label="Open menu"
+          >
+            <Menu className="h-5 w-5" />
+          </button>
+        </div>
       </header>
 
       {/* ── Mobile overlay ──────────────────────────────────────────────────── */}

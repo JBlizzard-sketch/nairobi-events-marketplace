@@ -458,6 +458,76 @@ export default function EventDetail() {
         ))}
       </div>
 
+      {/* ── Budget tracker ── */}
+      {e.budgetMax && allQuotes.length > 0 && (() => {
+        const budget = Number(e.budgetMax);
+        const budgetMin = e.budgetMin ? Number(e.budgetMin) : 0;
+        const lowestQuote = Math.min(...allQuotes.map((q: any) => Number(q.totalAmount)));
+        const highestQuote = Math.max(...allQuotes.map((q: any) => Number(q.totalAmount)));
+        const acceptedPct = Math.min((totalAccepted / budget) * 100, 100);
+        const isOver = totalAccepted > budget;
+        const barColor = isOver ? "bg-red-500" : totalAccepted > budget * 0.9 ? "bg-amber-500" : "bg-emerald-500";
+
+        return (
+          <Card className="shadow-sm">
+            <CardContent className="pt-5 pb-4 space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <h3 className="font-semibold text-sm">Budget Tracker</h3>
+                <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                  <span>Budget: <span className="font-semibold text-foreground">KES {budget.toLocaleString()}</span></span>
+                  {totalAccepted > 0 && (
+                    <span className={`font-semibold ${isOver ? "text-red-600" : "text-emerald-600"}`}>
+                      Committed: KES {totalAccepted.toLocaleString()} ({Math.round(acceptedPct)}%)
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Bar */}
+              <div className="relative">
+                <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
+                  {totalAccepted > 0 && (
+                    <div
+                      className={`h-full rounded-full transition-all duration-700 ${barColor}`}
+                      style={{ width: `${Math.min(acceptedPct, 100)}%` }}
+                    />
+                  )}
+                </div>
+                {/* Budget max marker */}
+                <div className="absolute top-0 right-0 h-3 w-0.5 bg-border" />
+              </div>
+
+              {/* Quote range row */}
+              <div className="grid grid-cols-3 gap-3 pt-1">
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Lowest Quote</p>
+                  <p className="text-sm font-semibold text-emerald-700">KES {lowestQuote.toLocaleString()}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Your Budget</p>
+                  <p className="text-sm font-semibold">KES {budget.toLocaleString()}</p>
+                  {budgetMin > 0 && (
+                    <p className="text-xs text-muted-foreground">min KES {budgetMin.toLocaleString()}</p>
+                  )}
+                </div>
+                <div className="text-center">
+                  <p className="text-xs text-muted-foreground">Highest Quote</p>
+                  <p className={`text-sm font-semibold ${highestQuote > budget ? "text-red-600" : "text-foreground"}`}>
+                    KES {highestQuote.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+
+              {isOver && (
+                <p className="text-xs text-red-600 font-medium bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  Committed spend exceeds your stated budget. Consider revising your brief or adjusting the budget.
+                </p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       <Separator />
 
       <div>
