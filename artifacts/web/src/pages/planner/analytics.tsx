@@ -410,6 +410,90 @@ export default function PlannerAnalytics() {
         </Card>
       )}
 
+      {/* Spending insights */}
+      {!isLoading && activeBookings.length > 0 && (() => {
+        const avgValue = activeBookings.length > 0
+          ? Math.round(totalSpend / activeBookings.length)
+          : 0;
+
+        const thisMonthSpend = monthlySpend[monthlySpend.length - 1]?.spend ?? 0;
+        const lastMonthSpend = monthlySpend[monthlySpend.length - 2]?.spend ?? 0;
+        const trendPct = lastMonthSpend > 0
+          ? Math.round(((thisMonthSpend - lastMonthSpend) / lastMonthSpend) * 100)
+          : null;
+
+        const bestMonth = monthlySpend.reduce(
+          (best, m) => (m.spend > (best?.spend ?? 0) ? m : best),
+          null as null | { label: string; spend: number }
+        );
+
+        const topCat = spendByCategory[0];
+
+        const insights: Array<{ icon: any; color: string; bg: string; text: string }> = [];
+
+        if (avgValue > 0) {
+          insights.push({
+            icon: Wallet,
+            color: "text-primary",
+            bg: "bg-primary/10",
+            text: `Average booking value: ${formatKES(avgValue)} across ${activeBookings.length} booking${activeBookings.length !== 1 ? "s" : ""}`,
+          });
+        }
+        if (trendPct !== null) {
+          const up = trendPct >= 0;
+          insights.push({
+            icon: TrendingUp,
+            color: up ? "text-emerald-600" : "text-red-500",
+            bg: up ? "bg-emerald-50" : "bg-red-50",
+            text: up
+              ? `Spend up ${trendPct}% this month vs last month`
+              : `Spend down ${Math.abs(trendPct)}% this month vs last month`,
+          });
+        }
+        if (bestMonth && bestMonth.spend > 0) {
+          insights.push({
+            icon: Calendar,
+            color: "text-violet-600",
+            bg: "bg-violet-50",
+            text: `Highest spend month: ${bestMonth.label} (${formatKES(bestMonth.spend)})`,
+          });
+        }
+        if (topCat) {
+          insights.push({
+            icon: Building2,
+            color: "text-amber-600",
+            bg: "bg-amber-50",
+            text: `Top category: ${topCat.name} — ${formatKES(topCat.value)} (${totalSpend > 0 ? Math.round((topCat.value / totalSpend) * 100) : 0}% of spend)`,
+          });
+        }
+
+        if (insights.length === 0) return null;
+
+        return (
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Spending Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2.5">
+              {insights.map((ins, i) => {
+                const Icon = ins.icon;
+                return (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30">
+                    <div className={`${ins.bg} p-2 rounded-lg flex-shrink-0`}>
+                      <Icon className={`h-4 w-4 ${ins.color}`} />
+                    </div>
+                    <p className="text-sm font-medium">{ins.text}</p>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })()}
+
       {/* Empty state */}
       {!isLoading && activeBookings.length === 0 && events.length === 0 && (
         <Card className="border-dashed">

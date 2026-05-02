@@ -359,17 +359,30 @@ export default function VendorDashboard() {
                   <p className="text-sm text-muted-foreground">No active bookings</p>
                 </div>
               ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {activeBookings.slice(0, 4).map((b: any) => (
-                    <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border">
-                      <div>
-                        <p className="font-medium text-sm">#{b.id.slice(0, 8).toUpperCase()}</p>
-                        <p className="text-xs text-muted-foreground">KES {Number(b.totalAmount).toLocaleString()}</p>
+                    <Link key={b.id} href={`/vendor/bookings/${b.id}`}>
+                      <div className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-all group">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm group-hover:text-primary transition-colors truncate">
+                            {b.eventTitle ?? `#${b.id.slice(0, 8).toUpperCase()}`}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            {b.eventDate
+                              ? new Date(b.eventDate).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) + " · "
+                              : ""}
+                            KES {Number(b.vendorPayoutAmount ?? b.totalAmount).toLocaleString()} payout
+                          </p>
+                        </div>
+                        <Badge className={`capitalize text-xs flex-shrink-0 ${
+                          b.status === "in_escrow"
+                            ? "bg-primary/10 text-primary border-primary/20"
+                            : "bg-blue-100 text-blue-800 border-blue-200"
+                        }`}>
+                          {b.status.replace(/_/g, " ")}
+                        </Badge>
                       </div>
-                      <Badge variant="default" className="capitalize text-xs">
-                        {b.status.replace(/_/g, " ")}
-                      </Badge>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

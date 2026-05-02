@@ -193,9 +193,19 @@ function exportUsersCSV(users: any[]) {
   URL.revokeObjectURL(a.href);
 }
 
+type SortKey = "newest" | "oldest" | "most_events" | "most_bookings";
+
+const SORT_OPTIONS: Array<{ value: SortKey; label: string }> = [
+  { value: "newest", label: "Newest First" },
+  { value: "oldest", label: "Oldest First" },
+  { value: "most_events", label: "Most Events" },
+  { value: "most_bookings", label: "Most Bookings" },
+];
+
 export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("newest");
 
   const { data, isLoading, refetch } = useAdminListUsers({
     role: roleFilter !== "all" ? (roleFilter as any) : undefined,
@@ -204,13 +214,21 @@ export default function AdminUsers() {
     limit: 100,
   });
 
-  const userList = (data?.users ?? []) as any[];
+  const rawList = (data?.users ?? []) as any[];
+
+  const userList = [...rawList].sort((a, b) => {
+    if (sortKey === "newest") return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    if (sortKey === "oldest") return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    if (sortKey === "most_events") return (b.eventCount ?? 0) - (a.eventCount ?? 0);
+    if (sortKey === "most_bookings") return (b.bookingCount ?? 0) - (a.bookingCount ?? 0);
+    return 0;
+  });
 
   const counts = {
-    planner: userList.filter(u => u.role === "planner").length,
-    vendor: userList.filter(u => u.role === "vendor").length,
-    admin: userList.filter(u => u.role === "admin").length,
-    inactive: userList.filter(u => !u.isActive).length,
+    planner: rawList.filter(u => u.role === "planner").length,
+    vendor: rawList.filter(u => u.role === "vendor").length,
+    admin: rawList.filter(u => u.role === "admin").length,
+    inactive: rawList.filter(u => !u.isActive).length,
   };
 
   return (
@@ -267,7 +285,7 @@ export default function AdminUsers() {
           />
         </div>
         <Select value={roleFilter} onValueChange={setRoleFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-36">
             <SelectValue placeholder="All roles" />
           </SelectTrigger>
           <SelectContent>
@@ -275,6 +293,16 @@ export default function AdminUsers() {
             <SelectItem value="planner">Planner</SelectItem>
             <SelectItem value="vendor">Vendor</SelectItem>
             <SelectItem value="admin">Admin</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={sortKey} onValueChange={v => setSortKey(v as SortKey)}>
+          <SelectTrigger className="w-44">
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
