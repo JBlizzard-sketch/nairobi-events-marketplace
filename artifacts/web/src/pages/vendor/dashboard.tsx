@@ -11,6 +11,7 @@ import {
   Clock3, AlertTriangle, XCircle, PauseCircle, CheckCircle2,
   TrendingUp, Circle, UserCog, CalendarDays,
 } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function OnboardingChecklist({ profile }: { profile: any }) {
   if (!profile || profile.status === "approved") return null;
@@ -181,6 +182,7 @@ export default function VendorDashboard() {
   const { data: bookings, isLoading: loadingBookings } = useListMyBookings({});
 
   const profile_ = profile as any;
+  useDocumentTitle(profile_?.businessName ?? "Vendor Dashboard");
   const allRequests = (Array.isArray(requests) ? requests : []) as any[];
   const pendingRequests = allRequests.filter((r: any) => r.status === "requested");
   const submittedRequests = allRequests.filter((r: any) => r.status === "submitted");

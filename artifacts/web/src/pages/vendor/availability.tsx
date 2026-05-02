@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Save, CalendarRange, X, AlertTriangle } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -59,6 +60,7 @@ export default function VendorAvailability() {
     { from: fromDate, to: toDate },
     { query: { enabled: !!vendorId, queryKey: getGetVendorAvailabilityQueryKey(vendorId, { from: fromDate, to: toDate }) } }
   );
+  useDocumentTitle("Availability");
 
   const setAvail = useSetMyAvailability();
 

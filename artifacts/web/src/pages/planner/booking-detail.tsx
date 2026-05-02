@@ -44,6 +44,7 @@ import {
   UserX,
 } from "lucide-react";
 import { useState } from "react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Pending Payment", color: "outline", icon: <Clock className="h-4 w-4" /> },
@@ -141,6 +142,7 @@ export default function BookingDetail() {
   const [noShowing, setNoShowing] = useState(false);
 
   const b = booking as any;
+  useDocumentTitle(b?.id ? `Booking #${b.id.slice(0, 8).toUpperCase()}` : "Booking Detail");
 
   // ── Payment flow ────────────────────────────────────────────────────────────
   const handlePay = async () => {

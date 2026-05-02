@@ -11,6 +11,7 @@ import {
   TrendingUp, Briefcase, Calendar, Star, Building2, Wallet, Download, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function exportPlannerCsv(bookings: any[]) {
   const headers = [
@@ -145,6 +146,7 @@ export default function PlannerAnalytics() {
   }, [activeBookings]);
 
   const isLoading = loadingBookings || loadingEvents;
+  useDocumentTitle("Spend Analytics");
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">

@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Search, Award, ChevronRight, MapPin, Briefcase, Heart, ArrowUpDown, AlertTriangle } from "lucide-react";
 import { useSavedVendors } from "@/hooks/use-saved-vendors";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const CATEGORIES = [
   { value: "all", label: "All" },
@@ -78,6 +79,7 @@ export default function VendorsDirectory() {
 
   const debouncedSearch = useDebounce(search, 300);
 
+  useDocumentTitle("Vendor Directory");
   const { data, isLoading, isError: vendorsError } = useListVendors({
     q: debouncedSearch || undefined,
     category: category !== "all" ? (category as any) : undefined,

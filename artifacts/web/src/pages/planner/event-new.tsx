@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, ArrowRight, CheckCircle2, Send, Sparkles, Loader2, ChevronDown, ChevronUp, BookTemplate, Trash2 } from "lucide-react";
 import type { BudgetOptimizeResult } from "@workspace/api-client-react";
 import { useEventTemplates } from "@/hooks/use-event-templates";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const EVENT_TYPES = ["corporate", "wedding", "birthday", "product_launch", "conference", "private_party", "other"];
 const SERVICES = [
@@ -36,6 +37,7 @@ const STEPS = [
 ];
 
 export default function EventNew() {
+  useDocumentTitle("Create Event");
   const [step, setStep] = useState(0);
   const [, setLocation] = useLocation();
   const { templates: eventTemplates, saveTemplate: saveEventTemplate, removeTemplate: removeEventTemplate } = useEventTemplates();

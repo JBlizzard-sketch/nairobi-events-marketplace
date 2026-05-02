@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import {
   TrendingUp, Briefcase, Star, FileText, DollarSign, Trophy, Target, Download, AlertTriangle,
 } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function exportVendorCsv(bookings: any[]) {
   const headers = ["Booking Ref", "Status", "Event", "Event Date", "Amount (KES)", "Payout (KES)", "Booked Date"];
@@ -98,6 +99,7 @@ export default function VendorAnalytics() {
   [requestsRaw]);
 
   const isLoading = loadingBookings || loadingRequests;
+  useDocumentTitle("Analytics");
 
   // ── KPIs ──────────────────────────────────────────────────────────────────────
   const activeBookings = useMemo(() =>

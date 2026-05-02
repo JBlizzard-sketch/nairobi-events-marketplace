@@ -12,6 +12,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
   DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "secondary",
@@ -547,6 +548,7 @@ export default function EventDetail() {
   const [, setLocation] = useLocation();
   const { data: event, isLoading: loadingEvent, isError: eventError } = useGetEvent(id ?? "");
   const { data: quotesData, isLoading: loadingQuotes, refetch } = useGetEventQuotes(id ?? "");
+  useDocumentTitle((event as any)?.title ?? "Event");
   const acceptQuote = useAcceptQuote();
   const rejectQuote = useRejectQuote();
   const [acting, setActing] = useState<string | null>(null);

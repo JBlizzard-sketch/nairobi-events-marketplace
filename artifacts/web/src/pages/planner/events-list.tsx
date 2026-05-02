@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Calendar, ChevronRight, Plus, FileText, Pencil, CalendarDays, List, ChevronLeft, Search, X, AlertTriangle, Download } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function exportCSV(events: any[]) {
   const headers = ["Title", "Type", "Status", "Date", "Venue", "City", "Guests", "Budget Max"];
@@ -213,6 +214,7 @@ export default function EventsList() {
       ? { status: statusFilter as any, page: 1, limit: 50 }
       : { page: 1, limit: 50 }
   );
+  useDocumentTitle("My Events");
 
   const allEvents = data?.events ?? [];
 

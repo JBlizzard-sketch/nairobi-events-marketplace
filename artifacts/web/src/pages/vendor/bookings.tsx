@@ -13,6 +13,7 @@ import {
   XCircle, AlertTriangle, Clock, Calendar, User, TrendingUp, Search, Download, Zap,
 } from "lucide-react";
 import { useState } from "react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; className: string }> = {
   pending: { label: "Pending Payment", icon: Clock, className: "bg-muted text-muted-foreground" },
@@ -70,6 +71,7 @@ export default function VendorBookings() {
   const { data: bookings, isLoading, isError: bookingsError } = useListMyBookings(
     statusFilter !== "all" ? { status: statusFilter as any } : {}
   );
+  useDocumentTitle("My Bookings");
 
   const rawList = (Array.isArray(bookings) ? bookings : []) as any[];
   const list = search.trim()

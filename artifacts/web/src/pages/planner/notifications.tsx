@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
 import { useState } from "react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const TYPE_CONFIG: Record<
   string,
@@ -108,6 +109,7 @@ export default function Notifications() {
 
   const allNotifications = (data as any)?.notifications ?? [];
   const unreadCount = (data as any)?.unreadCount ?? 0;
+  useDocumentTitle(unreadCount > 0 ? `(${unreadCount}) Notifications` : "Notifications");
   const notificationList = tab === "unread"
     ? allNotifications.filter((n: any) => !n.isRead)
     : allNotifications;

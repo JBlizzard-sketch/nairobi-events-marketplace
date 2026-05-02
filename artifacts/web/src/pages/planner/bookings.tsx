@@ -12,6 +12,7 @@ import {
   Star, CreditCard, Download, Search,
 } from "lucide-react";
 import { useState } from "react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function exportCsv(rows: any[]) {
   const headers = ["Booking Ref", "Status", "Event", "Event Date", "Vendor", "Category", "Amount (KES)", "Platform Fee (KES)", "Vendor Payout (KES)", "Created"];
@@ -64,6 +65,7 @@ export default function BookingsList() {
   const { data: bookings, isLoading, isError: bookingsError } = useListMyBookings(
     statusFilter !== "all" ? { status: statusFilter as any } : {}
   );
+  useDocumentTitle("Bookings");
 
   const rawList = (Array.isArray(bookings) ? bookings : []) as any[];
   const list = search.trim()

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const WELCOME_DISMISSED_KEY = "nairobi_welcome_dismissed";
 
@@ -95,6 +96,7 @@ function formatEventDate(dateStr: string) {
 export default function PlannerDashboard() {
   const { data: events, isLoading: loadingEvents, isError: eventsError } = useListMyEvents({ limit: 10 });
   const { data: bookings, isLoading: loadingBookings } = useListMyBookings({});
+  useDocumentTitle("Dashboard");
   const [welcomeDismissed, setWelcomeDismissed] = useState(
     () => localStorage.getItem(WELCOME_DISMISSED_KEY) === "1"
   );

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Save, Plus, X, Send, CheckCircle2, Clock3, XCircle, PauseCircle, Circle, AlertTriangle } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 // ── Profile completeness ─────────────────────────────────────────────────────
 
@@ -186,6 +187,7 @@ const STATUS_INFO: Record<string, { icon: any; color: string; title: string; des
 
 export default function VendorProfileEdit() {
   const { data: profile, isLoading, refetch, isError: profileError } = useGetMyVendorProfile();
+  useDocumentTitle("Vendor Profile");
   const update = useUpdateVendorProfile();
   const create = useCreateVendorProfile();
   const submit = useSubmitVendorProfileForReview();

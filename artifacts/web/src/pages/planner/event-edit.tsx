@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ArrowLeft, Save, Loader2, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const SERVICES = [
   { id: "catering", label: "Catering" },
@@ -45,6 +46,7 @@ export default function EventEdit() {
   const update = useUpdateEvent();
 
   const e = event as any;
+  useDocumentTitle(e?.title ? `Edit — ${e.title}` : "Edit Event");
 
   const [form, setForm] = useState({
     title: "",

@@ -12,6 +12,7 @@ import {
 import { Link } from "wouter";
 import { useState } from "react";
 import { useSavedVendors } from "@/hooks/use-saved-vendors";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function StarRow({ label, value }: { label: string; value: number }) {
@@ -213,6 +214,7 @@ export default function VendorProfile() {
   const { id } = useParams<{ id: string }>();
   const { data: vendor, isLoading, isError: vendorError } = useGetVendor(id ?? "");
   const { data: reviewsData } = useGetVendorReviews(id ?? "", { page: 1, limit: 10 });
+  useDocumentTitle((vendor as any)?.businessName ?? "Vendor Profile");
 
   const fromDate = new Date().toISOString().split("T")[0];
   const toDate = new Date(Date.now() + 60 * 86_400_000).toISOString().split("T")[0];

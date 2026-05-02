@@ -14,6 +14,7 @@ import {
   Calendar, Building2, Briefcase, Sparkles, Star, LayoutDashboard,
   Users, BookOpen, ChevronRight, AlertTriangle,
 } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   planner: { label: "Event Planner", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50" },
@@ -44,6 +45,7 @@ const PORTAL_LINKS: Record<string, Array<{ href: string; icon: any; label: strin
 
 export default function AccountSettings() {
   const { data: userRaw, isLoading, refetch, isError: userError } = useGetMe();
+  useDocumentTitle("Account Settings");
   const updateMe = useUpdateMe();
   const user = userRaw as any;
 

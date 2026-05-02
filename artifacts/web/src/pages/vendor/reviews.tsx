@@ -6,6 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Star, AlertTriangle, MessageSquare, ThumbsUp } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
   const cls = size === "md" ? "h-4.5 w-4.5 h-5 w-5" : "h-3.5 w-3.5";
@@ -109,6 +110,7 @@ export default function VendorReviews() {
   const { data: profileRaw, isLoading: profileLoading } = useGetMyVendorProfile();
   const profile = profileRaw as any;
 
+  useDocumentTitle("My Reviews");
   const { data: reviewsRaw, isLoading: reviewsLoading, isError: reviewsError } = useGetVendorReviews(
     profile?.id ?? "",
     { page: 1, limit: 50 },

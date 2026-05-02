@@ -16,6 +16,7 @@ import {
   BookTemplate, X, MinusCircle, ArrowUpDown, Eye, EyeOff, AlertTriangle,
 } from "lucide-react";
 import { useQuoteTemplates } from "@/hooks/use-quote-templates";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 const PASSED_KEY = "nairobi_passed_requests";
 
@@ -202,6 +203,7 @@ function RequestCard({
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function VendorRequests() {
   const { data: requests, isLoading, refetch, isError: requestsError } = useListMyQuoteRequests({});
+  useDocumentTitle("Quote Requests");
   const submitQuote = useSubmitQuote();
   const { templates: quoteTemplates, saveTemplate, removeTemplate } = useQuoteTemplates();
 

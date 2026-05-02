@@ -11,6 +11,7 @@ import {
   Calendar, MapPin, Users, Building2, User, ArrowLeft,
   Banknote, Package, Printer,
 } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/use-document-title";
 
 // ── Status config ──────────────────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ function EscrowTracker({ status }: { status: string }) {
 export default function VendorBookingDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: booking, isLoading, isError: bookingError } = useGetBooking(id ?? "");
+  useDocumentTitle((booking as any)?.id ? `Booking #${(booking as any).id.slice(0, 8).toUpperCase()}` : "Booking Detail");
 
   if (isLoading) {
     return (
