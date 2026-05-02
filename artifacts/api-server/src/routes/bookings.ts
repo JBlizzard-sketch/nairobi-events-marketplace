@@ -1,7 +1,7 @@
 import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { bookings, users, vendorProfiles, payments } from "@workspace/db";
+import { bookings, users, vendorProfiles, payments, events } from "@workspace/db";
 import { eq, and, or } from "drizzle-orm";
 import {
   ListMyBookingsQueryParams,
@@ -9,6 +9,7 @@ import {
   CreatePaymentIntentBody,
   DisputeBookingBody,
 } from "@workspace/api-zod";
+import { notify } from "../services/notify";
 
 const router: IRouter = Router();
 
@@ -162,6 +163,23 @@ router.post("/bookings/:bookingId/confirm", async (req, res): Promise<void> => {
     .set({ status: "held_in_escrow", updatedAt: new Date() })
     .where(eq(payments.stripePaymentIntentId, paymentIntentId));
 
+  // Notify vendor: payment is now in escrow
+  const vendor = await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.id, updated.vendorId) });
+  if (vendor) {
+    const vendorUser = await db.query.users.findFirst({ where: eq(users.id, vendor.userId) });
+    const event = await db.query.events.findFirst({ where: eq(events.id, updated.eventId) });
+    if (vendorUser && event) {
+      notify({
+        userId: vendorUser.id,
+        type: "payment_received",
+        title: "Payment Confirmed",
+        body: `KES ${Number(updated.vendorPayoutAmount).toLocaleString()} is now held in escrow for "${event.title}". Funds will be released after the event.`,
+        metadata: { bookingId: updated.id },
+        emailTo: vendorUser.email,
+      });
+    }
+  }
+
   res.json({ booking: updated, clientSecret: "" });
 });
 
@@ -196,6 +214,23 @@ router.post("/bookings/:bookingId/release", async (req, res): Promise<void> => {
       .update(payments)
       .set({ status: "released", escrowReleasedAt: new Date(), updatedAt: new Date() })
       .where(eq(payments.stripePaymentIntentId, booking.stripePaymentIntentId));
+  }
+
+  // Notify vendor: escrow released
+  const relVendor = await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.id, booking.vendorId) });
+  if (relVendor) {
+    const relVendorUser = await db.query.users.findFirst({ where: eq(users.id, relVendor.userId) });
+    const relEvent = await db.query.events.findFirst({ where: eq(events.id, booking.eventId) });
+    if (relVendorUser && relEvent) {
+      notify({
+        userId: relVendorUser.id,
+        type: "payment_released",
+        title: "Payment Released",
+        body: `KES ${Number(booking.vendorPayoutAmount).toLocaleString()} has been released to you for "${relEvent.title}". Thank you for a great event!`,
+        metadata: { bookingId: booking.id },
+        emailTo: relVendorUser.email,
+      });
+    }
   }
 
   res.json(updated);
@@ -233,6 +268,39 @@ router.post("/bookings/:bookingId/dispute", async (req, res): Promise<void> => {
     .set({ status: "disputed", cancellationReason: parsed.data.reason, updatedAt: new Date() })
     .where(eq(bookings.id, bookingId))
     .returning();
+
+  // Notify the other party about the dispute
+  const dispEvent = await db.query.events.findFirst({ where: eq(events.id, booking.eventId) });
+  const dispVendor = await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.id, booking.vendorId) });
+  const isPlanner = booking.plannerId === user.id;
+
+  if (isPlanner && dispVendor) {
+    // Planner raised dispute → notify vendor
+    const dispVendorUser = await db.query.users.findFirst({ where: eq(users.id, dispVendor.userId) });
+    if (dispVendorUser && dispEvent) {
+      notify({
+        userId: dispVendorUser.id,
+        type: "payment_received",
+        title: "Dispute Raised",
+        body: `The planner has raised a dispute for "${dispEvent.title}". Our team will review and contact you within 2 business days. Reason: ${parsed.data.reason}`,
+        metadata: { bookingId: booking.id },
+        emailTo: dispVendorUser.email,
+      });
+    }
+  } else if (!isPlanner) {
+    // Vendor raised dispute → notify planner
+    const plannerUser = await db.query.users.findFirst({ where: eq(users.id, booking.plannerId) });
+    if (plannerUser && dispEvent) {
+      notify({
+        userId: plannerUser.id,
+        type: "payment_received",
+        title: "Dispute Raised",
+        body: `The vendor has raised a dispute for "${dispEvent.title}". Our team will review and contact you within 2 business days.`,
+        metadata: { bookingId: booking.id },
+        emailTo: plannerUser.email,
+      });
+    }
+  }
 
   res.json(updated);
 });

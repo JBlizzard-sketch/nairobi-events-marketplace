@@ -174,8 +174,30 @@ Full 2-step escrow payment system on the booking detail page.
 
 **To enable real Stripe:** set `STRIPE_SECRET_KEY` (server) and `VITE_STRIPE_PUBLISHABLE_KEY` (frontend) env vars.
 
+## Notifications System (Phase 8 — Complete)
+
+Automatic in-app notifications + email transport fully wired across all business events.
+
+**Service layer (`artifacts/api-server/src/services/`):**
+- `notify.ts` — fire-and-forget helper: inserts a DB notification row + optionally sends email. Never blocks the calling route.
+- `email.ts` — transport: logs to console (dev stub) when `SMTP_HOST` env var is absent; sends real email via nodemailer when configured. Env vars: `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM`.
+
+**Triggers wired into routes:**
+| Event | Who notified | Type |
+|---|---|---|
+| Event brief submitted | Each matched vendor | `quote_requested` |
+| Vendor submits quote | Planner | `quote_received` |
+| Planner accepts quote | Vendor | `booking_confirmed` |
+| Payment confirmed (in_escrow) | Vendor | `payment_received` |
+| Escrow released | Vendor | `payment_released` |
+| Dispute raised | Other party | `payment_received` |
+| Review posted | Vendor | `review_reminder` |
+
+**Frontend:**
+- `NotificationBell` component — polls every 30 s for unread count; shows red badge. Available in sidebar for planners and vendors.
+- Notifications page — redesigned with per-type icons and colours, relative timestamps (e.g. "5m ago", "2d ago"), and body field correctly read from DB.
+
 ## Planned Phases (remaining)
 
-- Phase 8: Email/SMS notifications
 - Phase 9: Vendor vetting workflow
 - Phase 10: Analytics & reporting

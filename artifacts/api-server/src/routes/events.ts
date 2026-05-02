@@ -14,28 +14,20 @@ import {
   CreateEventBody,
   UpdateEventBody,
 } from "@workspace/api-zod";
+import { notify } from "../services/notify";
 
 const router: IRouter = Router();
 
 // GET /events
 router.get("/events", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const parsed = ListMyEventsQueryParams.safeParse(req.query);
-  if (!parsed.success) {
-    res.status(400).json({ error: "validation_error", message: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: "validation_error", message: parsed.error.message }); return; }
 
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user) {
-    res.status(404).json({ error: "not_found", message: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
 
   const { status, page = 1, limit = 20 } = parsed.data;
   const offset = (page - 1) * limit;
@@ -53,33 +45,19 @@ router.get("/events", async (req, res): Promise<void> => {
     db.select({ count: sql<number>`count(*)` }).from(events).where(and(...conditions)),
   ]);
 
-  res.json({
-    events: eventList,
-    total: Number(countResult[0]?.count ?? 0),
-    page,
-    limit,
-  });
+  res.json({ events: eventList, total: Number(countResult[0]?.count ?? 0), page, limit });
 });
 
 // POST /events
 router.post("/events", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const parsed = CreateEventBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "validation_error", message: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: "validation_error", message: parsed.error.message }); return; }
 
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user) {
-    res.status(404).json({ error: "not_found", message: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
 
   const { eventDate, eventEndDate, ...rest } = parsed.data;
   const toDateStr = (d: Date | undefined | null): string | undefined =>
@@ -102,18 +80,12 @@ router.post("/events", async (req, res): Promise<void> => {
 // GET /events/:eventId
 router.get("/events/:eventId", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId;
 
   const event = await db.query.events.findFirst({ where: eq(events.id, eventId) });
-  if (!event) {
-    res.status(404).json({ error: "not_found", message: "Event not found" });
-    return;
-  }
+  if (!event) { res.status(404).json({ error: "not_found", message: "Event not found" }); return; }
 
   res.json(event);
 });
@@ -121,38 +93,20 @@ router.get("/events/:eventId", async (req, res): Promise<void> => {
 // PATCH /events/:eventId
 router.patch("/events/:eventId", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId;
-
   const parsed = UpdateEventBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "validation_error", message: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: "validation_error", message: parsed.error.message }); return; }
 
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user) {
-    res.status(404).json({ error: "not_found", message: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
 
   const existing = await db.query.events.findFirst({
     where: and(eq(events.id, eventId), eq(events.plannerId, user.id)),
   });
-
-  if (!existing) {
-    res.status(404).json({ error: "not_found", message: "Event not found" });
-    return;
-  }
-
-  if (existing.status !== "draft") {
-    res.status(400).json({ error: "invalid_state", message: "Can only edit draft events" });
-    return;
-  }
+  if (!existing) { res.status(404).json({ error: "not_found", message: "Event not found" }); return; }
+  if (existing.status !== "draft") { res.status(400).json({ error: "invalid_state", message: "Can only edit draft events" }); return; }
 
   const { eventDate: ed, ...restUpdate } = parsed.data;
   const toDateStr2 = (d: Date | undefined | null): string | undefined =>
@@ -174,44 +128,30 @@ router.patch("/events/:eventId", async (req, res): Promise<void> => {
 // POST /events/:eventId/submit — submit brief and dispatch quote requests
 router.post("/events/:eventId/submit", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId;
 
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user) {
-    res.status(404).json({ error: "not_found", message: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
 
   const event = await db.query.events.findFirst({
     where: and(eq(events.id, eventId), eq(events.plannerId, user.id)),
   });
+  if (!event) { res.status(404).json({ error: "not_found", message: "Event not found" }); return; }
+  if (event.status !== "draft") { res.status(400).json({ error: "invalid_state", message: "Event already submitted" }); return; }
 
-  if (!event) {
-    res.status(404).json({ error: "not_found", message: "Event not found" });
-    return;
-  }
-
-  if (event.status !== "draft") {
-    res.status(400).json({ error: "invalid_state", message: "Event already submitted" });
-    return;
-  }
-
-  // Set quote deadline to 4 hours from now
   const quotesDeadline = new Date(Date.now() + 4 * 60 * 60 * 1000);
 
-  // Update event status
   const [updated] = await db
     .update(events)
     .set({ status: "quotes_requested", quotesDeadline, updatedAt: new Date() })
     .where(eq(events.id, eventId))
     .returning();
 
-  // Find up to 3 approved vendors per required service category
+  // Dispatch quote requests + notify matched vendors
+  const notifiedVendorUserIds: string[] = [];
+
   if (event.servicesNeeded && Array.isArray(event.servicesNeeded)) {
     for (const service of event.servicesNeeded as string[]) {
       const eligibleVendors = await db.query.vendorProfiles.findMany({
@@ -230,6 +170,22 @@ router.post("/events/:eventId/submit", async (req, res): Promise<void> => {
           status: "requested",
           expiresAt: quotesDeadline,
         });
+
+        // Notify each vendor (de-duplicate if same vendor handles multiple categories)
+        if (!notifiedVendorUserIds.includes(vendor.userId)) {
+          notifiedVendorUserIds.push(vendor.userId);
+          const vendorUser = await db.query.users.findFirst({ where: eq(users.id, vendor.userId) });
+          if (vendorUser) {
+            notify({
+              userId: vendor.userId,
+              type: "quote_requested",
+              title: "New Quote Request",
+              body: `A planner is looking for ${service} services for "${event.title}". Submit your quote before the 4-hour deadline.`,
+              metadata: { eventId: event.id, service },
+              emailTo: vendorUser.email,
+            });
+          }
+        }
       }
     }
   }
@@ -240,10 +196,7 @@ router.post("/events/:eventId/submit", async (req, res): Promise<void> => {
 // GET /events/:eventId/quotes — quotes grouped by category
 router.get("/events/:eventId/quotes", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const eventId = Array.isArray(req.params.eventId) ? req.params.eventId[0] : req.params.eventId;
 
@@ -252,12 +205,9 @@ router.get("/events/:eventId/quotes", async (req, res): Promise<void> => {
     orderBy: quotes.totalAmount,
   });
 
-  // Group by category
   const quotesByCategory: Record<string, typeof quoteList> = {};
   for (const quote of quoteList) {
-    if (!quotesByCategory[quote.category]) {
-      quotesByCategory[quote.category] = [];
-    }
+    if (!quotesByCategory[quote.category]) quotesByCategory[quote.category] = [];
     quotesByCategory[quote.category].push(quote);
   }
 
