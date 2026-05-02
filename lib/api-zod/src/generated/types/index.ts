@@ -8,9 +8,13 @@
 
 export * from "./adminStats";
 export * from "./adminSuspendVendorBody";
+export * from "./badRequestResponse";
 export * from "./booking";
 export * from "./bookingConfirmResponse";
 export * from "./bookingStatus";
+export * from "./budgetLineItem";
+export * from "./budgetOptimizeBody";
+export * from "./budgetOptimizeResult";
 export * from "./confirmBookingRequest";
 export * from "./conflictResponse";
 export * from "./createEventRequest";

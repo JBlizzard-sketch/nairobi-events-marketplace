@@ -130,9 +130,29 @@ if (!clerkId) { res.status(401).json({ error: "unauthorized" }); return; }
 - All 3 workflows running: api-server (8080), web (22333), mockup-sandbox (8081)
 - All proxied through shared reverse proxy on port 80
 
+## AI Budget Optimization (Phase 6 — Complete)
+
+Uses Replit-managed OpenAI integration (no API key needed, billed to credits).
+
+**Endpoint:** `POST /api/ai/budget-optimize`
+- Requires Clerk auth
+- Body: `{ eventType, guestCount, servicesNeeded, totalBudget?, city? }` (validated by Zod)
+- Calls `gpt-5-mini` with a structured JSON prompt using current Nairobi market rates
+- Returns: `{ suggestedMin, suggestedMax, currency, breakdown[], tips[] }`
+
+**Frontend:** Step 3 (Services) of the event creation form shows an "AI Budget Advisor" panel:
+- Appears once at least one service is selected
+- "Get Estimate" button calls the endpoint and shows a per-service breakdown with KES amounts, % bars, and rationale
+- "Apply to Budget" button sets the min/max budget fields and navigates back to step 2
+- "Re-run" button available after first estimate (e.g., if services change)
+
+**Key files:**
+- `artifacts/api-server/src/routes/ai.ts` — AI route
+- `lib/integrations-openai-ai-server/` — pre-configured OpenAI SDK client (Replit-managed)
+- `artifacts/web/src/pages/planner/event-new.tsx` — event form with AI advisor panel
+
 ## Planned Phases (remaining)
 
-- Phase 6: AI budget optimization
 - Phase 7: Escrow payment flow (Stripe)
 - Phase 8: Email/SMS notifications
 - Phase 9: Vendor vetting workflow

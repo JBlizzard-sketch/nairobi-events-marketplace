@@ -19,8 +19,11 @@ import type {
 import type {
   AdminStats,
   AdminSuspendVendorBody,
+  BadRequestResponse,
   Booking,
   BookingConfirmResponse,
+  BudgetOptimizeBody,
+  BudgetOptimizeResult,
   ConfirmBookingRequest,
   ConflictResponse,
   CreateEventRequest,
@@ -65,6 +68,94 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
+
+/**
+ * @summary AI-powered budget optimization for events
+ */
+export const getBudgetOptimizeUrl = () => {
+  return `/api/ai/budget-optimize`;
+};
+
+export const budgetOptimize = async (
+  budgetOptimizeBody: BudgetOptimizeBody,
+  options?: RequestInit,
+): Promise<BudgetOptimizeResult> => {
+  return customFetch<BudgetOptimizeResult>(getBudgetOptimizeUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(budgetOptimizeBody),
+  });
+};
+
+export const getBudgetOptimizeMutationOptions = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof budgetOptimize>>,
+    TError,
+    { data: BodyType<BudgetOptimizeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof budgetOptimize>>,
+  TError,
+  { data: BodyType<BudgetOptimizeBody> },
+  TContext
+> => {
+  const mutationKey = ["budgetOptimize"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof budgetOptimize>>,
+    { data: BodyType<BudgetOptimizeBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return budgetOptimize(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type BudgetOptimizeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof budgetOptimize>>
+>;
+export type BudgetOptimizeMutationBody = BodyType<BudgetOptimizeBody>;
+export type BudgetOptimizeMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse
+>;
+
+/**
+ * @summary AI-powered budget optimization for events
+ */
+export const useBudgetOptimize = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof budgetOptimize>>,
+    TError,
+    { data: BodyType<BudgetOptimizeBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof budgetOptimize>>,
+  TError,
+  { data: BodyType<BudgetOptimizeBody> },
+  TContext
+> => {
+  return useMutation(getBudgetOptimizeMutationOptions(options));
+};
 
 /**
  * @summary Health check

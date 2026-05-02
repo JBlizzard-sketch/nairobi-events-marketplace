@@ -8,6 +8,38 @@
 import * as zod from "zod";
 
 /**
+ * @summary AI-powered budget optimization for events
+ */
+export const BudgetOptimizeBody = zod.object({
+  eventType: zod.string(),
+  guestCount: zod.number(),
+  totalBudget: zod
+    .string()
+    .optional()
+    .describe(
+      "Estimated total budget in KES (optional — AI will suggest one if omitted)",
+    ),
+  servicesNeeded: zod.array(zod.string()),
+  city: zod.string().optional(),
+});
+
+export const BudgetOptimizeResponse = zod.object({
+  suggestedMin: zod.string().describe("Suggested minimum total budget in KES"),
+  suggestedMax: zod.string().describe("Suggested maximum total budget in KES"),
+  currency: zod.string(),
+  breakdown: zod.array(
+    zod.object({
+      service: zod.string(),
+      label: zod.string(),
+      amount: zod.string().describe("Suggested amount in KES"),
+      percentage: zod.number().describe("Percentage of total budget"),
+      rationale: zod.string(),
+    }),
+  ),
+  tips: zod.array(zod.string()),
+});
+
+/**
  * @summary Health check
  */
 export const HealthCheckResponse = zod.object({

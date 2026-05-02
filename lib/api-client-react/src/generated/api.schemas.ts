@@ -407,6 +407,40 @@ export interface AdminStats {
   activeEvents: number;
 }
 
+export interface BudgetOptimizeBody {
+  eventType: string;
+  guestCount: number;
+  /** Estimated total budget in KES (optional — AI will suggest one if omitted) */
+  totalBudget?: string;
+  servicesNeeded: string[];
+  city?: string;
+}
+
+export interface BudgetLineItem {
+  service: string;
+  label: string;
+  /** Suggested amount in KES */
+  amount: string;
+  /** Percentage of total budget */
+  percentage: number;
+  rationale: string;
+}
+
+export interface BudgetOptimizeResult {
+  /** Suggested minimum total budget in KES */
+  suggestedMin: string;
+  /** Suggested maximum total budget in KES */
+  suggestedMax: string;
+  currency: string;
+  breakdown: BudgetLineItem[];
+  tips: string[];
+}
+
+/**
+ * Invalid request body or parameters
+ */
+export type BadRequestResponse = ErrorResponse;
+
 /**
  * Authentication required
  */

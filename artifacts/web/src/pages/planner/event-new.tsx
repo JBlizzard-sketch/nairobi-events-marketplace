@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLocation } from "wouter";
-import { useCreateEvent, useSubmitEventBrief } from "@workspace/api-client-react";
+import { useCreateEvent, useSubmitEventBrief, useBudgetOptimize } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -8,7 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, CheckCircle2, Send } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Send, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import type { BudgetOptimizeResult } from "@workspace/api-client-react";
 
 const EVENT_TYPES = ["corporate", "wedding", "birthday", "product_launch", "conference", "private_party", "other"];
 const SERVICES = [
@@ -53,8 +54,11 @@ export default function EventNew() {
 
   const createEvent = useCreateEvent();
   const submitBrief = useSubmitEventBrief();
+  const budgetOptimize = useBudgetOptimize();
   const [createdId, setCreatedId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [aiResult, setAiResult] = useState<BudgetOptimizeResult | null>(null);
+  const [aiExpanded, setAiExpanded] = useState(false);
 
   const set = (key: string, val: any) => setForm(prev => ({ ...prev, [key]: val }));
 
@@ -62,6 +66,7 @@ export default function EventNew() {
     set("servicesNeeded", form.servicesNeeded.includes(id)
       ? form.servicesNeeded.filter(s => s !== id)
       : [...form.servicesNeeded, id]);
+    setAiResult(null);
   };
 
   const canNext = () => {
@@ -70,6 +75,28 @@ export default function EventNew() {
     if (step === 2) return form.guestCount > 0;
     if (step === 3) return form.servicesNeeded.length > 0;
     return true;
+  };
+
+  const handleAiOptimize = async () => {
+    setAiResult(null);
+    setAiExpanded(true);
+    const result = await budgetOptimize.mutateAsync({
+      data: {
+        eventType: form.eventType,
+        guestCount: form.guestCount,
+        totalBudget: form.budgetMax || form.budgetMin || undefined,
+        servicesNeeded: form.servicesNeeded,
+        city: form.city,
+      },
+    });
+    setAiResult(result as BudgetOptimizeResult);
+  };
+
+  const applyAiSuggestion = () => {
+    if (!aiResult) return;
+    set("budgetMin", aiResult.suggestedMin);
+    set("budgetMax", aiResult.suggestedMax);
+    setStep(2);
   };
 
   const handleSubmit = async () => {
@@ -237,35 +264,149 @@ export default function EventNew() {
                   />
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Not sure about your budget? Select your services on the next step, then use the AI advisor to get a market-rate estimate.
+              </p>
             </>
           )}
 
           {step === 3 && (
-            <div className="space-y-2">
-              <Label className="mb-3 block">Select all services you need</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {SERVICES.map(({ id, label }) => {
-                  const selected = form.servicesNeeded.includes(id);
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      onClick={() => toggleService(id)}
-                      className={`p-3 rounded-lg border text-sm font-medium transition-all text-left ${
-                        selected
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/50"
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+            <div className="space-y-5">
+              <div className="space-y-2">
+                <Label className="mb-3 block">Select all services you need</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {SERVICES.map(({ id, label }) => {
+                    const selected = form.servicesNeeded.includes(id);
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        onClick={() => toggleService(id)}
+                        className={`p-3 rounded-lg border text-sm font-medium transition-all text-left ${
+                          selected
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:border-primary/50 hover:bg-muted/50"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {form.servicesNeeded.length > 0 && (
+                  <p className="text-sm text-muted-foreground pt-2">
+                    {form.servicesNeeded.length} service{form.servicesNeeded.length > 1 ? "s" : ""} selected — we'll send briefs to 3 vendors per category
+                  </p>
+                )}
               </div>
+
+              {/* AI Budget Advisor */}
               {form.servicesNeeded.length > 0 && (
-                <p className="text-sm text-muted-foreground pt-2">
-                  {form.servicesNeeded.length} service{form.servicesNeeded.length > 1 ? "s" : ""} selected — we'll send briefs to 3 vendors per category
-                </p>
+                <div className="rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/60">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-amber-600" />
+                      <span className="text-sm font-semibold text-amber-900">AI Budget Advisor</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {aiResult && (
+                        <button
+                          type="button"
+                          onClick={() => setAiExpanded(v => !v)}
+                          className="text-amber-700 hover:text-amber-900 transition-colors"
+                        >
+                          {aiExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                        </button>
+                      )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleAiOptimize}
+                        disabled={budgetOptimize.isPending}
+                        className="border-amber-300 bg-white text-amber-800 hover:bg-amber-50 hover:border-amber-400 text-xs h-7 gap-1.5"
+                      >
+                        {budgetOptimize.isPending ? (
+                          <><Loader2 className="h-3 w-3 animate-spin" /> Analysing…</>
+                        ) : (
+                          <><Sparkles className="h-3 w-3" /> {aiResult ? "Re-run" : "Get Estimate"}</>
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+
+                  {budgetOptimize.isPending && (
+                    <div className="px-4 py-6 flex flex-col items-center gap-2 text-amber-700">
+                      <Loader2 className="h-6 w-6 animate-spin" />
+                      <p className="text-sm">Analysing {form.servicesNeeded.length} services for {form.guestCount} guests in {form.city}…</p>
+                    </div>
+                  )}
+
+                  {aiResult && aiExpanded && (
+                    <div className="px-4 py-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-amber-700 uppercase tracking-wider font-medium">Suggested Total Budget</p>
+                          <p className="text-lg font-bold text-amber-900">
+                            KES {Number(aiResult.suggestedMin).toLocaleString()} – {Number(aiResult.suggestedMax).toLocaleString()}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={applyAiSuggestion}
+                          className="text-xs h-8 gap-1.5 bg-amber-600 hover:bg-amber-700 text-white"
+                        >
+                          <CheckCircle2 className="h-3 w-3" />
+                          Apply to Budget
+                        </Button>
+                      </div>
+
+                      <div className="space-y-2">
+                        {aiResult.breakdown.map(item => (
+                          <div key={item.service} className="flex items-start gap-3 bg-white/70 rounded-lg px-3 py-2.5 border border-amber-100">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between gap-2">
+                                <span className="text-sm font-medium text-gray-800">{item.label}</span>
+                                <span className="text-sm font-semibold text-amber-800 whitespace-nowrap">
+                                  KES {Number(item.amount).toLocaleString()}
+                                </span>
+                              </div>
+                              <div className="mt-1.5 h-1.5 rounded-full bg-amber-100 overflow-hidden">
+                                <div
+                                  className="h-full rounded-full bg-amber-500"
+                                  style={{ width: `${item.percentage}%` }}
+                                />
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-1.5">{item.rationale}</p>
+                            </div>
+                            <span className="text-xs text-amber-600 font-medium shrink-0 pt-0.5">{item.percentage}%</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {aiResult.tips.length > 0 && (
+                        <div className="space-y-1.5">
+                          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider">Cost-saving tips</p>
+                          <ul className="space-y-1">
+                            {aiResult.tips.map((tip, i) => (
+                              <li key={i} className="flex items-start gap-2 text-xs text-amber-900">
+                                <span className="text-amber-500 mt-0.5 shrink-0">•</span>
+                                {tip}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {!aiResult && !budgetOptimize.isPending && (
+                    <div className="px-4 py-3 text-xs text-amber-700">
+                      Get Nairobi market-rate estimates for your {form.servicesNeeded.length} selected service{form.servicesNeeded.length > 1 ? "s" : ""} based on {form.guestCount} guests.
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}

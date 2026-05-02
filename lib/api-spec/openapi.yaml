@@ -26,8 +26,35 @@ tags:
     description: In-app notifications
   - name: admin
     description: Admin operations
+  - name: ai
+    description: AI-powered features
 
 paths:
+  # ─── AI ─────────────────────────────────────────────────────────────────────
+
+  /ai/budget-optimize:
+    post:
+      operationId: budgetOptimize
+      tags: [ai]
+      summary: AI-powered budget optimization for events
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BudgetOptimizeBody"
+      responses:
+        "200":
+          description: Budget optimization result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BudgetOptimizeResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
   /healthz:
     get:
       operationId: healthCheck
@@ -706,6 +733,12 @@ components:
         format: uuid
 
   responses:
+    BadRequest:
+      description: Invalid request body or parameters
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
     Unauthorized:
       description: Authentication required
       content:
@@ -1439,3 +1472,61 @@ components:
         activeEvents:
           type: integer
       required: [totalUsers, totalVendors, pendingVendors, totalEvents, totalBookings, totalRevenue, activeEvents]
+
+    # ─── AI ────────────────────────────────────────────────────────────────────
+
+    BudgetOptimizeBody:
+      type: object
+      properties:
+        eventType:
+          type: string
+        guestCount:
+          type: integer
+        totalBudget:
+          type: string
+          description: Estimated total budget in KES (optional — AI will suggest one if omitted)
+        servicesNeeded:
+          type: array
+          items:
+            type: string
+        city:
+          type: string
+      required: [eventType, guestCount, servicesNeeded]
+
+    BudgetLineItem:
+      type: object
+      properties:
+        service:
+          type: string
+        label:
+          type: string
+        amount:
+          type: string
+          description: Suggested amount in KES
+        percentage:
+          type: integer
+          description: Percentage of total budget
+        rationale:
+          type: string
+      required: [service, label, amount, percentage, rationale]
+
+    BudgetOptimizeResult:
+      type: object
+      properties:
+        suggestedMin:
+          type: string
+          description: Suggested minimum total budget in KES
+        suggestedMax:
+          type: string
+          description: Suggested maximum total budget in KES
+        currency:
+          type: string
+        breakdown:
+          type: array
+          items:
+            $ref: "#/components/schemas/BudgetLineItem"
+        tips:
+          type: array
+          items:
+            type: string
+      required: [suggestedMin, suggestedMax, currency, breakdown, tips]
