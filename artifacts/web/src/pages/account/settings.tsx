@@ -8,12 +8,38 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Save, User, Mail, Phone, ShieldCheck, CheckCircle2 } from "lucide-react";
+import { Link } from "wouter";
+import {
+  Save, User, Mail, Phone, ShieldCheck, CheckCircle2,
+  Calendar, Building2, Briefcase, Sparkles, Star, LayoutDashboard,
+  Users, BookOpen, ChevronRight,
+} from "lucide-react";
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
   planner: { label: "Event Planner", color: "bg-blue-100 text-blue-800 border-blue-200" },
   vendor: { label: "Vendor", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
   admin: { label: "Administrator", color: "bg-violet-100 text-violet-800 border-violet-200" },
+};
+
+const PORTAL_LINKS: Record<string, Array<{ href: string; icon: any; label: string; desc: string }>> = {
+  planner: [
+    { href: "/events", icon: Calendar, label: "My Events", desc: "View and manage your event briefs" },
+    { href: "/vendors", icon: Building2, label: "Vendor Directory", desc: "Browse and compare vetted vendors" },
+    { href: "/bookings", icon: Briefcase, label: "My Bookings", desc: "Track confirmed bookings" },
+    { href: "/budget", icon: Sparkles, label: "Budget AI", desc: "Optimise your event budget" },
+  ],
+  vendor: [
+    { href: "/vendor/profile", icon: Building2, label: "My Profile", desc: "Update your vendor profile" },
+    { href: "/vendor/requests", icon: BookOpen, label: "Quote Requests", desc: "Browse and respond to requests" },
+    { href: "/vendor/bookings", icon: Briefcase, label: "My Bookings", desc: "Manage confirmed bookings" },
+    { href: "/vendor/reviews", icon: Star, label: "My Reviews", desc: "See ratings from planners" },
+  ],
+  admin: [
+    { href: "/admin", icon: LayoutDashboard, label: "Platform Overview", desc: "Marketplace statistics" },
+    { href: "/admin/vendors", icon: Building2, label: "Vendors", desc: "Approve and manage vendors" },
+    { href: "/admin/users", icon: Users, label: "Users", desc: "View all platform users" },
+    { href: "/admin/bookings", icon: Briefcase, label: "Bookings", desc: "Monitor all bookings" },
+  ],
 };
 
 export default function AccountSettings() {
@@ -223,6 +249,32 @@ export default function AccountSettings() {
           )}
         </CardContent>
       </Card>
+
+      {/* Role-specific portal shortcuts */}
+      {!isLoading && user?.role && PORTAL_LINKS[user.role] && (
+        <Card className="shadow-sm">
+          <CardHeader className="border-b border-border/50">
+            <CardTitle className="text-base">Your Portal</CardTitle>
+            <CardDescription>Quick links to your main workspace</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4 space-y-1">
+            {PORTAL_LINKS[user.role].map(({ href, icon: Icon, label, desc }) => (
+              <Link key={href} href={href}>
+                <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-muted/50 transition-colors cursor-pointer group">
+                  <div className="bg-primary/10 group-hover:bg-primary/15 p-2 rounded-lg flex-shrink-0 transition-colors">
+                    <Icon className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold group-hover:text-primary transition-colors">{label}</p>
+                    <p className="text-xs text-muted-foreground">{desc}</p>
+                  </div>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                </div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }

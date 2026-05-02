@@ -344,6 +344,62 @@ export default function AdminStats() {
         </CardContent>
       </Card>
 
+      {/* Booking status breakdown */}
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Briefcase className="h-5 w-5 text-primary" />
+            Booking Status Breakdown
+          </CardTitle>
+          <CardDescription>Distribution of all bookings by current status</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-10 rounded-lg" />)}
+            </div>
+          ) : (() => {
+            const statusDefs: Array<{ key: string; label: string; icon: any; color: string; bg: string; bar: string }> = [
+              { key: "completed",  label: "Completed",      icon: CheckCircle2,  color: "text-emerald-600", bg: "bg-emerald-50",   bar: "bg-emerald-500" },
+              { key: "in_escrow",  label: "In Escrow",      icon: ShieldCheck,   color: "text-primary",     bg: "bg-primary/10",   bar: "bg-primary" },
+              { key: "confirmed",  label: "Confirmed",      icon: UserCheck,     color: "text-blue-600",    bg: "bg-blue-50",      bar: "bg-blue-500" },
+              { key: "pending",    label: "Pending Payment",icon: Clock,         color: "text-amber-600",   bg: "bg-amber-50",     bar: "bg-amber-400" },
+              { key: "disputed",   label: "Disputed",       icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10",bar: "bg-destructive" },
+              { key: "cancelled",  label: "Cancelled",      icon: XCircle,       color: "text-muted-foreground", bg: "bg-muted",   bar: "bg-muted-foreground/40" },
+              { key: "refunded",   label: "Refunded",       icon: XCircle,       color: "text-orange-600",  bg: "bg-orange-50",    bar: "bg-orange-400" },
+            ];
+            const counts = statusDefs.map(d => ({
+              ...d,
+              count: allBookings.filter((b: any) => b.status === d.key).length,
+            })).filter(d => d.count > 0 || ["completed", "in_escrow", "pending", "disputed"].includes(d.key));
+            const maxCount = Math.max(...counts.map(d => d.count), 1);
+            return (
+              <div className="space-y-2.5">
+                {counts.map(({ key, label, icon: Icon, color, bg, bar, count }) => (
+                  <div key={key} className="flex items-center gap-4 p-3 rounded-xl bg-muted/20">
+                    <div className={`${bg} p-2 rounded-lg flex-shrink-0`}>
+                      <Icon className={`h-4 w-4 ${color}`} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-sm font-medium">{label}</span>
+                        <span className="text-sm font-bold tabular-nums">{count}</span>
+                      </div>
+                      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          className={`${bar} h-full rounded-full transition-all duration-700`}
+                          style={{ width: `${Math.round((count / maxCount) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </CardContent>
+      </Card>
+
       {/* Quick admin actions */}
       <div className="grid sm:grid-cols-2 gap-5">
         <Card className="shadow-sm border-amber-200 bg-amber-50/50">

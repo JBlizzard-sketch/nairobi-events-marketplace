@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { useGetMyVendorProfile, useGetVendorReviews } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { Star, AlertTriangle, MessageSquare, ThumbsUp } from "lucide-react";
 
 function Stars({ value, size = "sm" }: { value: number; size?: "sm" | "md" }) {
@@ -102,6 +104,8 @@ function ReviewCard({ review }: { review: any }) {
 }
 
 export default function VendorReviews() {
+  const [starFilter, setStarFilter] = useState<number | null>(null);
+
   const { data: profileRaw, isLoading: profileLoading } = useGetMyVendorProfile();
   const profile = profileRaw as any;
 
@@ -125,6 +129,10 @@ export default function VendorReviews() {
   }));
 
   const noShowCount = reviews.filter((r) => r.isNoShow).length;
+
+  const filteredReviews = starFilter === null
+    ? reviews
+    : reviews.filter((r) => Math.round(r.rating) === starFilter);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -205,8 +213,52 @@ export default function VendorReviews() {
 
           {/* Individual reviews */}
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">All Reviews</h2>
-            {reviews.map((review) => (
+            <div className="flex items-center justify-between flex-wrap gap-3">
+              <h2 className="text-lg font-semibold">
+                {starFilter === null ? "All Reviews" : `${starFilter}-Star Reviews`}
+                {starFilter !== null && (
+                  <span className="ml-2 text-sm font-normal text-muted-foreground">
+                    ({filteredReviews.length})
+                  </span>
+                )}
+              </h2>
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <Button
+                  size="sm"
+                  variant={starFilter === null ? "default" : "outline"}
+                  className="h-7 text-xs px-2.5"
+                  onClick={() => setStarFilter(null)}
+                >
+                  All
+                </Button>
+                {[5, 4, 3, 2, 1].map((star) => {
+                  const count = starCounts.find(s => s.star === star)?.count ?? 0;
+                  return (
+                    <Button
+                      key={star}
+                      size="sm"
+                      variant={starFilter === star ? "default" : "outline"}
+                      className="h-7 text-xs px-2.5 gap-1"
+                      onClick={() => setStarFilter(starFilter === star ? null : star)}
+                      disabled={count === 0}
+                    >
+                      <Star className={`h-3 w-3 ${starFilter === star ? "fill-white text-white" : "fill-amber-400 text-amber-400"}`} />
+                      {star}
+                      {count > 0 && (
+                        <span className={`${starFilter === star ? "text-white/70" : "text-muted-foreground"}`}>
+                          ({count})
+                        </span>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+            {filteredReviews.length === 0 ? (
+              <div className="text-center py-10 text-muted-foreground text-sm border rounded-xl border-dashed">
+                No {starFilter}-star reviews yet.
+              </div>
+            ) : filteredReviews.map((review) => (
               <ReviewCard key={review.id} review={review} />
             ))}
           </div>
