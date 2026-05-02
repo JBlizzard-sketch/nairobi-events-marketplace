@@ -8,8 +8,35 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  TrendingUp, Briefcase, Calendar, Star, Building2, Wallet,
+  TrendingUp, Briefcase, Calendar, Star, Building2, Wallet, Download,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+function exportPlannerCsv(bookings: any[]) {
+  const headers = [
+    "Booking Ref", "Status", "Event", "Event Date",
+    "Vendor", "Category", "Amount (KES)", "Platform Fee (KES)", "Created",
+  ];
+  const rows = bookings.map(b => [
+    `#${(b.id ?? "").slice(0, 8).toUpperCase()}`,
+    b.status ?? "",
+    `"${(b.eventTitle ?? "").replace(/"/g, '""')}"`,
+    b.eventDate ? new Date(b.eventDate).toLocaleDateString("en-KE") : "",
+    `"${(b.vendorBusinessName ?? "").replace(/"/g, '""')}"`,
+    b.category ?? "",
+    Number(b.totalAmount ?? 0).toFixed(2),
+    Number(b.platformFeeAmount ?? 0).toFixed(2),
+    b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-KE") : "",
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `spend-analytics-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const CATEGORY_COLORS = [
   "hsl(var(--primary))",
@@ -121,9 +148,22 @@ export default function PlannerAnalytics() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Spend Analytics</h1>
-        <p className="text-muted-foreground mt-1">Track your event spending and vendor usage</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Spend Analytics</h1>
+          <p className="text-muted-foreground mt-1">Track your event spending and vendor usage</p>
+        </div>
+        {!isLoading && activeBookings.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 flex-shrink-0"
+            onClick={() => exportPlannerCsv(activeBookings)}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {/* Summary cards */}
