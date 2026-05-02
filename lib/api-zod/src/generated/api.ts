@@ -1064,14 +1064,39 @@ export const GetBookingResponse = zod.object({
 });
 
 /**
- * @summary Confirm booking and initiate escrow payment
+ * @summary Create a payment intent for a pending booking
+ */
+export const CreatePaymentIntentParams = zod.object({
+  bookingId: zod.coerce.string().uuid(),
+});
+
+export const CreatePaymentIntentBody = zod.object({
+  paymentMethod: zod.enum(["card", "mpesa"]).describe("Payment method to use"),
+});
+
+export const CreatePaymentIntentResponse = zod.object({
+  paymentIntentId: zod.string(),
+  clientSecret: zod
+    .string()
+    .describe("Stripe client secret for Elements (empty for mpesa\/mock)"),
+  amount: zod.number().describe("Amount in smallest currency unit (KES cents)"),
+  currency: zod.string(),
+  paymentMethod: zod.string(),
+  isMock: zod
+    .boolean()
+    .optional()
+    .describe("True when running without real Stripe keys"),
+});
+
+/**
+ * @summary Confirm booking after payment — moves to in_escrow
  */
 export const ConfirmBookingParams = zod.object({
   bookingId: zod.coerce.string().uuid(),
 });
 
 export const ConfirmBookingBody = zod.object({
-  paymentMethodId: zod.string(),
+  paymentIntentId: zod.string(),
 });
 
 export const ConfirmBookingResponse = zod.object({
@@ -1101,6 +1126,78 @@ export const ConfirmBookingResponse = zod.object({
     createdAt: zod.coerce.date(),
   }),
   clientSecret: zod.string(),
+});
+
+/**
+ * @summary Release escrow payment to vendor after event completion
+ */
+export const ReleaseEscrowParams = zod.object({
+  bookingId: zod.coerce.string().uuid(),
+});
+
+export const ReleaseEscrowResponse = zod.object({
+  id: zod.string().uuid(),
+  eventId: zod.string().uuid(),
+  quoteId: zod.string().uuid(),
+  vendorId: zod.string().uuid(),
+  plannerId: zod.string().uuid(),
+  status: zod.enum([
+    "pending",
+    "confirmed",
+    "in_escrow",
+    "completed",
+    "disputed",
+    "cancelled",
+    "refunded",
+  ]),
+  totalAmount: zod.string(),
+  platformFeeAmount: zod.string(),
+  vendorPayoutAmount: zod.string(),
+  currency: zod.string(),
+  stripePaymentIntentId: zod.string().nullish(),
+  contractUrl: zod.string().nullish(),
+  confirmedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Raise a dispute on an in-escrow booking
+ */
+export const DisputeBookingParams = zod.object({
+  bookingId: zod.coerce.string().uuid(),
+});
+
+export const disputeBookingBodyReasonMin = 10;
+
+export const DisputeBookingBody = zod.object({
+  reason: zod.string().min(disputeBookingBodyReasonMin),
+});
+
+export const DisputeBookingResponse = zod.object({
+  id: zod.string().uuid(),
+  eventId: zod.string().uuid(),
+  quoteId: zod.string().uuid(),
+  vendorId: zod.string().uuid(),
+  plannerId: zod.string().uuid(),
+  status: zod.enum([
+    "pending",
+    "confirmed",
+    "in_escrow",
+    "completed",
+    "disputed",
+    "cancelled",
+    "refunded",
+  ]),
+  totalAmount: zod.string(),
+  platformFeeAmount: zod.string(),
+  vendorPayoutAmount: zod.string(),
+  currency: zod.string(),
+  stripePaymentIntentId: zod.string().nullish(),
+  contractUrl: zod.string().nullish(),
+  confirmedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
 });
 
 /**

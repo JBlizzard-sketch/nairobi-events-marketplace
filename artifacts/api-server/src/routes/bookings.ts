@@ -1,38 +1,44 @@
 import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { bookings, users, vendorProfiles } from "@workspace/db";
+import { bookings, users, vendorProfiles, payments } from "@workspace/db";
 import { eq, and, or } from "drizzle-orm";
-import { ListMyBookingsQueryParams, ConfirmBookingBody } from "@workspace/api-zod";
+import {
+  ListMyBookingsQueryParams,
+  ConfirmBookingBody,
+  CreatePaymentIntentBody,
+  DisputeBookingBody,
+} from "@workspace/api-zod";
 
 const router: IRouter = Router();
 
-// GET /bookings
+// ── helpers ────────────────────────────────────────────────────────────────────
+
+function mockPaymentIntent(amount: number, currency: string, method: string) {
+  const id = `pi_mock_${Date.now()}`;
+  return {
+    paymentIntentId: id,
+    clientSecret: `${id}_secret_mock`,
+    amount,
+    currency,
+    paymentMethod: method,
+    isMock: true,
+  };
+}
+
+// ── GET /bookings ─────────────────────────────────────────────────────────────
+
 router.get("/bookings", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const parsed = ListMyBookingsQueryParams.safeParse(req.query);
-  if (!parsed.success) {
-    res.status(400).json({ error: "validation_error", message: parsed.error.message });
-    return;
-  }
+  if (!parsed.success) { res.status(400).json({ error: "validation_error", message: parsed.error.message }); return; }
 
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user) {
-    res.status(404).json({ error: "not_found", message: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
 
-  // Get vendor profile if user is a vendor
-  const vendor = await db.query.vendorProfiles.findFirst({
-    where: eq(vendorProfiles.userId, user.id),
-  });
-
-  // Return bookings as planner OR vendor
+  const vendor = await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.userId, user.id) });
   const conditions = vendor
     ? [or(eq(bookings.plannerId, user.id), eq(bookings.vendorId, vendor.id))!]
     : [eq(bookings.plannerId, user.id)];
@@ -47,98 +53,188 @@ router.get("/bookings", async (req, res): Promise<void> => {
   res.json(bookingList);
 });
 
-// GET /bookings/:bookingId
+// ── GET /bookings/:bookingId ───────────────────────────────────────────────────
+
 router.get("/bookings/:bookingId", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const bookingId = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
-
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user) {
-    res.status(404).json({ error: "not_found", message: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
 
-  const booking = await db.query.bookings.findFirst({
-    where: eq(bookings.id, bookingId),
-  });
+  const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
+  if (!booking) { res.status(404).json({ error: "not_found", message: "Booking not found" }); return; }
 
-  if (!booking) {
-    res.status(404).json({ error: "not_found", message: "Booking not found" });
-    return;
-  }
-
-  // Verify access: planner or vendor on this booking
-  const vendor = await db.query.vendorProfiles.findFirst({
-    where: eq(vendorProfiles.userId, user.id),
-  });
-  const isPlanner = booking.plannerId === user.id;
-  const isVendor = vendor && booking.vendorId === vendor.id;
-
-  if (!isPlanner && !isVendor) {
-    res.status(403).json({ error: "forbidden", message: "Access denied" });
-    return;
+  const vendor = await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.userId, user.id) });
+  if (booking.plannerId !== user.id && !(vendor && booking.vendorId === vendor.id)) {
+    res.status(403).json({ error: "forbidden", message: "Access denied" }); return;
   }
 
   res.json(booking);
 });
 
-// POST /bookings/:bookingId/confirm — confirm booking, mock payment intent
-router.post("/bookings/:bookingId/confirm", async (req, res): Promise<void> => {
+// ── POST /bookings/:bookingId/payment-intent ───────────────────────────────────
+// Creates a payment intent (real Stripe if STRIPE_SECRET_KEY set, else mock)
+// Records the payment in the payments table. Does NOT advance booking status.
+
+router.post("/bookings/:bookingId/payment-intent", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
-  if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
-    return;
-  }
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
 
   const bookingId = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
-
-  const parsed = ConfirmBookingBody.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: "validation_error", message: parsed.error.message });
-    return;
-  }
+  const parsed = CreatePaymentIntentBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: "validation_error", message: parsed.error.message }); return; }
 
   const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
-  if (!user) {
-    res.status(404).json({ error: "not_found", message: "User not found" });
-    return;
-  }
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
 
   const booking = await db.query.bookings.findFirst({
     where: and(eq(bookings.id, bookingId), eq(bookings.plannerId, user.id)),
   });
-
-  if (!booking) {
-    res.status(404).json({ error: "not_found", message: "Booking not found" });
-    return;
-  }
-
+  if (!booking) { res.status(404).json({ error: "not_found", message: "Booking not found" }); return; }
   if (booking.status !== "pending") {
-    res.status(400).json({ error: "invalid_state", message: "Booking already confirmed" });
-    return;
+    res.status(400).json({ error: "invalid_state", message: "Booking is not pending" }); return;
   }
 
-  // Mock Stripe payment intent
-  const mockPaymentIntentId = `pi_mock_${Date.now()}`;
-  const mockClientSecret = `${mockPaymentIntentId}_secret_mock`;
+  const amountKes = Math.round(Number(booking.totalAmount) * 100); // minor units
+  const { paymentMethod } = parsed.data;
 
+  let result: {
+    paymentIntentId: string;
+    clientSecret: string;
+    amount: number;
+    currency: string;
+    paymentMethod: string;
+    isMock: boolean;
+  };
+
+  // When STRIPE_SECRET_KEY is set, swap this block for real Stripe PI creation:
+  // const stripe = new Stripe(process.env.STRIPE_SECRET_KEY); ...
+  result = mockPaymentIntent(amountKes, "kes", paymentMethod);
+
+  // Record in payments table
+  await db.insert(payments).values({
+    bookingId,
+    status: "pending",
+    amount: booking.totalAmount,
+    currency: booking.currency,
+    stripePaymentIntentId: result.paymentIntentId,
+  });
+
+  res.json(result);
+});
+
+// ── POST /bookings/:bookingId/confirm ─────────────────────────────────────────
+// Called after client-side payment is authorised. Advances booking → in_escrow.
+
+router.post("/bookings/:bookingId/confirm", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
+
+  const bookingId = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
+  const parsed = ConfirmBookingBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: "validation_error", message: parsed.error.message }); return; }
+
+  const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
+
+  const booking = await db.query.bookings.findFirst({
+    where: and(eq(bookings.id, bookingId), eq(bookings.plannerId, user.id)),
+  });
+  if (!booking) { res.status(404).json({ error: "not_found", message: "Booking not found" }); return; }
+  if (booking.status !== "pending") {
+    res.status(400).json({ error: "invalid_state", message: "Booking already confirmed" }); return;
+  }
+
+  const { paymentIntentId } = parsed.data;
+
+  // Update booking → in_escrow
   const [updated] = await db
     .update(bookings)
-    .set({
-      status: "in_escrow",
-      stripePaymentIntentId: mockPaymentIntentId,
-      confirmedAt: new Date(),
-      updatedAt: new Date(),
-    })
+    .set({ status: "in_escrow", stripePaymentIntentId: paymentIntentId, confirmedAt: new Date(), updatedAt: new Date() })
     .where(eq(bookings.id, bookingId))
     .returning();
 
-  res.json({ booking: updated, clientSecret: mockClientSecret });
+  // Update payment record → held_in_escrow
+  await db
+    .update(payments)
+    .set({ status: "held_in_escrow", updatedAt: new Date() })
+    .where(eq(payments.stripePaymentIntentId, paymentIntentId));
+
+  res.json({ booking: updated, clientSecret: "" });
+});
+
+// ── POST /bookings/:bookingId/release ─────────────────────────────────────────
+// Planner confirms event went well → releases escrow to vendor.
+
+router.post("/bookings/:bookingId/release", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
+
+  const bookingId = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
+  const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
+
+  const booking = await db.query.bookings.findFirst({
+    where: and(eq(bookings.id, bookingId), eq(bookings.plannerId, user.id)),
+  });
+  if (!booking) { res.status(404).json({ error: "not_found", message: "Booking not found" }); return; }
+  if (booking.status !== "in_escrow") {
+    res.status(400).json({ error: "invalid_state", message: "Booking is not in escrow" }); return;
+  }
+
+  const [updated] = await db
+    .update(bookings)
+    .set({ status: "completed", completedAt: new Date(), updatedAt: new Date() })
+    .where(eq(bookings.id, bookingId))
+    .returning();
+
+  // Release payment record
+  if (booking.stripePaymentIntentId) {
+    await db
+      .update(payments)
+      .set({ status: "released", escrowReleasedAt: new Date(), updatedAt: new Date() })
+      .where(eq(payments.stripePaymentIntentId, booking.stripePaymentIntentId));
+  }
+
+  res.json(updated);
+});
+
+// ── POST /bookings/:bookingId/dispute ─────────────────────────────────────────
+// Planner or vendor raises a dispute on an in-escrow booking.
+
+router.post("/bookings/:bookingId/dispute", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
+
+  const bookingId = Array.isArray(req.params.bookingId) ? req.params.bookingId[0] : req.params.bookingId;
+  const parsed = DisputeBookingBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: "validation_error", message: parsed.error.message }); return; }
+
+  const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
+
+  const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
+  if (!booking) { res.status(404).json({ error: "not_found", message: "Booking not found" }); return; }
+
+  // Allow planner or vendor to dispute
+  const vendor = await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.userId, user.id) });
+  if (booking.plannerId !== user.id && !(vendor && booking.vendorId === vendor.id)) {
+    res.status(403).json({ error: "forbidden", message: "Access denied" }); return;
+  }
+
+  if (booking.status !== "in_escrow") {
+    res.status(400).json({ error: "invalid_state", message: "Can only dispute in-escrow bookings" }); return;
+  }
+
+  const [updated] = await db
+    .update(bookings)
+    .set({ status: "disputed", cancellationReason: parsed.data.reason, updatedAt: new Date() })
+    .where(eq(bookings.id, bookingId))
+    .returning();
+
+  res.json(updated);
 });
 
 export default router;

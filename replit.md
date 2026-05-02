@@ -51,7 +51,7 @@ Grouped by domain in `artifacts/api-server/src/routes/`:
 - **events.ts** — create/list/update/submit brief (planner flow)
 - **quotes.ts** — submit/accept/decline quotes, platform fee 10%
 - **vendors.ts** — profile CRUD, availability calendar, search+filter
-- **bookings.ts** — create booking, mock Stripe payment intent
+- **bookings.ts** — create booking, payment intent (mock/Stripe), confirm→in_escrow, release escrow, dispute
 - **reviews.ts** — post and list vendor reviews
 - **notifications.ts** — list and mark-read
 - **admin.ts** — stats dashboard, vendor approval queue
@@ -94,7 +94,7 @@ All wired in `artifacts/web/src/App.tsx` using Wouter:
 - **Date fields**: Drizzle schema uses `PgDateString` — always convert JS `Date` to `"YYYY-MM-DD"` string before DB insert/compare. See `events.ts` and `vendors.ts` for the `toDateStr` helper pattern.
 - **SQL date comparisons**: Use `sql\`${col} >= ${str}\`` with string values, not Drizzle `gte()` (which rejects string for date columns).
 - **Platform fee**: 10% hardcoded in `quotes.ts`.
-- **Mock payments**: `bookings.ts` returns `pi_mock_{timestamp}` as Stripe payment intent.
+- **Escrow payment flow** (Phase 7): 2-step flow — `POST /payment-intent` creates intent and records in `payments` table; `POST /confirm` advances booking → `in_escrow`; `POST /release` completes booking and marks payment released; `POST /dispute` flags booking as disputed. Mock payment intent (`pi_mock_{timestamp}`) used when no `STRIPE_SECRET_KEY` env var — swap with real Stripe trivially by setting the env var.
 
 ## Auth (Phase 5 — Complete)
 
@@ -151,9 +151,31 @@ Uses Replit-managed OpenAI integration (no API key needed, billed to credits).
 - `lib/integrations-openai-ai-server/` — pre-configured OpenAI SDK client (Replit-managed)
 - `artifacts/web/src/pages/planner/event-new.tsx` — event form with AI advisor panel
 
+## Escrow Payment Flow (Phase 7 — Complete)
+
+Full 2-step escrow payment system on the booking detail page.
+
+**API endpoints (`artifacts/api-server/src/routes/bookings.ts`):**
+- `POST /api/bookings/:id/payment-intent` — creates payment intent, inserts `payments` row (status: pending). Returns `{ paymentIntentId, clientSecret, amount, currency, isMock }`. Mock when no `STRIPE_SECRET_KEY` env var.
+- `POST /api/bookings/:id/confirm` — accepts `{ paymentIntentId }`, advances booking → `in_escrow`, updates payment → `held_in_escrow`.
+- `POST /api/bookings/:id/release` — advances booking → `completed`, payment → `released`. Only callable by planner who owns the booking.
+- `POST /api/bookings/:id/dispute` — advances booking → `disputed`, stores reason in `cancellationReason`. Callable by planner or vendor.
+
+**Frontend (`artifacts/web/src/pages/planner/booking-detail.tsx`):**
+- Visual escrow tracker (step progress bar: Payment → Escrow Held → Released)
+- M-Pesa / Card method selector with payment forms
+- Animated confirm button with KES amount
+- Release escrow with confirmation dialog
+- Dispute button with reason textarea (min 10 chars) in confirmation dialog
+- Completed state with leave-a-review prompt
+- Disputed state with resolution notice
+
+**Payments table:** Properly populated via `db.insert(payments)` in `/payment-intent`, updated in `/confirm` and `/release`.
+
+**To enable real Stripe:** set `STRIPE_SECRET_KEY` (server) and `VITE_STRIPE_PUBLISHABLE_KEY` (frontend) env vars.
+
 ## Planned Phases (remaining)
 
-- Phase 7: Escrow payment flow (Stripe)
 - Phase 8: Email/SMS notifications
 - Phase 9: Vendor vetting workflow
 - Phase 10: Analytics & reporting

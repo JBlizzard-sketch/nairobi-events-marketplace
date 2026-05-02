@@ -27,8 +27,10 @@ import type {
   ConfirmBookingRequest,
   ConflictResponse,
   CreateEventRequest,
+  CreatePaymentIntentBody,
   CreateReviewRequest,
   CreateVendorProfileRequest,
+  DisputeBookingBody,
   Event,
   EventListResponse,
   EventQuotesResponse,
@@ -44,6 +46,7 @@ import type {
   NotFoundResponse,
   Notification,
   NotificationListResponse,
+  PaymentIntentResult,
   Quote,
   QuoteRequest,
   Review,
@@ -2196,7 +2199,103 @@ export function useGetBooking<
 }
 
 /**
- * @summary Confirm booking and initiate escrow payment
+ * @summary Create a payment intent for a pending booking
+ */
+export const getCreatePaymentIntentUrl = (bookingId: string) => {
+  return `/api/bookings/${bookingId}/payment-intent`;
+};
+
+export const createPaymentIntent = async (
+  bookingId: string,
+  createPaymentIntentBody: CreatePaymentIntentBody,
+  options?: RequestInit,
+): Promise<PaymentIntentResult> => {
+  return customFetch<PaymentIntentResult>(
+    getCreatePaymentIntentUrl(bookingId),
+    {
+      ...options,
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...options?.headers },
+      body: JSON.stringify(createPaymentIntentBody),
+    },
+  );
+};
+
+export const getCreatePaymentIntentMutationOptions = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPaymentIntent>>,
+    TError,
+    { bookingId: string; data: BodyType<CreatePaymentIntentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createPaymentIntent>>,
+  TError,
+  { bookingId: string; data: BodyType<CreatePaymentIntentBody> },
+  TContext
+> => {
+  const mutationKey = ["createPaymentIntent"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createPaymentIntent>>,
+    { bookingId: string; data: BodyType<CreatePaymentIntentBody> }
+  > = (props) => {
+    const { bookingId, data } = props ?? {};
+
+    return createPaymentIntent(bookingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreatePaymentIntentMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createPaymentIntent>>
+>;
+export type CreatePaymentIntentMutationBody = BodyType<CreatePaymentIntentBody>;
+export type CreatePaymentIntentMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Create a payment intent for a pending booking
+ */
+export const useCreatePaymentIntent = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createPaymentIntent>>,
+    TError,
+    { bookingId: string; data: BodyType<CreatePaymentIntentBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createPaymentIntent>>,
+  TError,
+  { bookingId: string; data: BodyType<CreatePaymentIntentBody> },
+  TContext
+> => {
+  return useMutation(getCreatePaymentIntentMutationOptions(options));
+};
+
+/**
+ * @summary Confirm booking after payment — moves to in_escrow
  */
 export const getConfirmBookingUrl = (bookingId: string) => {
   return `/api/bookings/${bookingId}/confirm`;
@@ -2216,7 +2315,7 @@ export const confirmBooking = async (
 };
 
 export const getConfirmBookingMutationOptions = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2257,13 +2356,15 @@ export type ConfirmBookingMutationResult = NonNullable<
   Awaited<ReturnType<typeof confirmBooking>>
 >;
 export type ConfirmBookingMutationBody = BodyType<ConfirmBookingRequest>;
-export type ConfirmBookingMutationError = ErrorType<unknown>;
+export type ConfirmBookingMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse
+>;
 
 /**
- * @summary Confirm booking and initiate escrow payment
+ * @summary Confirm booking after payment — moves to in_escrow
  */
 export const useConfirmBooking = <
-  TError = ErrorType<unknown>,
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
   TContext = unknown,
 >(options?: {
   mutation?: UseMutationOptions<
@@ -2280,6 +2381,185 @@ export const useConfirmBooking = <
   TContext
 > => {
   return useMutation(getConfirmBookingMutationOptions(options));
+};
+
+/**
+ * @summary Release escrow payment to vendor after event completion
+ */
+export const getReleaseEscrowUrl = (bookingId: string) => {
+  return `/api/bookings/${bookingId}/release`;
+};
+
+export const releaseEscrow = async (
+  bookingId: string,
+  options?: RequestInit,
+): Promise<Booking> => {
+  return customFetch<Booking>(getReleaseEscrowUrl(bookingId), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getReleaseEscrowMutationOptions = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof releaseEscrow>>,
+    TError,
+    { bookingId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof releaseEscrow>>,
+  TError,
+  { bookingId: string },
+  TContext
+> => {
+  const mutationKey = ["releaseEscrow"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof releaseEscrow>>,
+    { bookingId: string }
+  > = (props) => {
+    const { bookingId } = props ?? {};
+
+    return releaseEscrow(bookingId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type ReleaseEscrowMutationResult = NonNullable<
+  Awaited<ReturnType<typeof releaseEscrow>>
+>;
+
+export type ReleaseEscrowMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+>;
+
+/**
+ * @summary Release escrow payment to vendor after event completion
+ */
+export const useReleaseEscrow = <
+  TError = ErrorType<
+    BadRequestResponse | UnauthorizedResponse | NotFoundResponse
+  >,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof releaseEscrow>>,
+    TError,
+    { bookingId: string },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof releaseEscrow>>,
+  TError,
+  { bookingId: string },
+  TContext
+> => {
+  return useMutation(getReleaseEscrowMutationOptions(options));
+};
+
+/**
+ * @summary Raise a dispute on an in-escrow booking
+ */
+export const getDisputeBookingUrl = (bookingId: string) => {
+  return `/api/bookings/${bookingId}/dispute`;
+};
+
+export const disputeBooking = async (
+  bookingId: string,
+  disputeBookingBody: DisputeBookingBody,
+  options?: RequestInit,
+): Promise<Booking> => {
+  return customFetch<Booking>(getDisputeBookingUrl(bookingId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(disputeBookingBody),
+  });
+};
+
+export const getDisputeBookingMutationOptions = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof disputeBooking>>,
+    TError,
+    { bookingId: string; data: BodyType<DisputeBookingBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof disputeBooking>>,
+  TError,
+  { bookingId: string; data: BodyType<DisputeBookingBody> },
+  TContext
+> => {
+  const mutationKey = ["disputeBooking"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof disputeBooking>>,
+    { bookingId: string; data: BodyType<DisputeBookingBody> }
+  > = (props) => {
+    const { bookingId, data } = props ?? {};
+
+    return disputeBooking(bookingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DisputeBookingMutationResult = NonNullable<
+  Awaited<ReturnType<typeof disputeBooking>>
+>;
+export type DisputeBookingMutationBody = BodyType<DisputeBookingBody>;
+export type DisputeBookingMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse
+>;
+
+/**
+ * @summary Raise a dispute on an in-escrow booking
+ */
+export const useDisputeBooking = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof disputeBooking>>,
+    TError,
+    { bookingId: string; data: BodyType<DisputeBookingBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof disputeBooking>>,
+  TError,
+  { bookingId: string; data: BodyType<DisputeBookingBody> },
+  TContext
+> => {
+  return useMutation(getDisputeBookingMutationOptions(options));
 };
 
 /**

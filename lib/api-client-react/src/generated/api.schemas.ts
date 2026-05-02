@@ -309,13 +309,46 @@ export interface Booking {
   createdAt: string;
 }
 
+/**
+ * Payment method to use
+ */
+export type CreatePaymentIntentBodyPaymentMethod =
+  (typeof CreatePaymentIntentBodyPaymentMethod)[keyof typeof CreatePaymentIntentBodyPaymentMethod];
+
+export const CreatePaymentIntentBodyPaymentMethod = {
+  card: "card",
+  mpesa: "mpesa",
+} as const;
+
+export interface CreatePaymentIntentBody {
+  /** Payment method to use */
+  paymentMethod: CreatePaymentIntentBodyPaymentMethod;
+}
+
+export interface PaymentIntentResult {
+  paymentIntentId: string;
+  /** Stripe client secret for Elements (empty for mpesa/mock) */
+  clientSecret: string;
+  /** Amount in smallest currency unit (KES cents) */
+  amount: number;
+  currency: string;
+  paymentMethod: string;
+  /** True when running without real Stripe keys */
+  isMock?: boolean;
+}
+
 export interface ConfirmBookingRequest {
-  paymentMethodId: string;
+  paymentIntentId: string;
 }
 
 export interface BookingConfirmResponse {
   booking: Booking;
   clientSecret: string;
+}
+
+export interface DisputeBookingBody {
+  /** @minLength 10 */
+  reason: string;
 }
 
 export interface Review {

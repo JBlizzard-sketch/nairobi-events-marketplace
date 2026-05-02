@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface ConfirmBookingRequest {
-  paymentIntentId: string;
+export interface DisputeBookingBody {
+  /** @minLength 10 */
+  reason: string;
 }

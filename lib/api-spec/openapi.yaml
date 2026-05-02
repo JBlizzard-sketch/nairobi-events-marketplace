@@ -525,11 +525,38 @@ paths:
         "404":
           $ref: "#/components/responses/NotFound"
 
+  /bookings/{bookingId}/payment-intent:
+    post:
+      operationId: createPaymentIntent
+      tags: [bookings]
+      summary: Create a payment intent for a pending booking
+      parameters:
+        - $ref: "#/components/parameters/bookingId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePaymentIntentBody"
+      responses:
+        "200":
+          description: Payment intent created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaymentIntentResult"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /bookings/{bookingId}/confirm:
     post:
       operationId: confirmBooking
       tags: [bookings]
-      summary: Confirm booking and initiate escrow payment
+      summary: Confirm booking after payment — moves to in_escrow
       parameters:
         - $ref: "#/components/parameters/bookingId"
       requestBody:
@@ -540,11 +567,61 @@ paths:
               $ref: "#/components/schemas/ConfirmBookingRequest"
       responses:
         "200":
-          description: Booking confirmed with payment intent
+          description: Booking confirmed and payment in escrow
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/BookingConfirmResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  /bookings/{bookingId}/release:
+    post:
+      operationId: releaseEscrow
+      tags: [bookings]
+      summary: Release escrow payment to vendor after event completion
+      parameters:
+        - $ref: "#/components/parameters/bookingId"
+      responses:
+        "200":
+          description: Escrow released, booking completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /bookings/{bookingId}/dispute:
+    post:
+      operationId: disputeBooking
+      tags: [bookings]
+      summary: Raise a dispute on an in-escrow booking
+      parameters:
+        - $ref: "#/components/parameters/bookingId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DisputeBookingBody"
+      responses:
+        "200":
+          description: Dispute raised
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   # ─── Reviews ─────────────────────────────────────────────────────────────────
 
@@ -1307,12 +1384,41 @@ components:
           format: date-time
       required: [id, eventId, quoteId, vendorId, plannerId, status, totalAmount, platformFeeAmount, vendorPayoutAmount, currency, createdAt]
 
+    CreatePaymentIntentBody:
+      type: object
+      properties:
+        paymentMethod:
+          type: string
+          enum: [card, mpesa]
+          description: Payment method to use
+      required: [paymentMethod]
+
+    PaymentIntentResult:
+      type: object
+      properties:
+        paymentIntentId:
+          type: string
+        clientSecret:
+          type: string
+          description: Stripe client secret for Elements (empty for mpesa/mock)
+        amount:
+          type: number
+          description: Amount in smallest currency unit (KES cents)
+        currency:
+          type: string
+        paymentMethod:
+          type: string
+        isMock:
+          type: boolean
+          description: True when running without real Stripe keys
+      required: [paymentIntentId, clientSecret, amount, currency, paymentMethod]
+
     ConfirmBookingRequest:
       type: object
       properties:
-        paymentMethodId:
+        paymentIntentId:
           type: string
-      required: [paymentMethodId]
+      required: [paymentIntentId]
 
     BookingConfirmResponse:
       type: object
@@ -1322,6 +1428,14 @@ components:
         clientSecret:
           type: string
       required: [booking, clientSecret]
+
+    DisputeBookingBody:
+      type: object
+      properties:
+        reason:
+          type: string
+          minLength: 10
+      required: [reason]
 
     # ─── Review ───────────────────────────────────────────────────────────────
 
