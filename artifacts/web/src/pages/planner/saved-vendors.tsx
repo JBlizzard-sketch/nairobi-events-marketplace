@@ -158,7 +158,7 @@ export default function SavedVendors() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Saved Vendors</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Saved Vendors</h1>
           <p className="text-muted-foreground mt-1">
             {count === 0
               ? "No saved vendors yet"

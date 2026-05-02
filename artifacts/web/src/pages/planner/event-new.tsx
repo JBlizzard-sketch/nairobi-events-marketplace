@@ -188,7 +188,7 @@ export default function EventNew() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">New Event Brief</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">New Event Brief</h1>
         <p className="text-muted-foreground mt-1">Fill in the details and receive quotes within 4 hours.</p>
       </div>
 
@@ -550,7 +550,7 @@ export default function EventNew() {
                   <Button size="sm" className="h-8 px-3 text-xs" onClick={handleSaveEventTemplate} disabled={!templateName.trim()}>
                     Save
                   </Button>
-                  <button onClick={() => setShowTemplateSave(false)} className="text-muted-foreground hover:text-foreground">
+                  <button type="button" onClick={() => setShowTemplateSave(false)} className="text-muted-foreground hover:text-foreground">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>

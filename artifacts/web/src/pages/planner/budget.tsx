@@ -97,7 +97,7 @@ export default function BudgetOptimizer() {
           <div className="bg-primary/10 p-2 rounded-lg">
             <Sparkles className="h-6 w-6 text-primary" />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight">AI Budget Optimizer</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">AI Budget Optimizer</h1>
         </div>
         <p className="text-muted-foreground">
           Get AI-powered budget recommendations based on real Nairobi vendor pricing. Tell us about your event and we'll suggest realistic allocations across your chosen services.

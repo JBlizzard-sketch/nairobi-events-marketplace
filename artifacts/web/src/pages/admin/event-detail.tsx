@@ -81,13 +81,13 @@ export default function AdminEventDetail() {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div>
         <Link href="/admin/events">
-          <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <button type="button" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
             <ArrowLeft className="h-4 w-4" /> All Events
           </button>
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{ev.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{ev.title}</h1>
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <Badge className={`text-xs ${statusCfg.className}`}>{statusCfg.label}</Badge>
               {ev.isEmergency && (

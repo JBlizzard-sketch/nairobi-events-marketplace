@@ -122,13 +122,13 @@ export default function VendorBookingDetail() {
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div>
         <Link href="/vendor/bookings">
-          <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+          <button type="button" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
             <ArrowLeft className="h-4 w-4" /> All Bookings
           </button>
         </Link>
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Booking Details</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Booking Details</h1>
             <div className="flex items-center gap-3 mt-2 flex-wrap">
               <code className="text-sm font-mono text-muted-foreground">
                 #{b.id?.slice(0, 8).toUpperCase()}

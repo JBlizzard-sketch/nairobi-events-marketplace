@@ -133,7 +133,7 @@ export default function VendorAvailability() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Availability Calendar</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Availability Calendar</h1>
           <p className="text-muted-foreground mt-1">Mark dates when you are unavailable to take bookings</p>
         </div>
         <div className="flex gap-2 flex-wrap">

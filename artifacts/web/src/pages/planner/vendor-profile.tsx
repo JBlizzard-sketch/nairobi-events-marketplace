@@ -82,7 +82,7 @@ function VendorCtaSidebar({ vendor }: { vendor: any }) {
       <div className="sticky top-24 space-y-4">
         {/* Back link */}
         <Link href="/vendors">
-          <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <button type="button" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Vendors
           </button>
@@ -253,7 +253,7 @@ export default function VendorProfile() {
       {/* Mobile back link */}
       <div className="lg:hidden mb-4">
         <Link href="/vendors">
-          <button className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <button type="button" className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" />
             Back to Vendors
           </button>
@@ -267,7 +267,7 @@ export default function VendorProfile() {
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h1 className="text-3xl font-bold tracking-tight">{v.businessName}</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{v.businessName}</h1>
                 {v.isPremium && (
                   <Badge className="gap-1 bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50">
                     <Award className="h-3.5 w-3.5" /> Premium
@@ -419,7 +419,7 @@ export default function VendorProfile() {
                 <CardContent className="pt-5 pb-4">
                   <div className="flex items-center gap-6 flex-wrap">
                     <div className="text-center">
-                      <p className="text-5xl font-black text-primary">{Number(v.averageRating).toFixed(1)}</p>
+                      <p className="text-4xl sm:text-5xl font-black text-primary">{Number(v.averageRating).toFixed(1)}</p>
                       <OverallStars value={Number(v.averageRating)} size="sm" />
                       <p className="text-xs text-muted-foreground mt-1">{totalReviews} review{totalReviews !== 1 ? "s" : ""}</p>
                     </div>

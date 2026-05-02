@@ -272,7 +272,7 @@ export default function BookingDetail() {
       <div className="print:hidden">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Booking Details</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Booking Details</h1>
             <div className="flex items-center gap-3 mt-2">
               <code className="text-sm text-muted-foreground">#{b.id.slice(0, 8).toUpperCase()}</code>
               <Badge variant={meta.color as any} className="capitalize flex items-center gap-1.5">

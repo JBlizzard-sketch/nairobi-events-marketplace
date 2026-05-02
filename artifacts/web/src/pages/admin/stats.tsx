@@ -129,7 +129,7 @@ export default function AdminStats() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Platform Overview</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Platform Overview</h1>
         <p className="text-muted-foreground mt-1">Real-time marketplace statistics</p>
       </div>
 

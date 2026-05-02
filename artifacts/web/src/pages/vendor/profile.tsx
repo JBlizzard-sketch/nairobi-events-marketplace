@@ -278,7 +278,7 @@ export default function VendorProfileEdit() {
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vendor Profile</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendor Profile</h1>
           <p className="text-muted-foreground mt-1">
             {p
               ? "Manage your business information and vetting status"

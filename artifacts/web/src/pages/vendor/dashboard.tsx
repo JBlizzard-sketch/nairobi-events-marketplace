@@ -198,7 +198,7 @@ export default function VendorDashboard() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
             {loadingProfile ? <Skeleton className="h-8 w-48 inline-block" /> : profile_?.businessName ?? "Vendor Dashboard"}
           </h1>
           <p className="text-muted-foreground mt-1">
@@ -240,7 +240,7 @@ export default function VendorDashboard() {
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Pending Requests</CardDescription>
-            <CardTitle className="text-4xl text-primary">
+            <CardTitle className="text-3xl sm:text-4xl text-primary">
               {loadingRequests ? <Skeleton className="h-10 w-16" /> : pendingRequests.length}
             </CardTitle>
           </CardHeader>
@@ -252,7 +252,7 @@ export default function VendorDashboard() {
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Win Rate</CardDescription>
-            <CardTitle className="text-4xl text-foreground">
+            <CardTitle className="text-3xl sm:text-4xl text-foreground">
               {loadingRequests || loadingBookings ? (
                 <Skeleton className="h-10 w-16" />
               ) : winRate !== null ? (
@@ -276,7 +276,7 @@ export default function VendorDashboard() {
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Active Bookings</CardDescription>
-            <CardTitle className="text-4xl text-foreground">
+            <CardTitle className="text-3xl sm:text-4xl text-foreground">
               {loadingBookings ? <Skeleton className="h-10 w-16" /> : activeBookings.length}
             </CardTitle>
           </CardHeader>
@@ -288,7 +288,7 @@ export default function VendorDashboard() {
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Total Bookings</CardDescription>
-            <CardTitle className="text-4xl text-foreground">
+            <CardTitle className="text-3xl sm:text-4xl text-foreground">
               {loadingProfile ? <Skeleton className="h-10 w-16" /> : profile_?.totalBookings ?? 0}
             </CardTitle>
           </CardHeader>

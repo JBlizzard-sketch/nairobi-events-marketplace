@@ -360,7 +360,7 @@ function QuoteCountdown({ submittedAt }: { submittedAt: string }) {
             </p>
           </div>
         </div>
-        <div className={`font-mono text-4xl font-black tracking-tight tabular-nums ${monoColor}`}>
+        <div className={`font-mono text-3xl sm:text-4xl font-black tracking-tight tabular-nums ${monoColor}`}>
           {String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
         </div>
       </div>
@@ -702,7 +702,7 @@ export default function EventDetail() {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-64" />
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24" />)}
         </div>
       </div>
@@ -726,7 +726,7 @@ export default function EventDetail() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">{e.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{e.title}</h1>
           <div className="flex items-center gap-3 mt-2 flex-wrap">
             <Badge variant={(STATUS_COLORS[e.status] ?? "secondary") as any} className="capitalize">
               {e.status.replace(/_/g, " ")}

@@ -72,7 +72,7 @@ function LineItemRow({
   };
 
   return (
-    <div className="grid grid-cols-[1fr_72px_100px_100px_36px] gap-2 items-center">
+    <div className="grid grid-cols-[minmax(120px,1fr)_64px_90px_90px_36px] gap-2 items-center min-w-[400px]">
       <Input
         placeholder="Service or item description"
         value={item.description}
@@ -185,8 +185,9 @@ function TemplateDialog({
               </div>
             </div>
 
+            <div className="overflow-x-auto -mx-1 px-1">
             {/* Header row */}
-            <div className="grid grid-cols-[1fr_72px_100px_100px_36px] gap-2">
+            <div className="grid grid-cols-[minmax(120px,1fr)_64px_90px_90px_36px] gap-2 min-w-[400px]">
               <p className="text-xs text-muted-foreground font-medium">Description</p>
               <p className="text-xs text-muted-foreground font-medium text-center">Qty</p>
               <p className="text-xs text-muted-foreground font-medium">Unit Price</p>
@@ -194,7 +195,7 @@ function TemplateDialog({
               <span />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 mt-2">
               {draft.lineItems.map((item, i) => (
                 <LineItemRow
                   key={i}
@@ -206,6 +207,7 @@ function TemplateDialog({
                 />
               ))}
             </div>
+            </div>{/* /overflow-x-auto */}
 
             <Button variant="outline" size="sm" className="gap-1.5" onClick={addLine}>
               <Plus className="h-3.5 w-3.5" />
@@ -445,7 +447,7 @@ export default function VendorTemplates() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quote Templates</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Quote Templates</h1>
           <p className="text-muted-foreground mt-1">
             Build reusable templates to submit quotes faster when requests come in.
           </p>

@@ -126,7 +126,7 @@ export default function AdminVendors() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Vendor Management</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendor Management</h1>
           <p className="text-muted-foreground mt-1">Review applications, approve, reject, or manage active vendors</p>
         </div>
         {vendorList.length > 0 && (

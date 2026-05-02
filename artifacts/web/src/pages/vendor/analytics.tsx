@@ -193,7 +193,7 @@ export default function VendorAnalytics() {
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Analytics</h1>
           <p className="text-muted-foreground mt-1">
             Performance overview for {profile?.businessName ?? "your business"}
           </p>

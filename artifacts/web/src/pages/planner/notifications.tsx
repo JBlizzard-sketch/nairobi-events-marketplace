@@ -125,7 +125,7 @@ export default function Notifications() {
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Notifications</h1>
           <p className="text-muted-foreground mt-1">
             {unreadCount > 0 ? `${unreadCount} unread` : "All caught up"}
           </p>

@@ -349,7 +349,7 @@ export default function VendorRequests() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Quote Requests</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Quote Requests</h1>
           <p className="text-muted-foreground mt-1">
             {isLoading ? "Loading..." : (
               pendingCount > 0
@@ -550,7 +550,8 @@ export default function VendorRequests() {
             {/* Line items */}
             <div>
               <Label className="mb-3 block font-semibold">Line Items</Label>
-              <div className="space-y-2.5">
+              <div className="overflow-x-auto -mx-1 px-1">
+              <div className="space-y-2.5 min-w-[480px]">
                 {lineItems.map((item, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-start">
                     <div className="col-span-5">
@@ -597,6 +598,7 @@ export default function VendorRequests() {
                   </div>
                 ))}
               </div>
+              </div>{/* /overflow-x-auto */}
               <Button
                 variant="outline"
                 size="sm"
@@ -700,7 +702,7 @@ export default function VendorRequests() {
                 <Button size="sm" className="h-8 px-3 text-xs" onClick={handleSaveTemplate} disabled={!templateName.trim()}>
                   Save
                 </Button>
-                <button onClick={() => setShowTemplateSave(false)} className="text-muted-foreground hover:text-foreground">
+                <button type="button" onClick={() => setShowTemplateSave(false)} className="text-muted-foreground hover:text-foreground">
                   <X className="h-4 w-4" />
                 </button>
               </div>

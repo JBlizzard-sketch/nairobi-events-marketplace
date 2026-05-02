@@ -337,7 +337,7 @@ export default function Landing() {
               </div>
 
               <Link href="/sign-up" className="mt-6">
-                <button className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors">
+                <button type="button" className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors">
                   Start planning for free
                 </button>
               </Link>
@@ -379,7 +379,7 @@ export default function Landing() {
               </div>
 
               <Link href="/sign-up" className="mt-6">
-                <button className="w-full h-12 rounded-lg border border-border font-semibold text-sm hover:bg-muted transition-colors">
+                <button type="button" className="w-full h-12 rounded-lg border border-border font-semibold text-sm hover:bg-muted transition-colors">
                   Apply as a vendor
                 </button>
               </Link>

@@ -196,7 +196,7 @@ export default function AdminBookings() {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">All Bookings</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">All Bookings</h1>
           <p className="text-muted-foreground mt-1">
             {isLoading ? "Loading..." : `${data?.total ?? 0} total bookings`}
           </p>
@@ -216,7 +216,7 @@ export default function AdminBookings() {
 
       {/* Summary cards */}
       {!isLoading && bookingList.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <Card className="shadow-sm border-emerald-100">
             <CardContent className="p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Volume</p>

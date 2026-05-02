@@ -85,7 +85,7 @@ export default function AccountSettings() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Account Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your profile and contact details</p>
       </div>
 
