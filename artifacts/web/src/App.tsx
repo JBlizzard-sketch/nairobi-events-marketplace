@@ -38,6 +38,7 @@ import VendorProfileEdit from "@/pages/vendor/profile";
 import VendorAvailability from "@/pages/vendor/availability";
 import VendorBookings from "@/pages/vendor/bookings";
 import VendorAnalytics from "@/pages/vendor/analytics";
+import VendorReviews from "@/pages/vendor/reviews";
 
 // Pages — admin
 import AdminStats from "@/pages/admin/stats";
@@ -46,6 +47,9 @@ import AdminEvents from "@/pages/admin/events";
 import AdminBookings from "@/pages/admin/bookings";
 import AdminUsers from "@/pages/admin/users";
 import AdminSettings from "@/pages/admin/settings";
+
+// Pages — account (all roles)
+import AccountSettings from "@/pages/account/settings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -279,6 +283,14 @@ function Router() {
       </Route>
       <Route path="/vendor/analytics">
         <ProtectedRoute component={VendorAnalytics} allowedRoles={["vendor"]} />
+      </Route>
+      <Route path="/vendor/reviews">
+        <ProtectedRoute component={VendorReviews} allowedRoles={["vendor"]} />
+      </Route>
+
+      {/* Account settings — all roles */}
+      <Route path="/account">
+        <ProtectedRoute component={AccountSettings} allowedRoles={["planner", "vendor", "admin"]} />
       </Route>
 
       {/* Admin routes */}

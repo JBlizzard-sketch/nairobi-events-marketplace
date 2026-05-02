@@ -24,6 +24,7 @@ import {
   TrendingUp,
   Sun,
   Moon,
+  Star,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
@@ -74,6 +75,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/bookings", label: "Bookings", icon: Briefcase },
     { href: "/analytics", label: "Analytics", icon: PieChart },
     { href: "/budget", label: "Budget AI", icon: Sparkles },
+    { href: "/account", label: "Account", icon: UserCog },
   ];
 
   const vendorLinks = [
@@ -83,6 +85,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/vendor/profile", label: "Profile", icon: Settings },
     { href: "/vendor/availability", label: "Availability", icon: Calendar },
     { href: "/vendor/analytics", label: "Analytics", icon: TrendingUp },
+    { href: "/vendor/reviews", label: "My Reviews", icon: Star },
+    { href: "/account", label: "Account", icon: UserCog },
   ];
 
   const adminLinks = [
@@ -92,6 +96,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/admin/events", label: "Events", icon: CalendarDays },
     { href: "/admin/bookings", label: "Bookings", icon: Briefcase },
     { href: "/admin/settings", label: "Settings", icon: SlidersHorizontal },
+    { href: "/account", label: "Account", icon: Settings },
   ];
 
   const links =
