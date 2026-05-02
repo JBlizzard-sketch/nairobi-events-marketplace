@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Search, Users, Building2, ShieldCheck, Calendar,
-  Briefcase, UserX, MoreVertical, UserCheck, ShieldAlert, User,
+  Briefcase, UserX, MoreVertical, UserCheck, ShieldAlert, User, Download,
 } from "lucide-react";
 
 const ROLE_CONFIG: Record<string, { label: string; className: string }> = {
@@ -171,6 +171,28 @@ function UserActions({ user, onDone }: { user: any; onDone: () => void }) {
   );
 }
 
+function exportUsersCSV(users: any[]) {
+  const headers = ["Name", "Email", "Role", "Vendor Business", "Vendor Status", "Events", "Bookings", "Phone", "Active", "Joined"];
+  const lines = users.map(u => [
+    u.fullName?.trim() || "",
+    u.email,
+    u.role,
+    u.vendorBusinessName ?? "",
+    u.vendorStatus ?? "",
+    u.eventCount ?? 0,
+    u.bookingCount ?? 0,
+    u.phone ?? "",
+    u.isActive ? "Yes" : "No",
+    u.createdAt ? new Date(u.createdAt).toLocaleDateString("en-KE") : "",
+  ]);
+  const csv = [headers, ...lines].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = `users-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
 export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -193,11 +215,19 @@ export default function AdminUsers() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">All Users</h1>
-        <p className="text-muted-foreground mt-1">
-          {isLoading ? "Loading..." : `${data?.total ?? 0} total users`}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">All Users</h1>
+          <p className="text-muted-foreground mt-1">
+            {isLoading ? "Loading..." : `${data?.total ?? 0} total users`}
+          </p>
+        </div>
+        {userList.length > 0 && (
+          <Button variant="outline" size="sm" className="gap-2 self-start sm:self-auto" onClick={() => exportUsersCSV(userList)}>
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {/* Role summary chips */}

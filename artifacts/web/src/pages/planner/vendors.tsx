@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, Search, Award, ChevronRight, MapPin, Briefcase, Heart } from "lucide-react";
+import { Star, Search, Award, ChevronRight, MapPin, Briefcase, Heart, ArrowUpDown } from "lucide-react";
 import { useSavedVendors } from "@/hooks/use-saved-vendors";
 
 const CATEGORIES = [
@@ -51,12 +51,28 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
+const SORT_OPTIONS = [
+  { value: "default", label: "Relevance" },
+  { value: "rating_desc", label: "Highest Rated" },
+  { value: "reviews_desc", label: "Most Reviews" },
+  { value: "bookings_desc", label: "Most Events" },
+];
+
+function sortVendors(vendors: any[], sort: string): any[] {
+  const copy = [...vendors];
+  if (sort === "rating_desc") return copy.sort((a, b) => Number(b.averageRating ?? 0) - Number(a.averageRating ?? 0));
+  if (sort === "reviews_desc") return copy.sort((a, b) => (b.totalReviews ?? 0) - (a.totalReviews ?? 0));
+  if (sort === "bookings_desc") return copy.sort((a, b) => (b.totalBookings ?? 0) - (a.totalBookings ?? 0));
+  return copy;
+}
+
 export default function VendorsDirectory() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<string>("all");
   const [minRating, setMinRating] = useState<string>("any");
   const [city, setCity] = useState<string>("all");
   const [showSaved, setShowSaved] = useState(false);
+  const [sortBy, setSortBy] = useState<string>("default");
 
   const { toggle, isSaved, count: savedCount } = useSavedVendors();
 
@@ -72,7 +88,8 @@ export default function VendorsDirectory() {
   });
 
   const allVendors = (data?.vendors ?? []) as any[];
-  const vendors = showSaved ? allVendors.filter(v => isSaved(v.id)) : allVendors;
+  const filtered = showSaved ? allVendors.filter(v => isSaved(v.id)) : allVendors;
+  const vendors = sortVendors(filtered, sortBy);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -128,41 +145,54 @@ export default function VendorsDirectory() {
       </div>
 
       {/* Secondary filters row */}
-      {!showSaved && (
-        <div className="flex flex-wrap gap-3">
-          <Select value={city} onValueChange={setCity}>
-            <SelectTrigger className="w-40 h-9 text-sm">
-              <SelectValue placeholder="All cities" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Cities</SelectItem>
-              {["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret"].map(c => (
-                <SelectItem key={c} value={c}>{c}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select value={minRating} onValueChange={setMinRating}>
-            <SelectTrigger className="w-40 h-9 text-sm">
-              <SelectValue placeholder="Any rating" />
-            </SelectTrigger>
-            <SelectContent>
-              {RATING_OPTIONS.map(o => (
-                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <div className="flex flex-wrap gap-3">
+        {!showSaved && (
+          <>
+            <Select value={city} onValueChange={setCity}>
+              <SelectTrigger className="w-40 h-9 text-sm">
+                <SelectValue placeholder="All cities" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Cities</SelectItem>
+                {["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret"].map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={minRating} onValueChange={setMinRating}>
+              <SelectTrigger className="w-40 h-9 text-sm">
+                <SelectValue placeholder="Any rating" />
+              </SelectTrigger>
+              <SelectContent>
+                {RATING_OPTIONS.map(o => (
+                  <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </>
+        )}
+        <Select value={sortBy} onValueChange={setSortBy}>
+          <SelectTrigger className="w-44 h-9 text-sm gap-2">
+            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            {SORT_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
 
-          {/* Active filter summary */}
-          {(category !== "all" || minRating !== "any" || city !== "all" || debouncedSearch) && (
-            <button
-              onClick={() => { setCategory("all"); setMinRating("any"); setCity("all"); setSearch(""); }}
-              className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors ml-1"
-            >
-              Clear filters
-            </button>
-          )}
-        </div>
-      )}
+        {/* Active filter summary */}
+        {!showSaved && (category !== "all" || minRating !== "any" || city !== "all" || debouncedSearch) && (
+          <button
+            onClick={() => { setCategory("all"); setMinRating("any"); setCity("all"); setSearch(""); setSortBy("default"); }}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
 
       {/* Results */}
       {isLoading ? (

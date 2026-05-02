@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { useState } from "react";
 
 const TYPE_CONFIG: Record<
   string,
@@ -95,6 +96,8 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function Notifications() {
+  const [tab, setTab] = useState<"all" | "unread">("all");
+
   const { data, isLoading, refetch } = useListNotifications(
     { limit: 50 },
     { query: { refetchInterval: 30_000 } as any },
@@ -102,8 +105,11 @@ export default function Notifications() {
   const markRead = useMarkNotificationRead();
   const markAll = useMarkAllNotificationsRead();
 
-  const notificationList = (data as any)?.notifications ?? [];
+  const allNotifications = (data as any)?.notifications ?? [];
   const unreadCount = (data as any)?.unreadCount ?? 0;
+  const notificationList = tab === "unread"
+    ? allNotifications.filter((n: any) => !n.isRead)
+    : allNotifications;
 
   const handleMarkRead = async (notifId: string) => {
     await markRead.mutateAsync({ notificationId: notifId });
@@ -116,7 +122,7 @@ export default function Notifications() {
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
@@ -137,6 +143,30 @@ export default function Notifications() {
         )}
       </div>
 
+      {/* All / Unread filter tabs */}
+      <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+        {(["all", "unread"] as const).map(t => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-2 ${
+              tab === t
+                ? "bg-background text-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t === "all" ? "All" : "Unread"}
+            {t === "unread" && unreadCount > 0 && (
+              <span className={`inline-flex items-center justify-center h-4.5 min-w-[1.125rem] px-1 rounded-full text-[10px] font-bold leading-none ${
+                tab === "unread" ? "bg-primary text-primary-foreground" : "bg-primary/15 text-primary"
+              }`}>
+                {unreadCount}
+              </span>
+            )}
+          </button>
+        ))}
+      </div>
+
       {isLoading ? (
         <div className="space-y-3">
           {[1, 2, 3].map((i) => (
@@ -149,10 +179,24 @@ export default function Notifications() {
             <div className="bg-primary/10 p-4 rounded-full mb-4">
               <Bell className="h-8 w-8 text-primary" />
             </div>
-            <h3 className="text-xl font-semibold mb-2">No notifications</h3>
-            <p className="text-muted-foreground text-sm">
-              You'll be notified when quotes arrive, bookings update, and payments are processed.
-            </p>
+            {tab === "unread" ? (
+              <>
+                <h3 className="text-xl font-semibold mb-2">All caught up!</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  No unread notifications right now.
+                </p>
+                <Button variant="outline" size="sm" onClick={() => setTab("all")}>
+                  View all notifications
+                </Button>
+              </>
+            ) : (
+              <>
+                <h3 className="text-xl font-semibold mb-2">No notifications</h3>
+                <p className="text-muted-foreground text-sm">
+                  You'll be notified when quotes arrive, bookings update, and payments are processed.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       ) : (
