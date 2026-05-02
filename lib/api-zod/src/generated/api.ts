@@ -1610,6 +1610,35 @@ export const AdminListUsersResponse = zod.object({
 });
 
 /**
+ * @summary Update a user's role or active status (admin)
+ */
+export const AdminUpdateUserParams = zod.object({
+  userId: zod.coerce.string().uuid(),
+});
+
+export const AdminUpdateUserBody = zod.object({
+  role: zod.enum(["planner", "vendor", "admin"]).optional(),
+  isActive: zod.boolean().optional(),
+});
+
+export const AdminUpdateUserResponse = zod.object({
+  id: zod.string().uuid(),
+  clerkId: zod.string(),
+  email: zod.string(),
+  fullName: zod.string(),
+  phone: zod.string().nullish(),
+  role: zod.enum(["planner", "vendor", "admin"]),
+  avatarUrl: zod.string().nullish(),
+  isActive: zod.boolean(),
+  createdAt: zod.coerce.date(),
+  vendorStatus: zod.string().nullish(),
+  vendorBusinessName: zod.string().nullish(),
+  vendorCategory: zod.string().nullish(),
+  eventCount: zod.number(),
+  bookingCount: zod.number(),
+});
+
+/**
  * @summary List all events (admin)
  */
 export const adminListEventsQueryPageDefault = 1;

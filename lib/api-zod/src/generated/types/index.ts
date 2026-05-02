@@ -21,6 +21,8 @@ export * from "./adminListVendorsStatus";
 export * from "./adminResolveDisputeRequest";
 export * from "./adminResolveDisputeRequestResolution";
 export * from "./adminStats";
+export * from "./adminUpdateUserBody";
+export * from "./adminUpdateUserBodyRole";
 export * from "./adminUser";
 export * from "./adminUserRole";
 export * from "./badRequestResponse";

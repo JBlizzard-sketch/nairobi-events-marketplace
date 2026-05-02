@@ -234,6 +234,54 @@ router.get("/admin/users", async (req, res): Promise<void> => {
   res.json({ users: enriched, total: Number(total ?? 0) });
 });
 
+// ── PATCH /admin/users/:userId ────────────────────────────────────────────────
+
+router.patch("/admin/users/:userId", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  const admin = await requireAdmin(clerkId);
+  if (!admin) { res.status(403).json({ error: "forbidden", message: "Admin access required" }); return; }
+
+  const { userId } = req.params;
+  const { role, isActive } = req.body as { role?: string; isActive?: boolean };
+
+  const target = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  if (!target) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
+
+  const updates: Record<string, unknown> = {};
+  if (role !== undefined) updates.role = role;
+  if (isActive !== undefined) updates.isActive = isActive;
+
+  if (Object.keys(updates).length === 0) { res.json(target); return; }
+
+  await db.update(users).set(updates as any).where(eq(users.id, userId));
+
+  const updated = await db.query.users.findFirst({ where: eq(users.id, userId) });
+  const vp = updated?.role === "vendor"
+    ? await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.userId, userId) })
+    : null;
+  const [[{ count: eventCount }], [{ count: bookingCount }]] = await Promise.all([
+    db.select({ count: sql<number>`count(*)` }).from(events).where(eq(events.plannerId, userId)),
+    db.select({ count: sql<number>`count(*)` }).from(bookings).where(eq(bookings.plannerId, userId)),
+  ]);
+
+  res.json({
+    id: updated!.id,
+    clerkId: updated!.clerkId,
+    email: updated!.email,
+    fullName: updated!.fullName ?? "",
+    phone: updated!.phone ?? null,
+    role: updated!.role,
+    avatarUrl: updated!.avatarUrl ?? null,
+    isActive: updated!.isActive,
+    createdAt: updated!.createdAt,
+    vendorStatus: vp?.status ?? null,
+    vendorBusinessName: vp?.businessName ?? null,
+    vendorCategory: vp?.category ?? null,
+    eventCount: Number(eventCount ?? 0),
+    bookingCount: Number(bookingCount ?? 0),
+  });
+});
+
 // ── GET /admin/events ─────────────────────────────────────────────────────────
 
 router.get("/admin/events", async (req, res): Promise<void> => {

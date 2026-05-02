@@ -1,14 +1,23 @@
 import { useState } from "react";
-import { useAdminListUsers } from "@workspace/api-client-react";
+import { useAdminListUsers, useAdminUpdateUser } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuSeparator, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Search, Users, Building2, ShieldCheck, Calendar,
-  Briefcase, Star, UserX,
+  Briefcase, UserX, MoreVertical, UserCheck, ShieldAlert, User,
 } from "lucide-react";
 
 const ROLE_CONFIG: Record<string, { label: string; className: string }> = {
@@ -36,11 +45,137 @@ function initials(name: string, email: string) {
   return email.slice(0, 2).toUpperCase();
 }
 
+interface ConfirmAction {
+  userId: string;
+  userName: string;
+  type: "deactivate" | "reactivate" | "make_admin" | "make_planner" | "make_vendor";
+}
+
+const ACTION_LABELS: Record<ConfirmAction["type"], { title: string; desc: (name: string) => string; variant: "destructive" | "default" }> = {
+  deactivate: {
+    title: "Deactivate account",
+    desc: (n) => `${n} will no longer be able to log in. You can reactivate at any time.`,
+    variant: "destructive",
+  },
+  reactivate: {
+    title: "Reactivate account",
+    desc: (n) => `${n}'s account will be restored and they can log in again.`,
+    variant: "default",
+  },
+  make_admin: {
+    title: "Grant admin access",
+    desc: (n) => `${n} will gain full admin privileges. This cannot be easily undone.`,
+    variant: "destructive",
+  },
+  make_planner: {
+    title: "Change role to Planner",
+    desc: (n) => `${n}'s role will be changed to Planner.`,
+    variant: "default",
+  },
+  make_vendor: {
+    title: "Change role to Vendor",
+    desc: (n) => `${n}'s role will be changed to Vendor. They will need to create a vendor profile.`,
+    variant: "default",
+  },
+};
+
+function UserActions({ user, onDone }: { user: any; onDone: () => void }) {
+  const [pending, setPending] = useState<ConfirmAction | null>(null);
+  const [saving, setSaving] = useState(false);
+  const updateUser = useAdminUpdateUser();
+
+  const confirm = async () => {
+    if (!pending) return;
+    setSaving(true);
+    try {
+      const payload: Record<string, unknown> = {};
+      if (pending.type === "deactivate") payload.isActive = false;
+      else if (pending.type === "reactivate") payload.isActive = true;
+      else if (pending.type === "make_admin") payload.role = "admin";
+      else if (pending.type === "make_planner") payload.role = "planner";
+      else if (pending.type === "make_vendor") payload.role = "vendor";
+      await updateUser.mutateAsync({ userId: user.id, data: payload as any });
+      setPending(null);
+      onDone();
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const act = pending ? ACTION_LABELS[pending.type] : null;
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-muted-foreground hover:text-foreground">
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48">
+          {user.role !== "planner" && (
+            <DropdownMenuItem onClick={() => setPending({ userId: user.id, userName: user.fullName?.trim() || user.email, type: "make_planner" })}>
+              <User className="mr-2 h-4 w-4" /> Set as Planner
+            </DropdownMenuItem>
+          )}
+          {user.role !== "vendor" && (
+            <DropdownMenuItem onClick={() => setPending({ userId: user.id, userName: user.fullName?.trim() || user.email, type: "make_vendor" })}>
+              <Building2 className="mr-2 h-4 w-4" /> Set as Vendor
+            </DropdownMenuItem>
+          )}
+          {user.role !== "admin" && (
+            <DropdownMenuItem
+              className="text-amber-700 focus:text-amber-700"
+              onClick={() => setPending({ userId: user.id, userName: user.fullName?.trim() || user.email, type: "make_admin" })}
+            >
+              <ShieldAlert className="mr-2 h-4 w-4" /> Grant Admin
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
+          {user.isActive ? (
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => setPending({ userId: user.id, userName: user.fullName?.trim() || user.email, type: "deactivate" })}
+            >
+              <UserX className="mr-2 h-4 w-4" /> Deactivate
+            </DropdownMenuItem>
+          ) : (
+            <DropdownMenuItem onClick={() => setPending({ userId: user.id, userName: user.fullName?.trim() || user.email, type: "reactivate" })}>
+              <UserCheck className="mr-2 h-4 w-4" /> Reactivate
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
+      {pending && act && (
+        <AlertDialog open onOpenChange={(open) => { if (!open) setPending(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{act.title}</AlertDialogTitle>
+              <AlertDialogDescription>{act.desc(pending.userName)}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={confirm}
+                disabled={saving}
+                className={act.variant === "destructive" ? "bg-destructive hover:bg-destructive/90" : ""}
+              >
+                {saving ? "Saving…" : "Confirm"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </>
+  );
+}
+
 export default function AdminUsers() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [search, setSearch] = useState("");
 
-  const { data, isLoading } = useAdminListUsers({
+  const { data, isLoading, refetch } = useAdminListUsers({
     role: roleFilter !== "all" ? (roleFilter as any) : undefined,
     search: search || undefined,
     page: 1,
@@ -83,12 +218,9 @@ export default function AdminUsers() {
             );
           })}
           {counts.inactive > 0 && (
-            <button
-              onClick={() => {}}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold border bg-muted text-muted-foreground opacity-70"
-            >
+            <span className="px-3 py-1.5 rounded-full text-xs font-semibold border bg-muted text-muted-foreground">
               Inactive · {counts.inactive}
-            </button>
+            </span>
           )}
         </div>
       )}
@@ -139,7 +271,7 @@ export default function AdminUsers() {
             const isInactive = !u.isActive;
 
             return (
-              <Card key={u.id} className={`shadow-sm ${isInactive ? "opacity-60" : ""}`}>
+              <Card key={u.id} className={`shadow-sm transition-opacity ${isInactive ? "opacity-60" : ""}`}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-4">
                     <Avatar className="h-10 w-10 flex-shrink-0">
@@ -188,11 +320,11 @@ export default function AdminUsers() {
                           <ShieldCheck className="h-3 w-3" />
                           Joined {formatDate(u.createdAt)}
                         </span>
-                        {u.phone && (
-                          <span>{u.phone}</span>
-                        )}
+                        {u.phone && <span>{u.phone}</span>}
                       </div>
                     </div>
+
+                    <UserActions user={u} onDone={() => refetch()} />
                   </div>
                 </CardContent>
               </Card>

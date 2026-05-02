@@ -28,6 +28,8 @@ import type {
   AdminListVendorsParams,
   AdminResolveDisputeRequest,
   AdminStats,
+  AdminUpdateUserBody,
+  AdminUser,
   BadRequestResponse,
   Booking,
   BookingConfirmResponse,
@@ -3538,6 +3540,93 @@ export function useAdminListUsers<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Update a user's role or active status (admin)
+ */
+export const getAdminUpdateUserUrl = (userId: string) => {
+  return `/api/admin/users/${userId}`;
+};
+
+export const adminUpdateUser = async (
+  userId: string,
+  adminUpdateUserBody: AdminUpdateUserBody,
+  options?: RequestInit,
+): Promise<AdminUser> => {
+  return customFetch<AdminUser>(getAdminUpdateUserUrl(userId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminUpdateUserBody),
+  });
+};
+
+export const getAdminUpdateUserMutationOptions = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateUser>>,
+    TError,
+    { userId: string; data: BodyType<AdminUpdateUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUpdateUser>>,
+  TError,
+  { userId: string; data: BodyType<AdminUpdateUserBody> },
+  TContext
+> => {
+  const mutationKey = ["adminUpdateUser"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUpdateUser>>,
+    { userId: string; data: BodyType<AdminUpdateUserBody> }
+  > = (props) => {
+    const { userId, data } = props ?? {};
+
+    return adminUpdateUser(userId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUpdateUserMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUpdateUser>>
+>;
+export type AdminUpdateUserMutationBody = BodyType<AdminUpdateUserBody>;
+export type AdminUpdateUserMutationError = ErrorType<void>;
+
+/**
+ * @summary Update a user's role or active status (admin)
+ */
+export const useAdminUpdateUser = <
+  TError = ErrorType<void>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateUser>>,
+    TError,
+    { userId: string; data: BodyType<AdminUpdateUserBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminUpdateUser>>,
+  TError,
+  { userId: string; data: BodyType<AdminUpdateUserBody> },
+  TContext
+> => {
+  return useMutation(getAdminUpdateUserMutationOptions(options));
+};
 
 /**
  * @summary List all events (admin)

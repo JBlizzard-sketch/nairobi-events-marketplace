@@ -661,6 +661,20 @@ export type AdminListUsers200 = {
   total: number;
 };
 
+export type AdminUpdateUserBodyRole =
+  (typeof AdminUpdateUserBodyRole)[keyof typeof AdminUpdateUserBodyRole];
+
+export const AdminUpdateUserBodyRole = {
+  planner: "planner",
+  vendor: "vendor",
+  admin: "admin",
+} as const;
+
+export type AdminUpdateUserBody = {
+  role?: AdminUpdateUserBodyRole;
+  isActive?: boolean;
+};
+
 export type AdminListEventsParams = {
   status?: string;
   page?: number;

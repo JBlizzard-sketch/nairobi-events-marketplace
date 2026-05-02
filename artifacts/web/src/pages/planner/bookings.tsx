@@ -8,9 +8,35 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   Briefcase, ChevronRight, ShieldCheck, CheckCircle2,
   XCircle, AlertTriangle, Clock, Calendar, Building2,
-  Star, CreditCard, ArrowRight,
+  Star, CreditCard, Download,
 } from "lucide-react";
 import { useState } from "react";
+
+function exportCsv(rows: any[]) {
+  const headers = ["Booking Ref", "Status", "Event", "Event Date", "Vendor", "Category", "Amount (KES)", "Platform Fee (KES)", "Vendor Payout (KES)", "Created"];
+  const lines = [
+    headers.join(","),
+    ...rows.map(b => [
+      `#${b.id.slice(0, 8).toUpperCase()}`,
+      b.status,
+      `"${(b.eventTitle ?? "").replace(/"/g, '""')}"`,
+      b.eventDate ? new Date(b.eventDate).toLocaleDateString("en-KE") : "",
+      `"${(b.vendorBusinessName ?? "").replace(/"/g, '""')}"`,
+      b.category ?? "",
+      Number(b.totalAmount).toFixed(2),
+      Number(b.platformFeeAmount).toFixed(2),
+      Number(b.vendorPayoutAmount).toFixed(2),
+      new Date(b.createdAt).toLocaleDateString("en-KE"),
+    ].join(",")),
+  ];
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `bookings-${new Date().toISOString().split("T")[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; className: string }> = {
   pending: { label: "Pending Payment", icon: Clock, className: "bg-muted text-muted-foreground" },
@@ -55,17 +81,25 @@ export default function BookingsList() {
             {isLoading ? "Loading…" : `${list.length} booking${list.length !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="All statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([val, { label }]) => (
-              <SelectItem key={val} value={val}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 flex-wrap">
+          {!isLoading && list.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => exportCsv(list)} className="gap-2">
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          )}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {Object.entries(STATUS_CONFIG).map(([val, { label }]) => (
+                <SelectItem key={val} value={val}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Summary stats bar */}
