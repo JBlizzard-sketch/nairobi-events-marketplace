@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAdminListBookings, useAdminResolveDispute } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ function ResolveDisputeDialog({ bookingId, bookingRef, open, onClose, onResolved
   const [adminNotes, setAdminNotes] = useState("");
   const [saving, setSaving] = useState(false);
   const resolve = useAdminResolveDispute();
+  const { toast } = useToast();
 
   const handleResolve = async () => {
     setSaving(true);
@@ -80,8 +82,12 @@ function ResolveDisputeDialog({ bookingId, bookingRef, open, onClose, onResolved
       onResolved();
       onClose();
       setAdminNotes("");
+      toast({
+        title: "Dispute resolved",
+        description: `Booking ${bookingRef} marked as ${resolution}.`,
+      });
     } catch {
-      // error is surfaced by the mutation
+      toast({ title: "Failed to resolve", description: "Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);
     }

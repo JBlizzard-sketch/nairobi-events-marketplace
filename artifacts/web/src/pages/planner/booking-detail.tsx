@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useDocumentTitle } from "@/hooks/use-document-title";
+import { useToast } from "@/hooks/use-toast";
 
 const STATUS_META: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
   pending: { label: "Pending Payment", color: "outline", icon: <Clock className="h-4 w-4" /> },
@@ -138,6 +139,7 @@ export default function BookingDetail() {
   const [valueRating, setValueRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+  const { toast } = useToast();
   const [releasing, setReleasing] = useState(false);
   const [noShowing, setNoShowing] = useState(false);
 
@@ -170,6 +172,9 @@ export default function BookingDetail() {
     try {
       await releaseEscrow.mutateAsync({ bookingId: b.id });
       refetch();
+      toast({ title: "Funds released", description: "Payment has been released to the vendor." });
+    } catch {
+      toast({ title: "Release failed", description: "Could not release funds. Please try again.", variant: "destructive" });
     } finally {
       setReleasing(false);
     }
@@ -189,6 +194,9 @@ export default function BookingDetail() {
         },
       });
       refetch();
+      toast({ title: "No-show reported", description: "Our team has been notified." });
+    } catch {
+      toast({ title: "Report failed", description: "Could not submit the no-show report. Please try again.", variant: "destructive" });
     } finally {
       setNoShowing(false);
     }
@@ -197,8 +205,13 @@ export default function BookingDetail() {
   // ── Dispute ─────────────────────────────────────────────────────────────────
   const handleDispute = async () => {
     if (!b || disputeReason.length < 10) return;
-    await disputeBooking.mutateAsync({ bookingId: b.id, data: { reason: disputeReason } });
-    refetch();
+    try {
+      await disputeBooking.mutateAsync({ bookingId: b.id, data: { reason: disputeReason } });
+      refetch();
+      toast({ title: "Dispute filed", description: "Our team will review and respond within 24 hours." });
+    } catch {
+      toast({ title: "Dispute failed", description: "Could not file your dispute. Please try again.", variant: "destructive" });
+    }
   };
 
   // ── Review ──────────────────────────────────────────────────────────────────
@@ -219,6 +232,9 @@ export default function BookingDetail() {
       });
       setReviewOpen(false);
       refetch();
+      toast({ title: "Review submitted", description: "Thank you for your feedback." });
+    } catch {
+      toast({ title: "Review failed", description: "Could not submit your review. Please try again.", variant: "destructive" });
     } finally {
       setSubmittingReview(false);
     }

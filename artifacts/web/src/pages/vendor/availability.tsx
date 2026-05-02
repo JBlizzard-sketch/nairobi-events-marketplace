@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useGetVendorAvailability, useSetMyAvailability, useGetMyVendorProfile, getGetVendorAvailabilityQueryKey } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,7 @@ export default function VendorAvailability() {
   const [month, setMonth] = useState(today.getMonth());
   const [toggled, setToggled] = useState<Record<string, boolean>>({});
   const [saving, setSaving] = useState(false);
+  const { toast } = useToast();
 
   // Range dialog state
   const [rangeOpen, setRangeOpen] = useState(false);
@@ -84,13 +86,19 @@ export default function VendorAvailability() {
   const handleSave = async () => {
     if (!vendorId) return;
     setSaving(true);
-    const dates = Object.entries(toggled).map(([date, isAvailable]) => ({ date, isAvailable }));
-    if (dates.length > 0) {
-      await setAvail.mutateAsync({ data: { dates } } as any);
-      setToggled({});
-      refetch();
+    try {
+      const dates = Object.entries(toggled).map(([date, isAvailable]) => ({ date, isAvailable }));
+      if (dates.length > 0) {
+        await setAvail.mutateAsync({ data: { dates } } as any);
+        setToggled({});
+        refetch();
+        toast({ title: "Availability saved", description: "Your calendar has been updated." });
+      }
+    } catch {
+      toast({ title: "Save failed", description: "Could not update availability. Please try again.", variant: "destructive" });
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const handleApplyRange = () => {

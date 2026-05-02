@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAdminListUsers, useAdminUpdateUser } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ function UserActions({ user, onDone }: { user: any; onDone: () => void }) {
   const [pending, setPending] = useState<ConfirmAction | null>(null);
   const [saving, setSaving] = useState(false);
   const updateUser = useAdminUpdateUser();
+  const { toast } = useToast();
 
   const confirm = async () => {
     if (!pending) return;
@@ -95,8 +97,11 @@ function UserActions({ user, onDone }: { user: any; onDone: () => void }) {
       else if (pending.type === "make_planner") payload.role = "planner";
       else if (pending.type === "make_vendor") payload.role = "vendor";
       await updateUser.mutateAsync({ userId: user.id, data: payload as any });
+      toast({ title: ACTION_LABELS[pending.type].title, description: `${pending.userName} has been updated.` });
       setPending(null);
       onDone();
+    } catch {
+      toast({ title: "Update failed", description: "Could not update user. Please try again.", variant: "destructive" });
     } finally {
       setSaving(false);
     }

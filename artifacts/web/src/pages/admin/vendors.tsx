@@ -5,6 +5,7 @@ import {
   useAdminRejectVendor,
   useAdminSuspendVendor,
 } from "@workspace/api-client-react";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,7 @@ export default function AdminVendors() {
   const [reason, setReason] = useState("");
   const [approveNote, setApproveNote] = useState("");
   const [processing, setProcessing] = useState<string | null>(null);
+  const { toast } = useToast();
 
   const openDialog = (id: string, name: string, mode: DialogMode) => {
     setDialogTarget({ id, name, mode });
@@ -87,17 +89,22 @@ export default function AdminVendors() {
 
   const handleAction = async () => {
     if (!dialogTarget) return;
-    const { id, mode } = dialogTarget;
+    const { id, name, mode } = dialogTarget;
     setProcessing(id);
     try {
       if (mode === "approve") {
         await approveVendor.mutateAsync({ vendorId: id, data: { note: approveNote || undefined } as any });
+        toast({ title: "Vendor approved", description: `${name} is now live on the marketplace.` });
       } else if (mode === "reject") {
         await rejectVendor.mutateAsync({ vendorId: id, data: { reason } });
+        toast({ title: "Vendor rejected", description: `${name} has been notified.` });
       } else {
         await suspendVendor.mutateAsync({ vendorId: id, data: { reason } });
+        toast({ title: "Vendor suspended", description: `${name} has been suspended.` });
       }
       refetch();
+    } catch {
+      toast({ title: "Action failed", description: "Could not process the request. Please try again.", variant: "destructive" });
     } finally {
       setDialogTarget(null);
       setProcessing(null);
