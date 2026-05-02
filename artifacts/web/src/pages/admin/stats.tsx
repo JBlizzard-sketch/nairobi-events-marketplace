@@ -1,8 +1,12 @@
-import { useAdminGetStats } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAdminGetStats, useAdminListBookings } from "@workspace/api-client-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
+import { useMemo } from "react";
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+} from "recharts";
 import {
   Users, Building2, Calendar, Briefcase, TrendingUp, Clock,
   CheckCircle2, XCircle, ChevronRight,
@@ -11,6 +15,37 @@ import {
 export default function AdminStats() {
   const { data: stats, isLoading } = useAdminGetStats();
   const s = stats as any;
+
+  const { data: bookingsRaw } = useAdminListBookings({ page: 1, limit: 500 });
+  const allBookings = useMemo(() => {
+    const raw = bookingsRaw as any;
+    return (Array.isArray(raw) ? raw : raw?.bookings ?? []) as any[];
+  }, [bookingsRaw]);
+
+  const monthlyRevenue = useMemo(() => {
+    const now = new Date();
+    const months = Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      return {
+        label: d.toLocaleDateString("en-KE", { month: "short" }),
+        year: d.getFullYear(),
+        month: d.getMonth(),
+        revenue: 0,
+        bookings: 0,
+      };
+    });
+    allBookings
+      .filter(b => ["completed", "in_escrow"].includes(b.status))
+      .forEach(b => {
+        const d = new Date(b.createdAt);
+        const bucket = months.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
+        if (bucket) {
+          bucket.revenue += Number(b.platformFeeAmount ?? 0);
+          bucket.bookings++;
+        }
+      });
+    return months;
+  }, [allBookings]);
 
   const statCards = [
     { label: "Total Users", value: s?.totalUsers ?? 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
@@ -57,6 +92,55 @@ export default function AdminStats() {
           </Card>
         ))}
       </div>
+
+      {/* Platform revenue trend */}
+      <Card className="shadow-sm">
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Platform Revenue
+            </CardTitle>
+            <CardDescription>Monthly escrow fees collected (last 6 months)</CardDescription>
+          </div>
+          <Link href="/admin/bookings">
+            <Button variant="outline" size="sm" className="gap-1">
+              All Bookings <ChevronRight className="h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <Skeleton className="h-48 w-full rounded-lg" />
+          ) : (
+            <ResponsiveContainer width="100%" height={190}>
+              <BarChart data={monthlyRevenue} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false} tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false} tickLine={false}
+                  tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
+                />
+                <Tooltip
+                  cursor={{ fill: "hsl(var(--muted))" }}
+                  formatter={(v: number) => [`KES ${v.toLocaleString()}`, "Platform Fee"]}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
+                />
+                <Bar dataKey="revenue" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={52} />
+              </BarChart>
+            </ResponsiveContainer>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Vendor approval funnel */}
       <Card className="shadow-sm">

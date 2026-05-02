@@ -14,6 +14,7 @@ import {
   Sparkles,
   CalendarDays,
   UserCog,
+  PieChart,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 
@@ -34,6 +35,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/events", label: "My Events", icon: Calendar },
     { href: "/vendors", label: "Vendors", icon: Users },
     { href: "/bookings", label: "Bookings", icon: Briefcase },
+    { href: "/analytics", label: "Analytics", icon: PieChart },
     { href: "/budget", label: "Budget AI", icon: Sparkles },
   ];
 

@@ -89,8 +89,16 @@ export default function VendorDashboard() {
   const { data: bookings, isLoading: loadingBookings } = useListMyBookings({});
 
   const profile_ = profile as any;
-  const pendingRequests = (Array.isArray(requests) ? requests : []).filter((r: any) => r.status === "requested");
-  const activeBookings = (Array.isArray(bookings) ? bookings : []).filter((b: any) => ["in_escrow", "confirmed"].includes(b.status));
+  const allRequests = (Array.isArray(requests) ? requests : []) as any[];
+  const pendingRequests = allRequests.filter((r: any) => r.status === "requested");
+  const submittedRequests = allRequests.filter((r: any) => r.status === "submitted");
+  const allBookings2 = (Array.isArray(bookings) ? bookings : []) as any[];
+  const activeBookings = allBookings2.filter((b: any) => ["in_escrow", "confirmed"].includes(b.status));
+  const wonBookings = allBookings2.filter((b: any) => b.status !== "cancelled" && b.status !== "refunded");
+
+  // Win rate: bookings won / quotes submitted
+  const totalSubmitted = submittedRequests.length;
+  const winRate = totalSubmitted > 0 ? Math.round((wonBookings.length / totalSubmitted) * 100) : null;
 
   const isApproved = profile_?.status === "approved";
 
@@ -135,7 +143,7 @@ export default function VendorDashboard() {
 
       {!loadingProfile && <VettingBanner profile={profile_} />}
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
         <Card className="shadow-sm">
           <CardHeader className="pb-2">
             <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Pending Requests</CardDescription>
@@ -145,6 +153,30 @@ export default function VendorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">Awaiting your quote</div>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader className="pb-2">
+            <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Win Rate</CardDescription>
+            <CardTitle className="text-4xl text-foreground">
+              {loadingRequests || loadingBookings ? (
+                <Skeleton className="h-10 w-16" />
+              ) : winRate !== null ? (
+                <span className={winRate >= 50 ? "text-emerald-600" : "text-amber-600"}>
+                  {winRate}%
+                </span>
+              ) : (
+                <span className="text-muted-foreground text-2xl">—</span>
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-sm text-muted-foreground">
+              {winRate !== null
+                ? `${wonBookings.length} won of ${totalSubmitted} quoted`
+                : "Submit quotes to track"}
+            </div>
           </CardContent>
         </Card>
 
