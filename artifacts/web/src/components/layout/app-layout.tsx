@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
+import { useTheme } from "@/hooks/use-theme";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -21,6 +22,8 @@ import {
   Search,
   Heart,
   TrendingUp,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
@@ -30,6 +33,7 @@ import { AdminVendorsLink } from "@/components/admin-vendors-badge";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { role, logout } = useAuth();
+  const { isDark, toggle: toggleTheme } = useTheme();
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -175,6 +179,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             ⌘K
           </kbd>
         </button>
+        {/* Dark mode toggle */}
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center justify-between px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm"
+        >
+          <span className="flex items-center gap-2">
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? "Light mode" : "Dark mode"}
+          </span>
+        </button>
         <Button
           variant="ghost"
           size="sm"
@@ -198,13 +212,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <Link href="/">
           <span className="text-base font-bold text-primary tracking-tight">Nairobi Events</span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <button
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+          </button>
           <button
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
             onClick={() => setPaletteOpen(true)}
             aria-label="Search"
           >
-            <Search className="h-4.5 w-4.5 h-5 w-5" />
+            <Search className="h-5 w-5" />
           </button>
           <button
             className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"

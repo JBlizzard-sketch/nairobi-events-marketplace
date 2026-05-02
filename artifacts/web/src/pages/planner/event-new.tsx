@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, ArrowRight, CheckCircle2, Send, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Send, Sparkles, Loader2, ChevronDown, ChevronUp, BookTemplate, Trash2 } from "lucide-react";
 import type { BudgetOptimizeResult } from "@workspace/api-client-react";
+import { useEventTemplates } from "@/hooks/use-event-templates";
 
 const EVENT_TYPES = ["corporate", "wedding", "birthday", "product_launch", "conference", "private_party", "other"];
 const SERVICES = [
@@ -37,6 +38,10 @@ const STEPS = [
 export default function EventNew() {
   const [step, setStep] = useState(0);
   const [, setLocation] = useLocation();
+  const { templates: eventTemplates, saveTemplate: saveEventTemplate, removeTemplate: removeEventTemplate } = useEventTemplates();
+  const [showTemplateSave, setShowTemplateSave] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
 
   // Pre-select a service category from URL params (e.g. ?service=catering)
   const preselectedService = (() => {
@@ -77,6 +82,33 @@ export default function EventNew() {
       ? form.servicesNeeded.filter(s => s !== id)
       : [...form.servicesNeeded, id]);
     setAiResult(null);
+  };
+
+  const applyEventTemplate = (tpl: (typeof eventTemplates)[0]) => {
+    setForm(prev => ({
+      ...prev,
+      ...tpl.form,
+      eventDate: prev.eventDate,
+    }));
+    setShowTemplatePicker(false);
+  };
+
+  const handleSaveEventTemplate = () => {
+    if (!templateName.trim()) return;
+    saveEventTemplate(templateName.trim(), {
+      title: form.title,
+      eventType: form.eventType,
+      venue: form.venue,
+      city: form.city,
+      guestCount: form.guestCount,
+      budgetMin: form.budgetMin,
+      budgetMax: form.budgetMax,
+      currency: form.currency,
+      servicesNeeded: form.servicesNeeded,
+      isEmergency: form.isEmergency,
+    });
+    setTemplateName("");
+    setShowTemplateSave(false);
   };
 
   const canNext = () => {
@@ -168,9 +200,45 @@ export default function EventNew() {
 
       <Card className="shadow-sm">
         <CardHeader className="border-b border-border/50">
-          <CardTitle>{STEPS[step].label}</CardTitle>
-          <CardDescription>{STEPS[step].desc}</CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle>{STEPS[step].label}</CardTitle>
+              <CardDescription>{STEPS[step].desc}</CardDescription>
+            </div>
+            {step === 0 && eventTemplates.length > 0 && (
+              <button
+                onClick={() => setShowTemplatePicker(v => !v)}
+                className="flex items-center gap-1.5 text-xs text-primary border border-primary/30 px-2.5 py-1.5 rounded-md hover:bg-primary/10 transition-colors shrink-0 mt-0.5"
+              >
+                <BookTemplate className="h-3.5 w-3.5" />
+                Load template
+              </button>
+            )}
+          </div>
         </CardHeader>
+        {step === 0 && showTemplatePicker && eventTemplates.length > 0 && (
+          <div className="border-b border-border/50 px-6 py-3 bg-primary/5 space-y-2">
+            <p className="text-xs text-muted-foreground font-medium">Pick a template to pre-fill the form:</p>
+            <div className="flex flex-wrap gap-2">
+              {eventTemplates.map(tpl => (
+                <div key={tpl.id} className="flex items-center gap-0.5">
+                  <button
+                    onClick={() => applyEventTemplate(tpl)}
+                    className="text-sm px-3 py-1.5 rounded-l-md border border-primary/30 text-primary bg-primary/5 hover:bg-primary/15 transition-colors"
+                  >
+                    {tpl.name}
+                  </button>
+                  <button
+                    onClick={() => removeEventTemplate(tpl.id)}
+                    className="px-1.5 py-1.5 rounded-r-md border border-l-0 border-primary/30 text-muted-foreground hover:text-destructive hover:border-destructive/30 transition-colors"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <CardContent className="pt-6 space-y-6">
           {step === 0 && (
             <>
@@ -447,6 +515,35 @@ export default function EventNew() {
                   ))}
                 </div>
               </div>
+
+              {/* Save as template */}
+              {!showTemplateSave ? (
+                <button
+                  onClick={() => { setShowTemplateSave(true); setTemplateName(""); }}
+                  className="w-full text-xs text-muted-foreground hover:text-primary flex items-center justify-center gap-1.5 py-2 border border-dashed border-border rounded-lg hover:border-primary/40 transition-colors"
+                >
+                  <BookTemplate className="h-3.5 w-3.5" />
+                  Save this setup as a reusable event template
+                </button>
+              ) : (
+                <div className="flex gap-2 items-center rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5">
+                  <BookTemplate className="h-4 w-4 text-primary shrink-0" />
+                  <Input
+                    placeholder='Template name (e.g. "Monthly Team Lunch")'
+                    value={templateName}
+                    onChange={e => setTemplateName(e.target.value)}
+                    className="h-8 text-sm flex-1"
+                    onKeyDown={e => e.key === "Enter" && handleSaveEventTemplate()}
+                  />
+                  <Button size="sm" className="h-8 px-3 text-xs" onClick={handleSaveEventTemplate} disabled={!templateName.trim()}>
+                    Save
+                  </Button>
+                  <button onClick={() => setShowTemplateSave(false)} className="text-muted-foreground hover:text-foreground">
+                    <Trash2 className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
               <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 text-sm text-primary font-medium">
                 We'll send your brief to up to {form.servicesNeeded.length * 3} vendors and you'll receive quotes within 4 hours.
               </div>

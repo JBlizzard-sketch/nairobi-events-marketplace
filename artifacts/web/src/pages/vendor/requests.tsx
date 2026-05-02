@@ -12,7 +12,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   FileText, Plus, Trash2, Users, MapPin, Calendar,
   Wallet, ChevronDown, ChevronUp, CheckCircle2, Timer,
+  BookTemplate, X,
 } from "lucide-react";
+import { useQuoteTemplates } from "@/hooks/use-quote-templates";
 
 interface LineItem {
   description: string;
@@ -168,6 +170,7 @@ function RequestCard({
 export default function VendorRequests() {
   const { data: requests, isLoading, refetch } = useListMyQuoteRequests({});
   const submitQuote = useSubmitQuote();
+  const { templates: quoteTemplates, saveTemplate, removeTemplate } = useQuoteTemplates();
 
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [lineItems, setLineItems] = useState<LineItem[]>([
@@ -179,6 +182,9 @@ export default function VendorRequests() {
   const [terms, setTerms] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showTemplateSave, setShowTemplateSave] = useState(false);
+  const [templateName, setTemplateName] = useState("");
+  const [showTemplateList, setShowTemplateList] = useState(false);
 
   const requestList = Array.isArray(requests) ? requests : [];
   const pendingCount = requestList.filter(r => (r as any).status === "requested").length;
@@ -206,6 +212,32 @@ export default function VendorRequests() {
     setInclusions("");
     setExclusions("");
     setTerms("Payment due 7 days before event. Cancellations within 14 days forfeit deposit.");
+    setShowTemplateSave(false);
+    setTemplateName("");
+    setShowTemplateList(false);
+  };
+
+  const applyTemplate = (tpl: (typeof quoteTemplates)[0]) => {
+    setLineItems(tpl.lineItems.map(li => ({ ...li })));
+    setDepositPercent(tpl.depositPercent);
+    setInclusions(tpl.inclusions);
+    setExclusions(tpl.exclusions);
+    setTerms(tpl.terms);
+    setShowTemplateList(false);
+  };
+
+  const handleSaveTemplate = () => {
+    if (!templateName.trim()) return;
+    saveTemplate({
+      name: templateName.trim(),
+      lineItems: lineItems.map(li => ({ ...li })),
+      inclusions,
+      exclusions,
+      terms,
+      depositPercent,
+    });
+    setTemplateName("");
+    setShowTemplateSave(false);
   };
 
   const handleSubmit = async () => {
@@ -291,6 +323,60 @@ export default function VendorRequests() {
           </DialogHeader>
 
           <div className="space-y-6 py-1">
+            {/* Template picker */}
+            {quoteTemplates.length > 0 && (
+              <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-primary uppercase tracking-wider flex items-center gap-1.5">
+                    <BookTemplate className="h-3.5 w-3.5" />
+                    Saved Templates
+                  </span>
+                  <button
+                    onClick={() => setShowTemplateList(v => !v)}
+                    className="text-xs text-primary/70 hover:text-primary transition-colors"
+                  >
+                    {showTemplateList ? "Hide" : "Show"}
+                  </button>
+                </div>
+                {showTemplateList && (
+                  <div className="space-y-1.5 pt-1">
+                    {quoteTemplates.map(tpl => (
+                      <div key={tpl.id} className="flex items-center justify-between gap-2">
+                        <button
+                          onClick={() => applyTemplate(tpl)}
+                          className="text-sm text-left flex-1 py-1 px-2 rounded hover:bg-primary/10 text-primary transition-colors"
+                        >
+                          {tpl.name}
+                          <span className="text-xs text-muted-foreground ml-2">
+                            {tpl.lineItems.length} item{tpl.lineItems.length !== 1 ? "s" : ""}
+                          </span>
+                        </button>
+                        <button
+                          onClick={() => removeTemplate(tpl.id)}
+                          className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {!showTemplateList && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {quoteTemplates.map(tpl => (
+                      <button
+                        key={tpl.id}
+                        onClick={() => applyTemplate(tpl)}
+                        className="text-xs px-2.5 py-1 rounded-full border border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+                      >
+                        {tpl.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Line items */}
             <div>
               <Label className="mb-3 block font-semibold">Line Items</Label>
@@ -421,6 +507,34 @@ export default function VendorRequests() {
                 className="text-sm"
               />
             </div>
+
+            {/* Save as template */}
+            {!showTemplateSave ? (
+              <button
+                onClick={() => { setShowTemplateSave(true); setTemplateName(""); }}
+                className="w-full text-xs text-muted-foreground hover:text-primary flex items-center justify-center gap-1.5 py-1.5 border border-dashed border-border rounded-lg hover:border-primary/40 transition-colors"
+              >
+                <BookTemplate className="h-3.5 w-3.5" />
+                Save current line-up as a reusable template
+              </button>
+            ) : (
+              <div className="flex gap-2 items-center rounded-lg border border-primary/20 bg-primary/5 px-3 py-2.5">
+                <BookTemplate className="h-4 w-4 text-primary shrink-0" />
+                <Input
+                  placeholder="Template name (e.g. Standard Catering Package)"
+                  value={templateName}
+                  onChange={e => setTemplateName(e.target.value)}
+                  className="h-8 text-sm flex-1"
+                  onKeyDown={e => e.key === "Enter" && handleSaveTemplate()}
+                />
+                <Button size="sm" className="h-8 px-3 text-xs" onClick={handleSaveTemplate} disabled={!templateName.trim()}>
+                  Save
+                </Button>
+                <button onClick={() => setShowTemplateSave(false)} className="text-muted-foreground hover:text-foreground">
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
 
             <Button
               className="w-full font-semibold h-12"
