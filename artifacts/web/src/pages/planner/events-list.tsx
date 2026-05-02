@@ -6,7 +6,28 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Calendar, ChevronRight, Plus, FileText, Pencil, CalendarDays, List, ChevronLeft, Search, X, AlertTriangle } from "lucide-react";
+import { Calendar, ChevronRight, Plus, FileText, Pencil, CalendarDays, List, ChevronLeft, Search, X, AlertTriangle, Download } from "lucide-react";
+
+function exportCSV(events: any[]) {
+  const headers = ["Title", "Type", "Status", "Date", "Venue", "City", "Guests", "Budget Max"];
+  const rows = events.map(e => [
+    `"${(e.title ?? "").replace(/"/g, '""')}"`,
+    e.eventType?.replace(/_/g, " ") ?? "",
+    STATUS_LABELS[e.status] ?? e.status,
+    e.eventDate ? new Date(e.eventDate).toLocaleDateString("en-KE") : "",
+    `"${(e.venue ?? "").replace(/"/g, '""')}"`,
+    e.city ?? "",
+    e.guestCount ?? "",
+    e.budgetMax ? Number(e.budgetMax).toLocaleString() : "",
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `events-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
@@ -248,6 +269,12 @@ export default function EventsList() {
               <CalendarDays className="h-4 w-4" />
             </button>
           </div>
+          {events.length > 0 && (
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(events)}>
+              <Download className="h-4 w-4" />
+              Export
+            </Button>
+          )}
           <Link href="/events/new">
             <Button className="font-semibold shadow-sm gap-2">
               <Plus className="h-4 w-4" />

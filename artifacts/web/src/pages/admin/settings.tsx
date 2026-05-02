@@ -75,8 +75,8 @@ export default function AdminSettings() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Platform Settings</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-2xl font-bold text-foreground">Platform Settings</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
             Manage platform-wide configuration and operational settings.
           </p>
         </div>
@@ -129,7 +129,7 @@ export default function AdminSettings() {
               <Label htmlFor="fee-percent" className="font-medium">
                 Platform Fee (%)
               </Label>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-muted-foreground">
                 Percentage deducted from each booking total as platform revenue. Must be between 0 and 50.
               </p>
             </div>
@@ -145,23 +145,23 @@ export default function AdminSettings() {
                   onChange={e => setFeePercent(e.target.value)}
                   className="pr-8 text-right font-mono"
                 />
-                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm">%</span>
+                <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">%</span>
               </div>
             </div>
           </div>
-          <div className="bg-gray-50 rounded-lg p-3 text-xs text-gray-600 space-y-1">
-            <p className="font-medium text-gray-700">Current fee breakdown example</p>
+          <div className="bg-muted/50 rounded-lg p-3 text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-foreground">Current fee breakdown example</p>
             <div className="flex justify-between">
               <span>Booking total</span>
               <span className="font-mono">KES 100,000</span>
             </div>
-            <div className="flex justify-between text-purple-700">
+            <div className="flex justify-between text-purple-700 dark:text-purple-400">
               <span>Platform fee ({feePercent || 0}%)</span>
               <span className="font-mono">
                 KES {(parseFloat(feePercent || "0") * 1000).toLocaleString("en-KE")}
               </span>
             </div>
-            <div className="flex justify-between font-medium text-gray-800 border-t border-gray-200 pt-1">
+            <div className="flex justify-between font-medium text-foreground border-t border-border pt-1">
               <span>Vendor receives</span>
               <span className="font-mono">
                 KES {(100000 - parseFloat(feePercent || "0") * 1000).toLocaleString("en-KE")}
@@ -175,8 +175,8 @@ export default function AdminSettings() {
       <Card>
         <CardHeader className="pb-4">
           <div className="flex items-center gap-2">
-            <div className={`p-2 rounded-lg ${maintenanceMode ? "bg-amber-100" : "bg-gray-100"}`}>
-              <WrenchIcon className={`h-4 w-4 ${maintenanceMode ? "text-amber-600" : "text-gray-500"}`} />
+            <div className={`p-2 rounded-lg ${maintenanceMode ? "bg-amber-100 dark:bg-amber-950" : "bg-muted"}`}>
+              <WrenchIcon className={`h-4 w-4 ${maintenanceMode ? "text-amber-600" : "text-muted-foreground"}`} />
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export default function AdminSettings() {
       </Card>
 
       {/* Metadata */}
-      <div className="flex items-center gap-2 text-xs text-gray-400 justify-end">
+      <div className="flex items-center gap-2 text-xs text-muted-foreground justify-end">
         <SlidersHorizontal className="h-3 w-3" />
         Last updated:{" "}
         {settings?.updatedAt
