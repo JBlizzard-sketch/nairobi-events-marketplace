@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 
@@ -574,6 +574,100 @@ export default function EventDetail() {
           </div>
         )}
       </div>
+
+      {/* ── Activity Timeline ── */}
+      {(() => {
+        type Milestone = { icon: React.ReactNode; label: string; sub: string; done: boolean; accent?: string };
+
+        const statusOrder = [
+          "draft", "brief_submitted", "quotes_requested",
+          "quotes_received", "vendor_selected", "booked", "completed",
+        ];
+        const idx = statusOrder.indexOf(e.status);
+
+        const milestones: Milestone[] = [
+          {
+            icon: <FileText className="h-4 w-4" />,
+            label: "Event brief created",
+            sub: new Date(e.createdAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }),
+            done: idx >= 0,
+          },
+          {
+            icon: <CheckCheck className="h-4 w-4" />,
+            label: "Brief submitted to vendors",
+            sub: "Vendors received your requirements",
+            done: idx >= 1,
+          },
+          {
+            icon: <Clock className="h-4 w-4" />,
+            label: "Quotes requested",
+            sub: "Vendors have up to 4 hours to respond",
+            done: idx >= 2,
+          },
+          {
+            icon: <Star className="h-4 w-4" />,
+            label: "Quotes received",
+            sub: `${allQuotes.length} quote${allQuotes.length !== 1 ? "s" : ""} available to compare`,
+            done: idx >= 3,
+          },
+          {
+            icon: <ThumbsUp className="h-4 w-4" />,
+            label: "Vendor selected",
+            sub: "Quote accepted — ready to confirm",
+            done: idx >= 4,
+          },
+          {
+            icon: <DollarSign className="h-4 w-4" />,
+            label: "Booked & payment secured",
+            sub: "Deposit held in escrow",
+            done: idx >= 5,
+            accent: "text-emerald-600",
+          },
+          {
+            icon: <CheckCircle2 className="h-4 w-4" />,
+            label: "Event completed",
+            sub: e.status === "completed" ? "All done — leave a review!" : "Awaiting completion",
+            done: idx >= 6,
+            accent: "text-emerald-600",
+          },
+        ];
+
+        // Only show the timeline if the event is past draft
+        if (e.status === "draft") return null;
+
+        return (
+          <>
+            <Separator />
+            <div>
+              <h2 className="text-xl font-bold mb-5">Activity Timeline</h2>
+              <div className="relative">
+                {/* Vertical rail */}
+                <div className="absolute left-[15px] top-0 bottom-0 w-px bg-border" />
+                <ol className="space-y-5 pl-10">
+                  {milestones.map((m, i) => (
+                    <li key={i} className="relative">
+                      {/* Dot */}
+                      <div className={`absolute -left-[25px] top-0.5 flex h-8 w-8 items-center justify-center rounded-full border-2 transition-colors ${
+                        m.done
+                          ? "bg-primary border-primary text-primary-foreground"
+                          : "bg-background border-border text-muted-foreground/50"
+                      }`}>
+                        {m.icon}
+                      </div>
+                      <div className={`${m.done ? "opacity-100" : "opacity-40"}`}>
+                        <p className={`text-sm font-semibold leading-none ${m.done && m.accent ? m.accent : ""}`}>
+                          {m.label}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">{m.sub}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          </>
+        );
+      })()}
     </div>
   );
 }

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
+import { VendorRequestsLink } from "@/components/vendor-requests-badge";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { role, logout } = useAuth();
@@ -116,6 +117,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
       <nav className="flex-1 p-4 space-y-0.5 overflow-y-auto">
         {links.map((link) => {
+          // Vendor "Quote Requests" gets a live pending-count badge
+          if (role === "vendor" && link.href === "/vendor/requests") {
+            return <VendorRequestsLink key={link.href} active={isActive(link.href)} />;
+          }
           const Icon = link.icon;
           const active = isActive(link.href);
           return (

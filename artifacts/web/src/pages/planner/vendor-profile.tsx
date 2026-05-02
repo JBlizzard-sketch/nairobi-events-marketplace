@@ -7,10 +7,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
   Star, Award, MapPin, Globe, Instagram, ShieldCheck, Briefcase,
-  MessageSquare, ArrowLeft, ArrowRight, Copy, CheckCircle2,
+  MessageSquare, ArrowLeft, ArrowRight, Copy, CheckCircle2, Heart,
 } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
+import { useSavedVendors } from "@/hooks/use-saved-vendors";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function StarRow({ label, value }: { label: string; value: number }) {
@@ -65,6 +66,8 @@ function CopiedBadge({ show }: { show: boolean }) {
 // ── Sticky CTA Sidebar ────────────────────────────────────────────────────────
 function VendorCtaSidebar({ vendor }: { vendor: any }) {
   const [copied, setCopied] = useState(false);
+  const { toggle, isSaved } = useSavedVendors();
+  const saved = isSaved(vendor.id);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(window.location.href).catch(() => {});
@@ -132,6 +135,20 @@ function VendorCtaSidebar({ vendor }: { vendor: any }) {
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
+
+            {/* Save button */}
+            <button
+              onClick={() => toggle(vendor.id)}
+              className={`w-full flex items-center justify-center gap-2 py-2 rounded-md border text-sm font-medium transition-all ${
+                saved
+                  ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                  : "border-border bg-background text-muted-foreground hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50/50"
+              }`}
+            >
+              <Heart className={`h-4 w-4 transition-all ${saved ? "fill-rose-500 text-rose-500" : ""}`} />
+              {saved ? "Saved to favourites" : "Save vendor"}
+            </button>
+
             <p className="text-xs text-muted-foreground text-center leading-relaxed">
               Submit a brief and receive up to 3 competing quotes within 4 hours — including from this vendor.
             </p>
@@ -163,15 +180,30 @@ function VendorCtaSidebar({ vendor }: { vendor: any }) {
 
 // ── Mobile CTA bar ────────────────────────────────────────────────────────────
 function MobileCtaBar({ vendor }: { vendor: any }) {
+  const { toggle, isSaved } = useSavedVendors();
+  const saved = isSaved(vendor.id);
   const serviceParam = vendor.category ? `?service=${vendor.category}` : "";
   return (
     <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-background/95 backdrop-blur border-t border-border p-4 z-50 safe-area-bottom">
-      <Link href={`/events/new${serviceParam}`}>
-        <Button className="w-full font-semibold gap-2 shadow-lg">
-          Start Event Brief with {vendor.businessName}
-          <ArrowRight className="h-4 w-4" />
-        </Button>
-      </Link>
+      <div className="flex gap-3">
+        <button
+          onClick={() => toggle(vendor.id)}
+          className={`flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-lg border transition-all ${
+            saved
+              ? "border-rose-200 bg-rose-50 text-rose-500"
+              : "border-border bg-background text-muted-foreground hover:text-rose-500 hover:border-rose-300"
+          }`}
+          aria-label={saved ? "Remove from saved" : "Save vendor"}
+        >
+          <Heart className={`h-5 w-5 ${saved ? "fill-rose-500 text-rose-500" : ""}`} />
+        </button>
+        <Link href={`/events/new${serviceParam}`} className="flex-1">
+          <Button className="w-full font-semibold gap-2 shadow-lg">
+            Start Event Brief
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+        </Link>
+      </div>
     </div>
   );
 }
