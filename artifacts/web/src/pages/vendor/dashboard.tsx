@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import {
   FileText, ChevronRight, Star, Briefcase, Clock,
   Clock3, AlertTriangle, XCircle, PauseCircle, CheckCircle2,
+  TrendingUp,
 } from "lucide-react";
 
 function VettingBanner({ profile }: { profile: any }) {
@@ -250,6 +252,76 @@ export default function VendorDashboard() {
           </Card>
         </div>
       )}
+
+      {/* Revenue chart — last 6 months */}
+      {isApproved && !loadingBookings && (() => {
+        const allBookings = (Array.isArray(bookings) ? bookings : []) as any[];
+        const completedBookings = allBookings.filter(b => b.status === "completed" || b.status === "in_escrow");
+        if (completedBookings.length === 0) return null;
+
+        // Build 6-month buckets
+        const now = new Date();
+        const months = Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+          return {
+            label: d.toLocaleDateString("en-KE", { month: "short" }),
+            year: d.getFullYear(),
+            month: d.getMonth(),
+            amount: 0,
+          };
+        });
+        completedBookings.forEach(b => {
+          const d = new Date(b.createdAt);
+          const bucket = months.find(m => m.year === d.getFullYear() && m.month === d.getMonth());
+          if (bucket) bucket.amount += Number(b.vendorPayoutAmount ?? 0);
+        });
+
+        const totalEarned = months.reduce((s, m) => s + m.amount, 0);
+        if (totalEarned === 0) return null;
+
+        return (
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Earnings (Last 6 Months)
+                </CardTitle>
+                <CardDescription>
+                  Total: KES {totalEarned.toLocaleString()}
+                </CardDescription>
+              </div>
+              <Link href="/vendor/bookings">
+                <Button variant="outline" size="sm">View Bookings</Button>
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={180}>
+                <BarChart data={months} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis
+                    tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={v => v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "hsl(var(--muted))" }}
+                    formatter={(v: number) => [`KES ${v.toLocaleString()}`, "Payout"]}
+                    contentStyle={{
+                      borderRadius: "8px",
+                      border: "1px solid hsl(var(--border))",
+                      fontSize: "12px",
+                    }}
+                  />
+                  <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {!isApproved && !loadingProfile && profile_?.status !== "pending_review" && (
         <Card className="border-dashed shadow-none">

@@ -1575,6 +1575,41 @@ export const SubmitVendorProfileForReviewResponse = zod.object({
 });
 
 /**
+ * @summary List all users (admin)
+ */
+export const adminListUsersQueryPageDefault = 1;
+export const adminListUsersQueryLimitDefault = 50;
+
+export const AdminListUsersQueryParams = zod.object({
+  role: zod.enum(["planner", "vendor", "admin"]).optional(),
+  search: zod.coerce.string().optional(),
+  page: zod.coerce.number().default(adminListUsersQueryPageDefault),
+  limit: zod.coerce.number().default(adminListUsersQueryLimitDefault),
+});
+
+export const AdminListUsersResponse = zod.object({
+  users: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      clerkId: zod.string(),
+      email: zod.string(),
+      fullName: zod.string(),
+      phone: zod.string().nullish(),
+      role: zod.enum(["planner", "vendor", "admin"]),
+      avatarUrl: zod.string().nullish(),
+      isActive: zod.boolean(),
+      createdAt: zod.coerce.date(),
+      vendorStatus: zod.string().nullish(),
+      vendorBusinessName: zod.string().nullish(),
+      vendorCategory: zod.string().nullish(),
+      eventCount: zod.number(),
+      bookingCount: zod.number(),
+    }),
+  ),
+  total: zod.number(),
+});
+
+/**
  * @summary List all events (admin)
  */
 export const adminListEventsQueryPageDefault = 1;

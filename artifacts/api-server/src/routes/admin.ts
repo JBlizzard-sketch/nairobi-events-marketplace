@@ -165,6 +165,66 @@ router.post("/admin/vendors/:vendorId/suspend", async (req, res): Promise<void> 
   res.json(updated);
 });
 
+// ── GET /admin/users ──────────────────────────────────────────────────────────
+
+router.get("/admin/users", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  const admin = await requireAdmin(clerkId);
+  if (!admin) { res.status(403).json({ error: "forbidden", message: "Admin access required" }); return; }
+
+  const page = Math.max(1, parseInt(String(req.query.page ?? "1")));
+  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? "50"))));
+  const offset = (page - 1) * limit;
+  const roleFilter = typeof req.query.role === "string" ? req.query.role : undefined;
+  const search = typeof req.query.search === "string" ? req.query.search.toLowerCase().trim() : undefined;
+
+  const conditions = roleFilter ? [eq(users.role, roleFilter as any)] : [];
+
+  const [allUsers, [{ count: total }]] = await Promise.all([
+    db.query.users.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: (u, { desc }) => [desc(u.createdAt)],
+      limit,
+      offset,
+    }),
+    db.select({ count: sql<number>`count(*)` }).from(users).where(conditions.length > 0 ? and(...conditions) : undefined),
+  ]);
+
+  // Filter by search in-memory (simple fullName/email match)
+  const filtered = search
+    ? allUsers.filter(u =>
+        u.email.toLowerCase().includes(search) ||
+        (u.fullName ?? "").toLowerCase().includes(search)
+      )
+    : allUsers;
+
+  const enriched = await Promise.all(filtered.map(async u => {
+    const [vp, [{ count: eventCount }], [{ count: bookingCount }]] = await Promise.all([
+      u.role === "vendor" ? db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.userId, u.id) }) : Promise.resolve(null),
+      db.select({ count: sql<number>`count(*)` }).from(events).where(eq(events.plannerId, u.id)),
+      db.select({ count: sql<number>`count(*)` }).from(bookings).where(eq(bookings.plannerId, u.id)),
+    ]);
+    return {
+      id: u.id,
+      clerkId: u.clerkId,
+      email: u.email,
+      fullName: u.fullName ?? "",
+      phone: u.phone ?? null,
+      role: u.role,
+      avatarUrl: u.avatarUrl ?? null,
+      isActive: u.isActive,
+      createdAt: u.createdAt,
+      vendorStatus: vp?.status ?? null,
+      vendorBusinessName: vp?.businessName ?? null,
+      vendorCategory: vp?.category ?? null,
+      eventCount: Number(eventCount ?? 0),
+      bookingCount: Number(bookingCount ?? 0),
+    };
+  }));
+
+  res.json({ users: enriched, total: Number(total ?? 0) });
+});
+
 // ── GET /admin/events ─────────────────────────────────────────────────────────
 
 router.get("/admin/events", async (req, res): Promise<void> => {

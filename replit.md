@@ -58,7 +58,7 @@ Grouped by domain in `artifacts/api-server/src/routes/`:
 
 Auth: simulated via `x-clerk-user-id` header (localStorage `userRole` in frontend).
 
-## Frontend Pages (20+)
+## Frontend Pages (25+)
 
 All wired in `artifacts/web/src/App.tsx` using Wouter:
 

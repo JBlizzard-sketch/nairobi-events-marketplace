@@ -833,6 +833,47 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin)
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [planner, vendor, admin]
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminUser"
+                  total:
+                    type: integer
+                required: [users, total]
+
   /admin/events:
     get:
       operationId: adminListEvents
@@ -1765,6 +1806,47 @@ components:
         activeEvents:
           type: integer
       required: [totalUsers, totalVendors, pendingVendors, totalEvents, totalBookings, totalRevenue, activeEvents]
+
+    AdminUser:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clerkId:
+          type: string
+        email:
+          type: string
+        fullName:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [planner, vendor, admin]
+        avatarUrl:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        vendorStatus:
+          type: string
+          nullable: true
+        vendorBusinessName:
+          type: string
+          nullable: true
+        vendorCategory:
+          type: string
+          nullable: true
+        eventCount:
+          type: integer
+        bookingCount:
+          type: integer
+      required: [id, clerkId, email, fullName, role, isActive, createdAt, eventCount, bookingCount]
 
     AdminEvent:
       type: object

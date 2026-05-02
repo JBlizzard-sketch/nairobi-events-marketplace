@@ -89,7 +89,21 @@ router.get("/bookings/:bookingId", async (req, res): Promise<void> => {
     res.status(403).json({ error: "forbidden", message: "Access denied" }); return;
   }
 
-  res.json(booking);
+  // Enrich with vendor/event context
+  const [vp, ev] = await Promise.all([
+    db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.id, booking.vendorId) }),
+    db.query.events.findFirst({ where: eq(events.id, booking.eventId) }),
+  ]);
+  const planner = await db.query.users.findFirst({ where: eq(users.id, booking.plannerId) });
+
+  res.json({
+    ...booking,
+    vendorBusinessName: vp?.businessName ?? null,
+    eventTitle: ev?.title ?? null,
+    eventDate: ev?.eventDate ?? null,
+    category: vp?.category ?? null,
+    plannerName: planner ? (planner.fullName?.trim() || planner.email) : null,
+  });
 });
 
 // ── POST /bookings/:bookingId/payment-intent ───────────────────────────────────

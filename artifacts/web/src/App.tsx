@@ -40,6 +40,7 @@ import AdminStats from "@/pages/admin/stats";
 import AdminVendors from "@/pages/admin/vendors";
 import AdminEvents from "@/pages/admin/events";
 import AdminBookings from "@/pages/admin/bookings";
+import AdminUsers from "@/pages/admin/users";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -272,6 +273,9 @@ function Router() {
       </Route>
       <Route path="/admin/bookings">
         <ProtectedRoute component={AdminBookings} allowedRoles={["admin"]} />
+      </Route>
+      <Route path="/admin/users">
+        <ProtectedRoute component={AdminUsers} allowedRoles={["admin"]} />
       </Route>
       <Route path="/admin">
         <ProtectedRoute component={AdminStats} allowedRoles={["admin"]} />

@@ -13,6 +13,7 @@ import {
   BarChart,
   Sparkles,
   CalendarDays,
+  UserCog,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 
@@ -46,6 +47,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const adminLinks = [
     { href: "/admin", label: "Overview", icon: BarChart },
+    { href: "/admin/users", label: "Users", icon: UserCog },
     { href: "/admin/vendors", label: "Vendors", icon: Users },
     { href: "/admin/events", label: "Events", icon: CalendarDays },
     { href: "/admin/bookings", label: "Bookings", icon: Briefcase },

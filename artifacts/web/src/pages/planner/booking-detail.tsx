@@ -37,6 +37,9 @@ import {
   Loader2,
   Clock,
   XCircle,
+  Building2,
+  Calendar,
+  User,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -62,7 +65,7 @@ function EscrowTracker({ status }: { status: string }) {
     <div className="flex items-center gap-0 py-2">
       {ESCROW_STEPS.map((s, i) => (
         <div key={s.key} className="flex items-center flex-1 last:flex-none">
-          <div className={`flex flex-col items-center gap-1 flex-shrink-0`}>
+          <div className="flex flex-col items-center gap-1 flex-shrink-0">
             <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
               i < stepIdx ? "bg-primary text-primary-foreground" :
               i === stepIdx ? (status === "disputed" ? "bg-destructive text-destructive-foreground" : "bg-primary text-primary-foreground ring-4 ring-primary/20") :
@@ -81,6 +84,37 @@ function EscrowTracker({ status }: { status: string }) {
   );
 }
 
+function StarRow({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-sm text-muted-foreground w-28">{label}</span>
+      <div className="flex gap-1.5">
+        {[1, 2, 3, 4, 5].map(i => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onChange(i)}
+            onMouseEnter={() => setHovered(i)}
+            onMouseLeave={() => setHovered(0)}
+            className="focus:outline-none"
+          >
+            <Star className={`h-6 w-6 transition-all ${
+              i <= (hovered || value)
+                ? "fill-amber-400 text-amber-400"
+                : "text-muted-foreground/25 hover:text-muted-foreground/50"
+            }`} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+}
+
 export default function BookingDetail() {
   const { id } = useParams<{ id: string }>();
   const { data: booking, isLoading, refetch } = useGetBooking(id ?? "");
@@ -96,6 +130,9 @@ export default function BookingDetail() {
   const [disputeReason, setDisputeReason] = useState("");
   const [reviewOpen, setReviewOpen] = useState(false);
   const [rating, setRating] = useState(5);
+  const [qualityRating, setQualityRating] = useState(5);
+  const [punctualityRating, setPunctualityRating] = useState(5);
+  const [valueRating, setValueRating] = useState(5);
   const [comment, setComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [releasing, setReleasing] = useState(false);
@@ -111,8 +148,6 @@ export default function BookingDetail() {
         bookingId: b.id,
         data: { paymentMethod: payMethod },
       });
-      // In production with real Stripe: use pi.clientSecret with Stripe Elements here.
-      // For mock / M-Pesa: just confirm directly.
       await confirmBooking.mutateAsync({
         bookingId: b.id,
         data: { paymentIntentId: (pi as any).paymentIntentId },
@@ -148,7 +183,15 @@ export default function BookingDetail() {
     setSubmittingReview(true);
     try {
       await createReview.mutateAsync({
-        data: { bookingId: b.id, rating, qualityRating: rating, punctualityRating: rating, valueRating: rating, comment, isNoShow: false },
+        data: {
+          bookingId: b.id,
+          rating,
+          qualityRating,
+          punctualityRating,
+          valueRating,
+          comment,
+          isNoShow: false,
+        },
       });
       setReviewOpen(false);
       refetch();
@@ -185,6 +228,34 @@ export default function BookingDetail() {
         </div>
       </div>
 
+      {/* Context card — vendor + event */}
+      {(b.eventTitle || b.vendorBusinessName) && (
+        <Card className="shadow-sm bg-muted/30">
+          <CardContent className="pt-5 pb-4">
+            <div className="flex flex-col gap-2 text-sm">
+              {b.eventTitle && (
+                <div className="flex items-center gap-2 text-foreground">
+                  <Calendar className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-medium">{b.eventTitle}</span>
+                  {b.eventDate && (
+                    <span className="text-muted-foreground text-xs">· {formatDate(b.eventDate)}</span>
+                  )}
+                </div>
+              )}
+              {b.vendorBusinessName && (
+                <div className="flex items-center gap-2 text-foreground">
+                  <Building2 className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                  <span className="font-medium">{b.vendorBusinessName}</span>
+                  {b.category && (
+                    <span className="capitalize text-xs text-muted-foreground">({b.category.replace(/_/g, " ")})</span>
+                  )}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Escrow tracker */}
       {["pending", "in_escrow", "completed", "disputed"].includes(b.status) && (
         <Card className="shadow-sm">
@@ -192,7 +263,8 @@ export default function BookingDetail() {
             <EscrowTracker status={b.status} />
             {b.status === "disputed" && (
               <div className="mt-3 text-xs text-destructive bg-destructive/5 rounded-lg p-3 border border-destructive/20">
-                <span className="font-semibold">Dispute in review.</span> Our team will contact both parties within 2 business days. Reason: {b.cancellationReason}
+                <span className="font-semibold">Dispute in review.</span> Our team will contact both parties within 2 business days.
+                {b.cancellationReason && <span> Reason: {b.cancellationReason}</span>}
               </div>
             )}
           </CardContent>
@@ -228,7 +300,7 @@ export default function BookingDetail() {
         </CardContent>
       </Card>
 
-      {/* ── PENDING: payment method selection + form ── */}
+      {/* ── PENDING: payment ── */}
       {b.status === "pending" && (
         <Card className="shadow-sm border-primary/30">
           <CardHeader>
@@ -242,7 +314,6 @@ export default function BookingDetail() {
               Choose a payment method. Funds are held securely in escrow until your event is completed.
             </p>
 
-            {/* Method selector */}
             <div className="grid grid-cols-2 gap-3">
               {([
                 { key: "mpesa", label: "M-Pesa", icon: <Smartphone className="h-5 w-5" />, sub: "Lipa Na M-Pesa" },
@@ -265,18 +336,16 @@ export default function BookingDetail() {
               ))}
             </div>
 
-            {/* M-Pesa form */}
             {payMethod === "mpesa" && (
               <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
                 <Label>M-Pesa Phone Number</Label>
                 <Input placeholder="e.g. 0712 345 678" type="tel" />
                 <p className="text-xs text-muted-foreground">
-                  You will receive an STK push to authorise the payment of KES {Number(b.totalAmount).toLocaleString()}.
+                  You will receive an STK push to authorise KES {Number(b.totalAmount).toLocaleString()}.
                 </p>
               </div>
             )}
 
-            {/* Card form */}
             {payMethod === "card" && (
               <div className="space-y-3 rounded-xl border border-border/60 bg-muted/30 p-4">
                 <Label>Card details</Label>
@@ -286,26 +355,19 @@ export default function BookingDetail() {
                   <Input placeholder="CVC" />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Secured by 256-bit SSL encryption. Your card details are never stored.
+                  Secured by 256-bit SSL encryption.
                 </p>
               </div>
             )}
 
-            <Button
-              size="lg"
-              className="w-full font-semibold"
-              onClick={handlePay}
-              disabled={!payMethod || paying}
-            >
+            <Button size="lg" className="w-full font-semibold" onClick={handlePay} disabled={!payMethod || paying}>
               {paying ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing…</>
               ) : payMethod === "mpesa" ? (
                 <><Smartphone className="mr-2 h-4 w-4" />Send STK Push — KES {Number(b.totalAmount).toLocaleString()}</>
               ) : payMethod === "card" ? (
                 <><CreditCard className="mr-2 h-4 w-4" />Pay KES {Number(b.totalAmount).toLocaleString()}</>
-              ) : (
-                "Select a payment method"
-              )}
+              ) : "Select a payment method"}
             </Button>
 
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
@@ -316,7 +378,7 @@ export default function BookingDetail() {
         </Card>
       )}
 
-      {/* ── IN ESCROW: release / dispute ── */}
+      {/* ── IN ESCROW ── */}
       {b.status === "in_escrow" && (
         <div className="space-y-4">
           <div className="rounded-xl bg-primary/5 border border-primary/20 p-5 flex items-start gap-4">
@@ -329,7 +391,6 @@ export default function BookingDetail() {
             </div>
           </div>
 
-          {/* Release */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button className="w-full font-semibold gap-2" size="lg">
@@ -341,7 +402,7 @@ export default function BookingDetail() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Release escrow payment?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will release KES {Number(b.vendorPayoutAmount).toLocaleString()} to the vendor and mark the booking as complete. This action cannot be undone.
+                  This will release KES {Number(b.vendorPayoutAmount).toLocaleString()} to the vendor and mark the booking as complete. This cannot be undone.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -353,7 +414,6 @@ export default function BookingDetail() {
             </AlertDialogContent>
           </AlertDialog>
 
-          {/* Dispute */}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="outline" className="w-full gap-2 text-destructive border-destructive/30 hover:bg-destructive/5">
@@ -365,7 +425,7 @@ export default function BookingDetail() {
               <AlertDialogHeader>
                 <AlertDialogTitle>Raise a dispute</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Describe the issue clearly. Our team will review and contact both parties within 2 business days. Funds remain in escrow until resolved.
+                  Describe the issue clearly. Our team will review within 2 business days. Funds remain in escrow until resolved.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <Textarea
@@ -397,7 +457,9 @@ export default function BookingDetail() {
             <CheckCircle2 className="h-10 w-10 text-green-600 mx-auto" />
             <div>
               <p className="font-semibold text-green-800">Event completed!</p>
-              <p className="text-sm text-green-700/80 mt-0.5">Payment of KES {Number(b.vendorPayoutAmount).toLocaleString()} has been released to the vendor.</p>
+              <p className="text-sm text-green-700/80 mt-0.5">
+                KES {Number(b.vendorPayoutAmount).toLocaleString()} has been released to the vendor.
+              </p>
             </div>
             <Button variant="outline" onClick={() => setReviewOpen(true)} className="gap-2">
               <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
@@ -407,28 +469,60 @@ export default function BookingDetail() {
         </Card>
       )}
 
-      {/* Review form */}
+      {/* ── REVIEW FORM ── */}
       {reviewOpen && (
         <Card className="shadow-sm">
-          <CardHeader><CardTitle>Write a Review</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5 fill-amber-400 text-amber-400" />
+              Write a Review
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {b.vendorBusinessName && (
+              <p className="text-sm text-muted-foreground">
+                Reviewing <span className="font-medium text-foreground">{b.vendorBusinessName}</span>
+              </p>
+            )}
+
+            {/* Overall rating */}
             <div>
-              <Label className="mb-2 block">Rating</Label>
+              <Label className="mb-3 block font-medium">Overall Rating</Label>
               <div className="flex gap-2">
                 {[1, 2, 3, 4, 5].map(i => (
-                  <button key={i} onClick={() => setRating(i)} className="focus:outline-none">
-                    <Star className={`h-8 w-8 transition-all ${i <= rating ? "fill-amber-400 text-amber-400 scale-110" : "text-muted-foreground/30 hover:text-muted-foreground"}`} />
+                  <button key={i} type="button" onClick={() => setRating(i)} className="focus:outline-none">
+                    <Star className={`h-9 w-9 transition-all ${i <= rating ? "fill-amber-400 text-amber-400 scale-110" : "text-muted-foreground/25 hover:text-muted-foreground/50"}`} />
                   </button>
                 ))}
               </div>
             </div>
-            <div>
-              <Label className="mb-2 block">Comment</Label>
-              <Textarea placeholder="Share your experience with this vendor…" value={comment} onChange={e => setComment(e.target.value)} rows={4} />
+
+            <Separator />
+
+            {/* Per-category ratings */}
+            <div className="space-y-3">
+              <Label className="font-medium">Category Ratings</Label>
+              <StarRow label="Quality" value={qualityRating} onChange={setQualityRating} />
+              <StarRow label="Punctuality" value={punctualityRating} onChange={setPunctualityRating} />
+              <StarRow label="Value" value={valueRating} onChange={setValueRating} />
             </div>
+
+            <Separator />
+
+            {/* Comment */}
+            <div>
+              <Label className="mb-2 block font-medium">Comment</Label>
+              <Textarea
+                placeholder="Share your experience in detail…"
+                value={comment}
+                onChange={e => setComment(e.target.value)}
+                rows={4}
+              />
+            </div>
+
             <div className="flex gap-3">
               <Button onClick={handleReview} disabled={submittingReview} className="flex-1 font-semibold">
-                {submittingReview ? "Submitting…" : "Submit Review"}
+                {submittingReview ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</> : "Submit Review"}
               </Button>
               <Button variant="outline" onClick={() => setReviewOpen(false)}>Cancel</Button>
             </div>

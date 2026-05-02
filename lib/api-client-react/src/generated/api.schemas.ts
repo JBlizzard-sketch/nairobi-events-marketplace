@@ -457,6 +457,31 @@ export interface AdminStats {
   activeEvents: number;
 }
 
+export type AdminUserRole = (typeof AdminUserRole)[keyof typeof AdminUserRole];
+
+export const AdminUserRole = {
+  planner: "planner",
+  vendor: "vendor",
+  admin: "admin",
+} as const;
+
+export interface AdminUser {
+  id: string;
+  clerkId: string;
+  email: string;
+  fullName: string;
+  phone?: string | null;
+  role: AdminUserRole;
+  avatarUrl?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  vendorStatus?: string | null;
+  vendorBusinessName?: string | null;
+  vendorCategory?: string | null;
+  eventCount: number;
+  bookingCount: number;
+}
+
 export interface AdminEvent {
   id: string;
   title: string;
@@ -588,6 +613,27 @@ export const AdminListVendorsStatus = {
   rejected: "rejected",
   suspended: "suspended",
 } as const;
+
+export type AdminListUsersParams = {
+  role?: AdminListUsersRole;
+  search?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type AdminListUsersRole =
+  (typeof AdminListUsersRole)[keyof typeof AdminListUsersRole];
+
+export const AdminListUsersRole = {
+  planner: "planner",
+  vendor: "vendor",
+  admin: "admin",
+} as const;
+
+export type AdminListUsers200 = {
+  users: AdminUser[];
+  total: number;
+};
 
 export type AdminListEventsParams = {
   status?: string;
