@@ -3,18 +3,30 @@ import { useListMyQuoteRequests, useSubmitQuote } from "@workspace/api-client-re
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   FileText, Plus, Trash2, Users, MapPin, Calendar,
   Wallet, ChevronDown, ChevronUp, CheckCircle2, Timer,
-  BookTemplate, X,
+  BookTemplate, X, MinusCircle, ArrowUpDown, Eye, EyeOff,
 } from "lucide-react";
 import { useQuoteTemplates } from "@/hooks/use-quote-templates";
+
+const PASSED_KEY = "nairobi_passed_requests";
+
+const PASS_REASONS = [
+  { value: "date_conflict", label: "Date conflict — already booked" },
+  { value: "budget_low", label: "Budget too low for this service" },
+  { value: "outside_area", label: "Outside my service area" },
+  { value: "at_capacity", label: "At capacity — too many bookings" },
+  { value: "scope_mismatch", label: "Scope doesn't match my offering" },
+  { value: "other", label: "Other reason" },
+];
 
 interface LineItem {
   description: string;
@@ -57,12 +69,16 @@ function RequestCard({
   isExpanded,
   onExpand,
   onQuote,
+  onPass,
+  isPassed,
 }: {
   req: any;
   statusCfg: { label: string; className: string };
   isExpanded: boolean;
   onExpand: () => void;
   onQuote: () => void;
+  onPass?: () => void;
+  isPassed?: boolean;
 }) {
   const countdown = useCountdown(req.status === "requested" ? req.expiresAt : null);
 
@@ -136,10 +152,27 @@ function RequestCard({
 
           {/* Action buttons */}
           <div className="flex flex-col gap-2 flex-shrink-0">
-            {req.status === "requested" && (
+            {req.status === "requested" && !isPassed && (
               <Button onClick={onQuote} className="font-semibold gap-2" size="sm">
                 Submit Quote
               </Button>
+            )}
+            {req.status === "requested" && !isPassed && onPass && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onPass}
+                className="gap-1.5 text-xs text-muted-foreground hover:text-destructive hover:border-destructive/50"
+              >
+                <MinusCircle className="h-3.5 w-3.5" />
+                Pass
+              </Button>
+            )}
+            {isPassed && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
+                <MinusCircle className="h-3.5 w-3.5" />
+                Passed
+              </div>
             )}
             {req.status === "submitted" && (
               <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
@@ -186,8 +219,41 @@ export default function VendorRequests() {
   const [templateName, setTemplateName] = useState("");
   const [showTemplateList, setShowTemplateList] = useState(false);
 
+  // Sort + pass-on-request state
+  const [sortBy, setSortBy] = useState<"newest" | "event_date" | "budget">("newest");
+  const [passedIds, setPassedIds] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(PASSED_KEY) ?? "[]"); } catch { return []; }
+  });
+  const [showPassed, setShowPassed] = useState(false);
+  const [passDialogReq, setPassDialogReq] = useState<any>(null);
+  const [passReason, setPassReason] = useState<string>("");
+  const [undoVisible, setUndoVisible] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem(PASSED_KEY, JSON.stringify(passedIds));
+  }, [passedIds]);
+
+  const handlePass = (req: any) => {
+    setPassDialogReq(req);
+    setPassReason("");
+  };
+
+  const confirmPass = () => {
+    if (!passDialogReq) return;
+    const id = passDialogReq.id;
+    setPassedIds(prev => [...prev, id]);
+    setPassDialogReq(null);
+    setUndoVisible(id);
+    setTimeout(() => setUndoVisible(v => v === id ? null : v), 5000);
+  };
+
+  const undoPass = (id: string) => {
+    setPassedIds(prev => prev.filter(p => p !== id));
+    setUndoVisible(null);
+  };
+
   const requestList = Array.isArray(requests) ? requests : [];
-  const pendingCount = requestList.filter(r => (r as any).status === "requested").length;
+  const pendingCount = requestList.filter(r => (r as any).status === "requested" && !passedIds.includes((r as any).id)).length;
 
   const updateLineItem = (i: number, field: keyof LineItem, value: string | number) => {
     setLineItems(items =>
@@ -263,18 +329,64 @@ export default function VendorRequests() {
     }
   };
 
+  // Sort + filter logic
+  const sortedList = [...requestList].sort((a: any, b: any) => {
+    if (sortBy === "event_date") {
+      return new Date(a.event?.eventDate ?? 0).getTime() - new Date(b.event?.eventDate ?? 0).getTime();
+    }
+    if (sortBy === "budget") {
+      return Number(b.event?.budgetMax ?? 0) - Number(a.event?.budgetMax ?? 0);
+    }
+    return new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime();
+  });
+  const passedCount = passedIds.filter(id => requestList.some((r: any) => r.id === id)).length;
+  const visibleList = sortedList.filter((r: any) =>
+    showPassed ? passedIds.includes(r.id) : !passedIds.includes(r.id)
+  );
+
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Quote Requests</h1>
-        <p className="text-muted-foreground mt-1">
-          {isLoading ? "Loading..." : (
-            pendingCount > 0
-              ? <span className="text-primary font-medium">{pendingCount} request{pendingCount !== 1 ? "s" : ""} awaiting your quote</span>
-              : `${requestList.length} total request${requestList.length !== 1 ? "s" : ""}`
-          )}
-        </p>
+    <div className="space-y-6 animate-in fade-in duration-500">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Quote Requests</h1>
+          <p className="text-muted-foreground mt-1">
+            {isLoading ? "Loading..." : (
+              pendingCount > 0
+                ? <span className="text-primary font-medium">{pendingCount} request{pendingCount !== 1 ? "s" : ""} awaiting your quote</span>
+                : `${requestList.length} total request${requestList.length !== 1 ? "s" : ""}`
+            )}
+          </p>
+        </div>
+        {requestList.length > 1 && (
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <ArrowUpDown className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+            <Select value={sortBy} onValueChange={v => setSortBy(v as any)}>
+              <SelectTrigger className="h-9 w-44 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Newest first</SelectItem>
+                <SelectItem value="event_date">Event date (soonest)</SelectItem>
+                <SelectItem value="budget">Budget (highest)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
+
+      {/* Undo toast */}
+      {undoVisible && (
+        <div className="flex items-center justify-between gap-4 bg-foreground text-background rounded-xl px-4 py-3 text-sm shadow-lg animate-in slide-in-from-bottom-2">
+          <span>Request passed — removed from your active list.</span>
+          <button
+            onClick={() => undoPass(undoVisible)}
+            className="font-semibold text-primary-foreground underline underline-offset-2 hover:no-underline flex-shrink-0"
+          >
+            Undo
+          </button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-4">
@@ -293,24 +405,82 @@ export default function VendorRequests() {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {requestList.map((req: any) => {
-            const statusCfg =
-              STATUS_CONFIG[req.status] ?? { label: req.status, className: "bg-muted text-muted-foreground" };
-            const isExpanded = expandedId === req.id;
-            return (
-              <RequestCard
-                key={req.id}
-                req={req}
-                statusCfg={statusCfg}
-                isExpanded={isExpanded}
-                onExpand={() => setExpandedId(isExpanded ? null : req.id)}
-                onQuote={() => openQuoteDialog(req)}
-              />
-            );
-          })}
-        </div>
+        <>
+          {/* Show/hide passed toggle */}
+          {passedCount > 0 && (
+            <button
+              onClick={() => setShowPassed(v => !v)}
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {showPassed
+                ? <><EyeOff className="h-4 w-4" /> Hide passed requests</>
+                : <><Eye className="h-4 w-4" /> Show {passedCount} passed request{passedCount !== 1 ? "s" : ""}</>
+              }
+            </button>
+          )}
+
+          <div className="space-y-3">
+            {visibleList.length === 0 ? (
+              <Card className="border-dashed">
+                <CardContent className="py-12 text-center text-muted-foreground text-sm">
+                  {showPassed ? "No passed requests." : "All active requests handled — you're up to date!"}
+                </CardContent>
+              </Card>
+            ) : visibleList.map((req: any) => {
+              const statusCfg =
+                STATUS_CONFIG[req.status] ?? { label: req.status, className: "bg-muted text-muted-foreground" };
+              const isExpanded = expandedId === req.id;
+              const isPassed = passedIds.includes(req.id);
+              return (
+                <RequestCard
+                  key={req.id}
+                  req={req}
+                  statusCfg={statusCfg}
+                  isExpanded={isExpanded}
+                  onExpand={() => setExpandedId(isExpanded ? null : req.id)}
+                  onQuote={() => openQuoteDialog(req)}
+                  onPass={req.status === "requested" ? () => handlePass(req) : undefined}
+                  isPassed={isPassed}
+                />
+              );
+            })}
+          </div>
+        </>
       )}
+
+      {/* Pass dialog */}
+      <Dialog open={!!passDialogReq} onOpenChange={() => setPassDialogReq(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Pass on this request?</DialogTitle>
+            <DialogDescription>
+              It will be hidden from your active list. You can undo this immediately after.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-1">
+            <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Reason (optional)</Label>
+            <div className="grid gap-2">
+              {PASS_REASONS.map(r => (
+                <button
+                  key={r.value}
+                  onClick={() => setPassReason(r.value)}
+                  className={`text-left text-sm px-3 py-2.5 rounded-lg border transition-all ${
+                    passReason === r.value
+                      ? "border-primary bg-primary/5 font-medium text-primary"
+                      : "border-border hover:border-primary/40 hover:bg-muted/40"
+                  }`}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setPassDialogReq(null)}>Cancel</Button>
+            <Button onClick={confirmPass}>Confirm Pass</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Quote submission dialog */}
       <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>

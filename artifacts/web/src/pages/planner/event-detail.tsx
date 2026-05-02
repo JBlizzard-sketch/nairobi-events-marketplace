@@ -822,13 +822,70 @@ export default function EventDetail() {
       <Separator />
 
       <div>
-        <div className="flex items-end justify-between mb-2">
+        <div className="flex items-end justify-between mb-2 flex-wrap gap-3">
           <h2 className="text-xl font-bold">Quotes</h2>
-          {categories.length > 0 && (
-            <p className="text-xs text-muted-foreground">
-              Sorted by price · Best Value highlighted
-            </p>
-          )}
+          <div className="flex items-center gap-3">
+            {categories.length > 0 && (
+              <>
+                <p className="text-xs text-muted-foreground hidden sm:block">
+                  Sorted by price · Best Value highlighted
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-xs"
+                  onClick={() => {
+                    const allQ = categories.flatMap((cat: string) => (quotesData as any).quotesByCategory[cat]);
+                    const rows = categories.map((cat: string) => {
+                      const qs = (quotesData as any).quotesByCategory[cat] as any[];
+                      const submitted = qs.filter(q => q.status !== "rejected");
+                      const lowest = submitted.length ? Math.min(...submitted.map((q: any) => Number(q.totalAmount))) : null;
+                      return `
+  <tr><td colspan="6" style="background:#f9fafb;font-weight:700;font-size:13px;padding:10px 14px;text-transform:capitalize;border-top:2px solid #e5e7eb">
+    ${cat.replace(/_/g, " ")} <span style="font-weight:400;color:#9ca3af;font-size:11px">(${submitted.length} quote${submitted.length !== 1 ? "s" : ""})</span>
+  </td></tr>
+  ${submitted.map((q: any) => `
+  <tr style="${q.status === "accepted" ? "background:#fef9c3;" : ""}">
+    <td style="padding:8px 14px">${q.vendorBusinessName ?? "—"}</td>
+    <td style="padding:8px 14px">${Number(q.vendorAverageRating) > 0 ? "★ " + Number(q.vendorAverageRating).toFixed(1) : "New"}</td>
+    <td style="padding:8px 14px">${q.vendorCity ?? "—"}</td>
+    <td style="padding:8px 14px;text-align:right;font-weight:600">KES ${Number(q.totalAmount).toLocaleString()}</td>
+    <td style="padding:8px 14px;text-align:right">${q.depositPercent ?? 30}%</td>
+    <td style="padding:8px 14px">${lowest !== null && Number(q.totalAmount) === lowest ? "★ Lowest" : q.status === "accepted" ? "✓ Accepted" : ""}</td>
+  </tr>`).join("")}`;
+                    }).join("");
+                    const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/>
+  <title>Quote Comparison — ${e.title}</title>
+  <style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Helvetica Neue',Arial,sans-serif;color:#111;background:#fff;padding:40px;max-width:860px;margin:0 auto}
+  h1{font-size:22px;font-weight:800;margin-bottom:4px}
+  .subtitle{font-size:13px;color:#6b7280;margin-bottom:28px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:8px 14px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;border-bottom:1px solid #e5e7eb}
+  td{border-bottom:1px solid #f3f4f6}
+  .footer{margin-top:32px;font-size:11px;color:#9ca3af;display:flex;justify-content:space-between}
+  </style></head><body>
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:24px">
+    <div style="width:28px;height:28px;background:#d97706;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:900;font-size:14px">N</div>
+    <span style="font-size:13px;font-weight:600;color:#555">Nairobi Events Marketplace</span>
+  </div>
+  <h1>${e.title}</h1>
+  <p class="subtitle">Quote Comparison · ${new Date(e.eventDate).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })} · ${e.guestCount} guests · ${allQ.filter((q: any) => q.status !== "rejected").length} quotes received</p>
+  <table>
+    <thead><tr><th>Vendor</th><th>Rating</th><th>Location</th><th style="text-align:right">Amount</th><th style="text-align:right">Deposit</th><th>Notes</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="footer"><span>Generated ${new Date().toLocaleDateString("en-KE", { day:"numeric", month:"long", year:"numeric" })}</span><span>Nairobi Events Marketplace · events.co.ke</span></div>
+  <script>window.onload=()=>{window.print()}</script></body></html>`;
+                    const win = window.open("", "_blank");
+                    if (win) { win.document.write(html); win.document.close(); }
+                  }}
+                >
+                  <Printer className="h-3.5 w-3.5" />
+                  Print Quotes
+                </Button>
+              </>
+            )}
+          </div>
         </div>
         <p className="text-sm text-muted-foreground mb-6">
           {e.status === "quotes_requested"
