@@ -14,7 +14,143 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Save, Plus, X, Send, CheckCircle2, Clock3, XCircle, PauseCircle } from "lucide-react";
+import { Save, Plus, X, Send, CheckCircle2, Clock3, XCircle, PauseCircle, Circle } from "lucide-react";
+
+// ── Profile completeness ─────────────────────────────────────────────────────
+
+interface FormState {
+  businessName: string;
+  category: string;
+  description: string;
+  city: string;
+  websiteUrl: string;
+  instagramHandle: string;
+  serviceAreas: string[];
+}
+
+const COMPLETENESS_CRITERIA = [
+  {
+    key: "businessName",
+    label: "Business name",
+    points: 20,
+    check: (f: FormState) => f.businessName.trim().length > 0,
+  },
+  {
+    key: "description",
+    label: "Description (50+ characters)",
+    points: 25,
+    check: (f: FormState) => f.description.trim().length >= 50,
+  },
+  {
+    key: "serviceAreas",
+    label: "At least one service area",
+    points: 20,
+    check: (f: FormState) => f.serviceAreas.length > 0,
+  },
+  {
+    key: "website",
+    label: "Website URL",
+    points: 15,
+    check: (f: FormState) => f.websiteUrl.trim().length > 0,
+  },
+  {
+    key: "instagram",
+    label: "Instagram handle",
+    points: 10,
+    check: (f: FormState) => f.instagramHandle.trim().length > 0,
+  },
+  {
+    key: "extraAreas",
+    label: "3 or more service areas",
+    points: 10,
+    check: (f: FormState) => f.serviceAreas.length >= 3,
+  },
+];
+
+function computeScore(form: FormState) {
+  return COMPLETENESS_CRITERIA.reduce(
+    (total, c) => total + (c.check(form) ? c.points : 0),
+    0,
+  );
+}
+
+const SCORE_LEVELS = [
+  {
+    min: 90,
+    label: "Excellent",
+    desc: "Your profile stands out to planners — submit for review.",
+    bar: "bg-emerald-500",
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  },
+  {
+    min: 70,
+    label: "Good",
+    desc: "Competitive profile. Add a few more details to maximise approval chances.",
+    bar: "bg-blue-500",
+    badge: "bg-blue-100 text-blue-800 border-blue-200",
+  },
+  {
+    min: 40,
+    label: "Getting there",
+    desc: "Keep filling in the sections below to strengthen your profile.",
+    bar: "bg-amber-500",
+    badge: "bg-amber-100 text-amber-800 border-amber-200",
+  },
+  {
+    min: 0,
+    label: "Incomplete",
+    desc: "Complete your profile before submitting for review.",
+    bar: "bg-red-500",
+    badge: "bg-red-100 text-red-800 border-red-200",
+  },
+];
+
+function CompletenessWidget({ form }: { form: FormState }) {
+  const score = computeScore(form);
+  const level = SCORE_LEVELS.find(l => score >= l.min) ?? SCORE_LEVELS[SCORE_LEVELS.length - 1];
+
+  return (
+    <Card className="shadow-sm border-border/70">
+      <CardContent className="pt-5 pb-4 space-y-4">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div>
+            <p className="text-sm font-semibold">Profile Quality</p>
+            <p className="text-xs text-muted-foreground mt-0.5">{level.desc}</p>
+          </div>
+          <Badge variant="outline" className={`text-xs font-semibold px-2.5 py-1 ${level.badge}`}>
+            {level.label} · {score}/100
+          </Badge>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${level.bar}`}
+            style={{ width: `${score}%` }}
+          />
+        </div>
+
+        {/* Criteria list */}
+        <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+          {COMPLETENESS_CRITERIA.map(c => {
+            const done = c.check(form);
+            return (
+              <li key={c.key} className="flex items-center gap-2 text-xs">
+                {done ? (
+                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600 flex-shrink-0" />
+                ) : (
+                  <Circle className="h-3.5 w-3.5 text-muted-foreground/40 flex-shrink-0" />
+                )}
+                <span className={done ? "text-foreground" : "text-muted-foreground"}>{c.label}</span>
+                <span className="ml-auto text-muted-foreground/60 font-mono">{c.points}pts</span>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
 
 const CATEGORIES = [
   "catering", "mc", "photography", "videography", "floristry",
@@ -56,14 +192,14 @@ export default function VendorProfileEdit() {
 
   const p = profile as any;
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormState>({
     businessName: "",
     category: "catering",
     description: "",
     city: "Nairobi",
     websiteUrl: "",
     instagramHandle: "",
-    serviceAreas: [] as string[],
+    serviceAreas: [],
   });
   const [areaInput, setAreaInput] = useState("");
   const [saving, setSaving] = useState(false);
@@ -177,6 +313,8 @@ export default function VendorProfileEdit() {
           </AlertDescription>
         </Alert>
       )}
+
+      <CompletenessWidget form={form} />
 
       <Card className="shadow-sm">
         <CardHeader><CardTitle>Business Details</CardTitle></CardHeader>

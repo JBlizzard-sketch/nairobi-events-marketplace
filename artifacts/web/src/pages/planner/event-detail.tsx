@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp, Printer } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 
@@ -375,6 +375,82 @@ export default function EventDetail() {
     setActing(null);
   };
 
+  const handlePrintBrief = () => {
+    const e = event as any;
+    const services = (e.servicesNeeded ?? [])
+      .map((s: string) => `<li style="margin:2px 0">${s.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}</li>`)
+      .join("");
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Event Brief — ${e.title}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Helvetica Neue', Arial, sans-serif; color: #111; background: #fff; padding: 48px; max-width: 720px; margin: 0 auto; }
+    .logo { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+    .logo-mark { width: 32px; height: 32px; background: #d97706; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 900; font-size: 16px; }
+    .logo-text { font-size: 14px; font-weight: 600; color: #555; }
+    h1 { font-size: 28px; font-weight: 800; line-height: 1.2; margin-bottom: 6px; }
+    .status-row { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; }
+    .badge { display: inline-block; background: #f3f4f6; border: 1px solid #e5e7eb; border-radius: 6px; padding: 3px 10px; font-size: 11px; font-weight: 600; text-transform: capitalize; color: #374151; }
+    .badge.emergency { background: #fee2e2; border-color: #fca5a5; color: #991b1b; }
+    .section { margin-bottom: 24px; }
+    .section-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #9ca3af; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field label { font-size: 11px; color: #9ca3af; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 3px; }
+    .field .value { font-size: 14px; font-weight: 600; color: #111; }
+    ul { padding-left: 18px; margin-top: 4px; }
+    ul li { font-size: 14px; color: #111; font-weight: 500; }
+    .notes { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 16px; font-size: 13px; line-height: 1.6; color: #374151; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 11px; color: #9ca3af; display: flex; justify-content: space-between; }
+    @media print { body { padding: 32px; } }
+  </style>
+</head>
+<body>
+  <div class="logo">
+    <div class="logo-mark">N</div>
+    <span class="logo-text">Nairobi Events Marketplace — Event Brief</span>
+  </div>
+
+  <h1>${e.title}</h1>
+  <div class="status-row">
+    <span class="badge">${(e.status ?? "").replace(/_/g, " ")}</span>
+    ${e.isEmergency ? '<span class="badge emergency">Emergency</span>' : ""}
+    ${e.eventType ? `<span class="badge">${e.eventType.replace(/_/g, " ")}</span>` : ""}
+  </div>
+
+  <div class="section">
+    <div class="section-title">Event Details</div>
+    <div class="grid">
+      <div class="field"><label>Date</label><div class="value">${new Date(e.eventDate).toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</div></div>
+      <div class="field"><label>Guest Count</label><div class="value">${e.guestCount} expected</div></div>
+      <div class="field"><label>Venue</label><div class="value">${e.venue ?? "TBD"}</div></div>
+      <div class="field"><label>City</label><div class="value">${e.city ?? "Nairobi"}</div></div>
+      ${e.budgetMin ? `<div class="field"><label>Min Budget</label><div class="value">KES ${Number(e.budgetMin).toLocaleString()}</div></div>` : ""}
+      ${e.budgetMax ? `<div class="field"><label>Max Budget</label><div class="value">KES ${Number(e.budgetMax).toLocaleString()}</div></div>` : ""}
+    </div>
+  </div>
+
+  ${services ? `<div class="section"><div class="section-title">Services Needed</div><ul>${services}</ul></div>` : ""}
+
+  ${e.description ? `<div class="section"><div class="section-title">Brief Notes</div><div class="notes">${e.description}</div></div>` : ""}
+
+  <div class="footer">
+    <span>Generated ${new Date().toLocaleDateString("en-KE", { day: "numeric", month: "long", year: "numeric" })}</span>
+    <span>Nairobi Events Marketplace · events.co.ke</span>
+  </div>
+
+  <script>window.onload = () => { window.print(); }</script>
+</body>
+</html>`;
+    const win = window.open("", "_blank");
+    if (win) {
+      win.document.write(html);
+      win.document.close();
+    }
+  };
+
   if (loadingEvent) {
     return (
       <div className="space-y-6">
@@ -412,6 +488,10 @@ export default function EventDetail() {
           </div>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrintBrief}>
+            <Printer className="h-3.5 w-3.5" />
+            Print Brief
+          </Button>
           {e.status === "draft" && (
             <Link href={`/events/${e.id}/edit`}>
               <Button variant="outline" size="sm" className="gap-1.5">
