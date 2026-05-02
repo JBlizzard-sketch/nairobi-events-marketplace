@@ -26,6 +26,7 @@ import {
   Moon,
   Star,
   HelpCircle,
+  BookTemplate,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
@@ -87,6 +88,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/vendor/availability", label: "Availability", icon: Calendar },
     { href: "/vendor/analytics", label: "Analytics", icon: TrendingUp },
     { href: "/vendor/reviews", label: "My Reviews", icon: Star },
+    { href: "/vendor/templates", label: "Quote Templates", icon: BookTemplate },
     { href: "/account", label: "Account", icon: UserCog },
   ];
 

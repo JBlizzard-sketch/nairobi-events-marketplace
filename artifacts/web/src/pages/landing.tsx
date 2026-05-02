@@ -100,6 +100,24 @@ export default function Landing() {
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-primary-foreground font-black text-base shadow-sm">N</div>
           <span className="text-lg font-bold tracking-tight">Nairobi Events</span>
         </div>
+
+        {/* Desktop anchor nav */}
+        <nav className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
+          {[
+            { label: "How it works", id: "how-it-works" },
+            { label: "Pricing", id: "pricing" },
+            { label: "For vendors", id: "for-vendors" },
+          ].map(({ label, id }) => (
+            <button
+              key={id}
+              onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+              className="px-3.5 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground rounded-md hover:bg-muted transition-colors"
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+
         <nav className="flex items-center gap-2">
           <Link href="/sign-in">
             <Button variant="ghost" className="font-medium text-muted-foreground hover:text-foreground">Sign In</Button>
@@ -175,7 +193,7 @@ export default function Landing() {
         </div>
 
         {/* ── How It Works ───────────────────────────────────────────────────── */}
-        <section className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-6xl">
+        <section id="how-it-works" className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-6xl">
           <div className="text-center mb-14">
             <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">How it works</h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
@@ -274,7 +292,7 @@ export default function Landing() {
         </section>
 
         {/* ── Pricing ────────────────────────────────────────────────────────── */}
-        <section className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-5xl">
+        <section id="pricing" className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-5xl">
           <div className="text-center mb-14">
             <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Simple, transparent pricing</h2>
             <p className="text-lg text-muted-foreground max-w-xl mx-auto">
@@ -386,7 +404,7 @@ export default function Landing() {
         </section>
 
         {/* ── Vendor CTA ─────────────────────────────────────────────────────── */}
-        <section className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-6xl">
+        <section id="for-vendors" className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-6xl">
           <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-3xl p-10 md:p-16 text-center">
             <Badge variant="outline" className="mb-6 border-primary/30 text-primary bg-primary/5 text-xs font-semibold">
               For Vendors

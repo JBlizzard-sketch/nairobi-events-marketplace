@@ -43,6 +43,7 @@ import VendorAvailability from "@/pages/vendor/availability";
 import VendorBookings from "@/pages/vendor/bookings";
 import VendorAnalytics from "@/pages/vendor/analytics";
 import VendorReviews from "@/pages/vendor/reviews";
+import VendorTemplates from "@/pages/vendor/templates";
 
 // Pages — admin
 import AdminStats from "@/pages/admin/stats";
@@ -290,6 +291,9 @@ function Router() {
       </Route>
       <Route path="/vendor/reviews">
         <ProtectedRoute component={VendorReviews} allowedRoles={["vendor"]} />
+      </Route>
+      <Route path="/vendor/templates">
+        <ProtectedRoute component={VendorTemplates} allowedRoles={["vendor"]} />
       </Route>
 
       {/* Account settings — all roles */}
