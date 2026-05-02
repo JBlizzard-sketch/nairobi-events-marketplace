@@ -54,10 +54,10 @@ const STATUS_TABS = [
 ] as const;
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
-  pending_review: { label: "Pending Review", className: "bg-amber-100 text-amber-800 border-amber-200" },
-  approved: { label: "Approved", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  rejected: { label: "Rejected", className: "bg-red-100 text-red-800 border-red-200" },
-  suspended: { label: "Suspended", className: "bg-slate-100 text-slate-700 border-slate-200" },
+  pending_review: { label: "Pending Review", className: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50" },
+  approved: { label: "Approved", className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
+  rejected: { label: "Rejected", className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50" },
+  suspended: { label: "Suspended", className: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800/30 dark:text-slate-300 dark:border-slate-600/50" },
 };
 
 export default function AdminVendors() {
@@ -225,7 +225,7 @@ export default function AdminVendors() {
                           )}
 
                           {vendor.adminNotes && (
-                            <div className="bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-xs text-amber-800 mb-3">
+                            <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 rounded-md px-3 py-2 text-xs text-amber-800 dark:text-amber-300 mb-3">
                               <span className="font-semibold">Admin note: </span>{vendor.adminNotes}
                             </div>
                           )}
@@ -234,7 +234,7 @@ export default function AdminVendors() {
                           {(vendor.averageRating > 0 || vendor.totalReviews > 0 || vendor.totalBookings > 0) && (
                             <div className="flex items-center gap-3 mb-3 flex-wrap">
                               {vendor.averageRating > 0 && (
-                                <span className="flex items-center gap-1 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-1 rounded-md">
+                                <span className="flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50 px-2 py-1 rounded-md">
                                   <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
                                   {Number(vendor.averageRating).toFixed(1)}
                                   {vendor.totalReviews > 0 && (

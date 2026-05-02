@@ -184,9 +184,9 @@ export default function EventEdit() {
       )}
 
       {saved && (
-        <Alert className="border-emerald-300 bg-emerald-50 text-emerald-900">
-          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-          <AlertDescription className="text-emerald-800">Saved! Redirecting back to your event…</AlertDescription>
+        <Alert className="border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+          <AlertDescription className="text-emerald-800 dark:text-emerald-300">Saved! Redirecting back to your event…</AlertDescription>
         </Alert>
       )}
 

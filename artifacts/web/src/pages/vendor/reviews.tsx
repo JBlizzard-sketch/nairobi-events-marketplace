@@ -56,7 +56,7 @@ function ReviewCard({ review }: { review: any }) {
               <Stars value={review.rating} size="md" />
               <span className="font-semibold text-sm">{Number(review.rating).toFixed(1)}</span>
               {review.isNoShow && (
-                <Badge className="bg-red-100 text-red-700 border-red-200 gap-1 text-xs">
+                <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50 gap-1 text-xs">
                   <AlertTriangle className="h-3 w-3" />
                   No-show reported
                 </Badge>
@@ -173,7 +173,7 @@ export default function VendorReviews() {
                 <Stars value={avgRating} size="md" />
                 <p className="text-sm text-muted-foreground">{total} review{total !== 1 ? "s" : ""}</p>
                 {noShowCount > 0 && (
-                  <Badge className="bg-red-100 text-red-700 border-red-200 gap-1 text-xs mt-1">
+                  <Badge className="bg-red-100 text-red-700 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50 gap-1 text-xs mt-1">
                     <AlertTriangle className="h-3 w-3" />
                     {noShowCount} no-show{noShowCount !== 1 ? "s" : ""}
                   </Badge>

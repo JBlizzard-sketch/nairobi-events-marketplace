@@ -109,10 +109,10 @@ function VettingBanner({ profile }: { profile: any }) {
 
   if (profile.status === "pending_review") {
     return (
-      <Alert className="border-amber-300 bg-amber-50 text-amber-900">
+      <Alert className="border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30">
         <Clock3 className="h-4 w-4 text-amber-600" />
-        <AlertTitle className="text-amber-800 font-semibold">Profile Under Review</AlertTitle>
-        <AlertDescription className="text-amber-700">
+        <AlertTitle className="text-amber-800 dark:text-amber-300 font-semibold">Profile Under Review</AlertTitle>
+        <AlertDescription className="text-amber-700 dark:text-amber-400">
           Your vendor application is being reviewed by our team. This typically takes 1–2 business days.
           You'll receive a notification as soon as a decision is made.
         </AlertDescription>
@@ -122,10 +122,10 @@ function VettingBanner({ profile }: { profile: any }) {
 
   if (profile.status === "rejected") {
     return (
-      <Alert className="border-red-300 bg-red-50 text-red-900">
+      <Alert className="border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30">
         <XCircle className="h-4 w-4 text-red-600" />
-        <AlertTitle className="text-red-800 font-semibold">Application Not Approved</AlertTitle>
-        <AlertDescription className="text-red-700 space-y-3">
+        <AlertTitle className="text-red-800 dark:text-red-300 font-semibold">Application Not Approved</AlertTitle>
+        <AlertDescription className="text-red-700 dark:text-red-400 space-y-3">
           <p>
             {profile.adminNotes
               ? <>Reason: <span className="font-medium">{profile.adminNotes}</span></>
@@ -133,7 +133,7 @@ function VettingBanner({ profile }: { profile: any }) {
           </p>
           <p>You can update your profile and resubmit for review.</p>
           <Link href="/vendor/profile">
-            <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-100 mt-1">
+            <Button size="sm" variant="outline" className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/40 mt-1">
               Update Profile &amp; Resubmit
             </Button>
           </Link>
@@ -144,10 +144,10 @@ function VettingBanner({ profile }: { profile: any }) {
 
   if (profile.status === "suspended") {
     return (
-      <Alert className="border-slate-300 bg-slate-50 text-slate-900">
+      <Alert className="border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-800/30">
         <PauseCircle className="h-4 w-4 text-slate-600" />
-        <AlertTitle className="text-slate-800 font-semibold">Account Suspended</AlertTitle>
-        <AlertDescription className="text-slate-700">
+        <AlertTitle className="text-slate-800 dark:text-slate-300 font-semibold">Account Suspended</AlertTitle>
+        <AlertDescription className="text-slate-700 dark:text-slate-400">
           {profile.adminNotes
             ? <>Reason: <span className="font-medium">{profile.adminNotes}</span>. </>
             : ""}
@@ -205,7 +205,7 @@ export default function VendorDashboard() {
             {loadingProfile ? "" : (
               <span className="flex items-center gap-2 flex-wrap">
                 {profile_?.status === "approved" ? (
-                  <Badge variant="secondary" className="text-xs gap-1 bg-emerald-100 text-emerald-800 border-emerald-200">
+                  <Badge variant="secondary" className="text-xs gap-1 bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50">
                     <CheckCircle2 className="h-3 w-3" /> Approved Vendor
                   </Badge>
                 ) : profile_?.status ? (
@@ -377,7 +377,7 @@ export default function VendorDashboard() {
                         <Badge className={`capitalize text-xs flex-shrink-0 ${
                           b.status === "in_escrow"
                             ? "bg-primary/10 text-primary border-primary/20"
-                            : "bg-blue-100 text-blue-800 border-blue-200"
+                            : "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50"
                         }`}>
                           {b.status.replace(/_/g, " ")}
                         </Badge>
@@ -500,14 +500,14 @@ export default function VendorDashboard() {
                   <div
                     key={b.id}
                     className={`flex items-center gap-4 p-3 rounded-xl border transition-all ${
-                      isUrgent ? "border-red-200 bg-red-50/50" :
-                      isSoon ? "border-amber-200 bg-amber-50/50" :
+                      isUrgent ? "border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20" :
+                      isSoon ? "border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20" :
                       "border-border bg-muted/10 hover:bg-muted/30"
                     }`}
                   >
                     <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center font-black text-xs ${
-                      isUrgent ? "bg-red-100 text-red-700" :
-                      isSoon ? "bg-amber-100 text-amber-700" :
+                      isUrgent ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400" :
+                      isSoon ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400" :
                       "bg-primary/10 text-primary"
                     }`}>
                       <span className="text-xl leading-none">{days === 0 ? "!" : days}</span>
@@ -522,7 +522,7 @@ export default function VendorDashboard() {
                     </div>
                     <div className="flex-shrink-0 text-right">
                       <p className="text-sm font-semibold">KES {Number(b.vendorPayoutAmount).toLocaleString()}</p>
-                      <Badge variant="outline" className={`text-[10px] mt-0.5 ${isUrgent ? "border-red-300 text-red-700" : isSoon ? "border-amber-300 text-amber-700" : ""}`}>
+                      <Badge variant="outline" className={`text-[10px] mt-0.5 ${isUrgent ? "border-red-300 text-red-700 dark:border-red-700 dark:text-red-400" : isSoon ? "border-amber-300 text-amber-700 dark:border-amber-700 dark:text-amber-400" : ""}`}>
                         {b.status.replace(/_/g, " ")}
                       </Badge>
                     </div>

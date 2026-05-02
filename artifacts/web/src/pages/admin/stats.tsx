@@ -111,10 +111,10 @@ export default function AdminStats() {
   }, [allBookings]);
 
   const statCards = [
-    { label: "Total Users", value: s?.totalUsers ?? 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-100" },
-    { label: "Total Vendors", value: s?.totalVendors ?? 0, icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50", border: "border-emerald-100" },
-    { label: "Total Events", value: s?.totalEvents ?? 0, icon: Calendar, color: "text-violet-600", bg: "bg-violet-50", border: "border-violet-100" },
-    { label: "Total Bookings", value: s?.totalBookings ?? 0, icon: Briefcase, color: "text-rose-600", bg: "bg-rose-50", border: "border-rose-100" },
+    { label: "Total Users", value: s?.totalUsers ?? 0, icon: Users, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-950/40", border: "border-blue-100 dark:border-blue-900/50" },
+    { label: "Total Vendors", value: s?.totalVendors ?? 0, icon: Building2, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40", border: "border-emerald-100 dark:border-emerald-900/50" },
+    { label: "Total Events", value: s?.totalEvents ?? 0, icon: Calendar, color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-950/40", border: "border-violet-100 dark:border-violet-900/50" },
+    { label: "Total Bookings", value: s?.totalBookings ?? 0, icon: Briefcase, color: "text-rose-600", bg: "bg-rose-50 dark:bg-rose-950/40", border: "border-rose-100 dark:border-rose-900/50" },
     {
       label: "Platform Revenue",
       value: s?.totalRevenue ? `KES ${Number(s.totalRevenue).toLocaleString()}` : "KES 0",
@@ -123,7 +123,7 @@ export default function AdminStats() {
       bg: "bg-primary/10",
       border: "border-primary/20",
     },
-    { label: "Active Events", value: s?.activeEvents ?? 0, icon: Clock, color: "text-amber-600", bg: "bg-amber-50", border: "border-amber-100" },
+    { label: "Active Events", value: s?.activeEvents ?? 0, icon: Clock, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/40", border: "border-amber-100 dark:border-amber-900/50" },
   ];
 
   return (
@@ -228,7 +228,7 @@ export default function AdminStats() {
                   count: s?.pendingVendors ?? 0,
                   icon: Clock,
                   color: "text-amber-600",
-                  bg: "bg-amber-50",
+                  bg: "bg-amber-50 dark:bg-amber-950/40",
                   bar: "bg-amber-400",
                   action: s?.pendingVendors > 0 ? "Review now" : null,
                   href: "/admin/vendors",
@@ -238,7 +238,7 @@ export default function AdminStats() {
                   count: s?.approvedVendors ?? 0,
                   icon: CheckCircle2,
                   color: "text-emerald-600",
-                  bg: "bg-emerald-50",
+                  bg: "bg-emerald-50 dark:bg-emerald-950/40",
                   bar: "bg-emerald-500",
                   action: null,
                   href: null,
@@ -248,7 +248,7 @@ export default function AdminStats() {
                   count: s?.rejectedVendors ?? 0,
                   icon: XCircle,
                   color: "text-red-500",
-                  bg: "bg-red-50",
+                  bg: "bg-red-50 dark:bg-red-950/40",
                   bar: "bg-red-400",
                   action: null,
                   href: null,
@@ -313,12 +313,12 @@ export default function AdminStats() {
               {recentActivity.map((item) => {
                 const cfg = {
                   booking_disputed:  { icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10" },
-                  booking_completed: { icon: CheckCircle2,  color: "text-emerald-600", bg: "bg-emerald-50" },
+                  booking_completed: { icon: CheckCircle2,  color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
                   booking_in_escrow: { icon: ShieldCheck,   color: "text-primary",     bg: "bg-primary/10" },
-                  booking_created:   { icon: Briefcase,     color: "text-blue-600",    bg: "bg-blue-50" },
-                  vendor_pending:    { icon: Clock,         color: "text-amber-600",   bg: "bg-amber-50" },
-                  vendor_approved:   { icon: UserCheck,     color: "text-emerald-600", bg: "bg-emerald-50" },
-                  vendor_rejected:   { icon: UserX,         color: "text-red-500",     bg: "bg-red-50" },
+                  booking_created:   { icon: Briefcase,     color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-950/40" },
+                  vendor_pending:    { icon: Clock,         color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-950/40" },
+                  vendor_approved:   { icon: UserCheck,     color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40" },
+                  vendor_rejected:   { icon: UserX,         color: "text-red-500",     bg: "bg-red-50 dark:bg-red-950/40" },
                 }[item.type] ?? { icon: Briefcase, color: "text-muted-foreground", bg: "bg-muted" };
                 const Icon = cfg.icon;
                 return (
@@ -360,13 +360,13 @@ export default function AdminStats() {
             </div>
           ) : (() => {
             const statusDefs: Array<{ key: string; label: string; icon: any; color: string; bg: string; bar: string }> = [
-              { key: "completed",  label: "Completed",      icon: CheckCircle2,  color: "text-emerald-600", bg: "bg-emerald-50",   bar: "bg-emerald-500" },
-              { key: "in_escrow",  label: "In Escrow",      icon: ShieldCheck,   color: "text-primary",     bg: "bg-primary/10",   bar: "bg-primary" },
-              { key: "confirmed",  label: "Confirmed",      icon: UserCheck,     color: "text-blue-600",    bg: "bg-blue-50",      bar: "bg-blue-500" },
-              { key: "pending",    label: "Pending Payment",icon: Clock,         color: "text-amber-600",   bg: "bg-amber-50",     bar: "bg-amber-400" },
-              { key: "disputed",   label: "Disputed",       icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10",bar: "bg-destructive" },
-              { key: "cancelled",  label: "Cancelled",      icon: XCircle,       color: "text-muted-foreground", bg: "bg-muted",   bar: "bg-muted-foreground/40" },
-              { key: "refunded",   label: "Refunded",       icon: XCircle,       color: "text-orange-600",  bg: "bg-orange-50",    bar: "bg-orange-400" },
+              { key: "completed",  label: "Completed",      icon: CheckCircle2,  color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/40",   bar: "bg-emerald-500" },
+              { key: "in_escrow",  label: "In Escrow",      icon: ShieldCheck,   color: "text-primary",     bg: "bg-primary/10",                          bar: "bg-primary" },
+              { key: "confirmed",  label: "Confirmed",      icon: UserCheck,     color: "text-blue-600",    bg: "bg-blue-50 dark:bg-blue-950/40",          bar: "bg-blue-500" },
+              { key: "pending",    label: "Pending Payment",icon: Clock,         color: "text-amber-600",   bg: "bg-amber-50 dark:bg-amber-950/40",        bar: "bg-amber-400" },
+              { key: "disputed",   label: "Disputed",       icon: AlertTriangle, color: "text-destructive", bg: "bg-destructive/10",                      bar: "bg-destructive" },
+              { key: "cancelled",  label: "Cancelled",      icon: XCircle,       color: "text-muted-foreground", bg: "bg-muted",                          bar: "bg-muted-foreground/40" },
+              { key: "refunded",   label: "Refunded",       icon: XCircle,       color: "text-orange-600",  bg: "bg-orange-50 dark:bg-orange-950/40",      bar: "bg-orange-400" },
             ];
             const counts = statusDefs.map(d => ({
               ...d,
@@ -402,10 +402,10 @@ export default function AdminStats() {
 
       {/* Quick admin actions */}
       <div className="grid sm:grid-cols-2 gap-5">
-        <Card className="shadow-sm border-amber-200 bg-amber-50/50">
+        <Card className="shadow-sm border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20">
           <CardContent className="p-6 flex items-start gap-4">
-            <div className="bg-amber-100 p-3 rounded-xl">
-              <Clock className="h-6 w-6 text-amber-700" />
+            <div className="bg-amber-100 dark:bg-amber-950/60 p-3 rounded-xl">
+              <Clock className="h-6 w-6 text-amber-700 dark:text-amber-400" />
             </div>
             <div className="flex-1">
               <p className="font-semibold text-amber-900">Pending Approvals</p>

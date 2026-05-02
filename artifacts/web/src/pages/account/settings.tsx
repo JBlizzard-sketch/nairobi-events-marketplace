@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
-  planner: { label: "Event Planner", color: "bg-blue-100 text-blue-800 border-blue-200" },
-  vendor: { label: "Vendor", color: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  admin: { label: "Administrator", color: "bg-violet-100 text-violet-800 border-violet-200" },
+  planner: { label: "Event Planner", color: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50" },
+  vendor: { label: "Vendor", color: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
+  admin: { label: "Administrator", color: "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700/50" },
 };
 
 const PORTAL_LINKS: Record<string, Array<{ href: string; icon: any; label: string; desc: string }>> = {
@@ -210,9 +210,9 @@ export default function AccountSettings() {
               </div>
 
               {status === "saved" && (
-                <Alert className="border-emerald-200 bg-emerald-50">
+                <Alert className="border-emerald-200 bg-emerald-50 dark:border-emerald-800/50 dark:bg-emerald-950/20">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <AlertDescription className="text-emerald-700 font-medium">
+                  <AlertDescription className="text-emerald-700 dark:text-emerald-400 font-medium">
                     Profile saved successfully.
                   </AlertDescription>
                 </Alert>

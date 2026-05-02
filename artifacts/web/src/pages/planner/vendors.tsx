@@ -242,7 +242,7 @@ export default function VendorsDirectory() {
                     onClick={e => { e.preventDefault(); e.stopPropagation(); toggle(vendor.id); }}
                     className={`absolute top-3 right-3 z-10 p-1.5 rounded-full transition-all ${
                       saved
-                        ? "bg-rose-50 text-rose-500 hover:bg-rose-100"
+                        ? "bg-rose-50 text-rose-500 hover:bg-rose-100 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50"
                         : "bg-muted/80 text-muted-foreground hover:bg-muted hover:text-rose-500 opacity-0 group-hover:opacity-100"
                     }`}
                     aria-label={saved ? "Remove from saved" : "Save vendor"}

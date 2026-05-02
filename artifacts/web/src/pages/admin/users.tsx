@@ -21,16 +21,16 @@ import {
 } from "lucide-react";
 
 const ROLE_CONFIG: Record<string, { label: string; className: string }> = {
-  planner: { label: "Planner", className: "bg-blue-100 text-blue-800 border-blue-200" },
-  vendor: { label: "Vendor", className: "bg-violet-100 text-violet-800 border-violet-200" },
-  admin: { label: "Admin", className: "bg-amber-100 text-amber-800 border-amber-200" },
+  planner: { label: "Planner", className: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50" },
+  vendor: { label: "Vendor", className: "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700/50" },
+  admin: { label: "Admin", className: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50" },
 };
 
 const VENDOR_STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  pending_review: { label: "Pending Review", className: "bg-amber-100 text-amber-800 border-amber-200" },
-  approved: { label: "Approved", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  rejected: { label: "Rejected", className: "bg-red-100 text-red-800 border-red-200" },
-  suspended: { label: "Suspended", className: "bg-red-200 text-red-900 border-red-300" },
+  pending_review: { label: "Pending Review", className: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50" },
+  approved: { label: "Approved", className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
+  rejected: { label: "Rejected", className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50" },
+  suspended: { label: "Suspended", className: "bg-red-200 text-red-900 border-red-300 dark:bg-red-900/40 dark:text-red-300 dark:border-red-700/60" },
 };
 
 function formatDate(d: string) {

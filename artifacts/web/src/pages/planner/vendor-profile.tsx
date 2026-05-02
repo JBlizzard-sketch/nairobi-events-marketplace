@@ -141,7 +141,7 @@ function VendorCtaSidebar({ vendor }: { vendor: any }) {
               onClick={() => toggle(vendor.id)}
               className={`w-full flex items-center justify-center gap-2 py-2 rounded-md border text-sm font-medium transition-all ${
                 saved
-                  ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
+                  ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400 dark:hover:bg-rose-950/50"
                   : "border-border bg-background text-muted-foreground hover:border-rose-300 hover:text-rose-500 hover:bg-rose-50/50"
               }`}
             >
@@ -190,7 +190,7 @@ function MobileCtaBar({ vendor }: { vendor: any }) {
           onClick={() => toggle(vendor.id)}
           className={`flex-shrink-0 flex items-center justify-center w-11 h-11 rounded-lg border transition-all ${
             saved
-              ? "border-rose-200 bg-rose-50 text-rose-500"
+              ? "border-rose-200 bg-rose-50 text-rose-500 dark:border-rose-800/50 dark:bg-rose-950/30 dark:text-rose-400"
               : "border-border bg-background text-muted-foreground hover:text-rose-500 hover:border-rose-300"
           }`}
           aria-label={saved ? "Remove from saved" : "Save vendor"}
@@ -269,11 +269,11 @@ export default function VendorProfile() {
               <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h1 className="text-3xl font-bold tracking-tight">{v.businessName}</h1>
                 {v.isPremium && (
-                  <Badge className="gap-1 bg-amber-100 text-amber-800 border-amber-200">
+                  <Badge className="gap-1 bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50">
                     <Award className="h-3.5 w-3.5" /> Premium
                   </Badge>
                 )}
-                <Badge className="gap-1 bg-emerald-100 text-emerald-800 border-emerald-200">
+                <Badge className="gap-1 bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50">
                   <ShieldCheck className="h-3.5 w-3.5" /> Verified
                 </Badge>
               </div>
@@ -320,7 +320,7 @@ export default function VendorProfile() {
             </Card>
             <Card className="shadow-sm">
               <CardContent className="p-5 flex items-center gap-3">
-                <div className="bg-amber-50 p-2.5 rounded-xl flex-shrink-0">
+                <div className="bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-xl flex-shrink-0">
                   <Star className="h-5 w-5 text-amber-500" />
                 </div>
                 <div>
@@ -333,7 +333,7 @@ export default function VendorProfile() {
             </Card>
             <Card className="shadow-sm">
               <CardContent className="p-5 flex items-center gap-3">
-                <div className="bg-violet-50 p-2.5 rounded-xl flex-shrink-0">
+                <div className="bg-violet-50 dark:bg-violet-950/40 p-2.5 rounded-xl flex-shrink-0">
                   <MessageSquare className="h-5 w-5 text-violet-500" />
                 </div>
                 <div>

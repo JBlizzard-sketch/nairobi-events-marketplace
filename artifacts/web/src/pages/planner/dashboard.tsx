@@ -70,10 +70,10 @@ function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
 const EVENT_STATUS_BADGE: Record<string, { label: string; variant: any; className?: string }> = {
   draft: { label: "Draft", variant: "outline" },
   brief_submitted: { label: "Brief Sent", variant: "outline" },
-  quotes_requested: { label: "Awaiting Quotes", variant: "outline", className: "border-amber-300 text-amber-700 bg-amber-50" },
+  quotes_requested: { label: "Awaiting Quotes", variant: "outline", className: "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:bg-amber-950/30" },
   quotes_received: { label: "Quotes Ready", variant: "default", className: "bg-primary text-primary-foreground" },
   vendor_selected: { label: "Vendor Chosen", variant: "secondary" },
-  booked: { label: "Booked", variant: "secondary", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  booked: { label: "Booked", variant: "secondary", className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50" },
   completed: { label: "Completed", variant: "secondary" },
   cancelled: { label: "Cancelled", variant: "destructive" },
 };
@@ -212,7 +212,7 @@ export default function PlannerDashboard() {
         <Card className="shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="bg-amber-50 p-2.5 rounded-lg">
+              <div className="bg-amber-50 dark:bg-amber-950/40 p-2.5 rounded-lg">
                 <Clock className="h-5 w-5 text-amber-600" />
               </div>
               <div>
@@ -228,7 +228,7 @@ export default function PlannerDashboard() {
         <Card className="shadow-sm">
           <CardContent className="p-5">
             <div className="flex items-center gap-3">
-              <div className="bg-emerald-50 p-2.5 rounded-lg">
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-lg">
                 <Briefcase className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
@@ -246,13 +246,13 @@ export default function PlannerDashboard() {
       {!loadingEvents && nextEvent && daysToNext !== null && daysToNext <= 30 && (
         <Link href={`/events/${nextEvent.id}`}>
           <div className={`rounded-xl border p-4 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all ${
-            daysToNext <= 7 ? "border-red-200 bg-red-50" :
-            daysToNext <= 14 ? "border-amber-200 bg-amber-50" :
+            daysToNext <= 7 ? "border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20" :
+            daysToNext <= 14 ? "border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/20" :
             "border-primary/20 bg-primary/5"
           }`}>
             <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center font-black ${
-              daysToNext <= 7 ? "bg-red-100 text-red-700" :
-              daysToNext <= 14 ? "bg-amber-100 text-amber-700" :
+              daysToNext <= 7 ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400" :
+              daysToNext <= 14 ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400" :
               "bg-primary/10 text-primary"
             }`}>
               <span className="text-2xl leading-none">{daysToNext}</span>

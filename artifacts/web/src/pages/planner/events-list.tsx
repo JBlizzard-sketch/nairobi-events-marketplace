@@ -43,10 +43,10 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_BADGE: Record<string, { variant: any; className?: string }> = {
   draft: { variant: "outline" },
   brief_submitted: { variant: "outline" },
-  quotes_requested: { variant: "outline", className: "border-amber-300 text-amber-700 bg-amber-50" },
+  quotes_requested: { variant: "outline", className: "border-amber-300 text-amber-700 bg-amber-50 dark:border-amber-700 dark:text-amber-400 dark:bg-amber-950/30" },
   quotes_received: { variant: "default", className: "bg-primary text-primary-foreground" },
   vendor_selected: { variant: "secondary" },
-  booked: { variant: "secondary", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  booked: { variant: "secondary", className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
   completed: { variant: "secondary" },
   cancelled: { variant: "destructive" },
 };

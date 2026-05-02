@@ -130,7 +130,7 @@ export default function BookingsList() {
       {/* Summary stats bar */}
       {!isLoading && list.length > 0 && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div className={`rounded-xl border p-4 ${pendingCount > 0 ? "border-amber-200 bg-amber-50" : "border-border bg-card"}`}>
+          <div className={`rounded-xl border p-4 ${pendingCount > 0 ? "border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/20" : "border-border bg-card"}`}>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Payment</p>
             <p className={`text-2xl font-bold mt-1 ${pendingCount > 0 ? "text-amber-700" : "text-foreground"}`}>
               {pendingCount}
@@ -148,7 +148,7 @@ export default function BookingsList() {
               <p className="text-xs text-primary/80 font-medium mt-0.5">Held securely</p>
             )}
           </div>
-          <div className={`rounded-xl border p-4 ${reviewDueCount > 0 ? "border-amber-200 bg-amber-50" : "border-border bg-card"}`}>
+          <div className={`rounded-xl border p-4 ${reviewDueCount > 0 ? "border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/20" : "border-border bg-card"}`}>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Reviews Due</p>
             <p className={`text-2xl font-bold mt-1 ${reviewDueCount > 0 ? "text-amber-700" : "text-foreground"}`}>
               {reviewDueCount}
@@ -157,7 +157,7 @@ export default function BookingsList() {
               <p className="text-xs text-amber-600 font-medium mt-0.5">Help future planners</p>
             )}
           </div>
-          <div className="rounded-xl border p-4 border-emerald-100 bg-emerald-50/40">
+          <div className="rounded-xl border p-4 border-emerald-100 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Total Committed</p>
             <p className="text-2xl font-bold mt-1 text-emerald-700">
               {totalSpent > 0 ? `KES ${(totalSpent / 1000).toFixed(0)}K` : "—"}
@@ -197,16 +197,16 @@ export default function BookingsList() {
                 key={booking.id}
                 className={`flex items-start justify-between p-5 rounded-xl border bg-card transition-all group ${
                   isDisputed
-                    ? "border-red-200 bg-red-50/30"
+                    ? "border-red-200 bg-red-50/30 dark:border-red-900/50 dark:bg-red-950/15"
                     : isPending
-                    ? "border-amber-200 bg-amber-50/20 hover:border-amber-300 hover:shadow-sm"
+                    ? "border-amber-200 bg-amber-50/20 hover:border-amber-300 hover:shadow-sm dark:border-amber-800/50 dark:bg-amber-950/10"
                     : isCompleted
-                    ? "border-emerald-100 hover:border-emerald-200 hover:shadow-sm"
+                    ? "border-emerald-100 hover:border-emerald-200 hover:shadow-sm dark:border-emerald-900/50"
                     : "hover:border-primary/40 hover:shadow-md"
                 } cursor-pointer`}
               >
                 <Link href={`/bookings/${booking.id}`} className="flex items-start gap-4 min-w-0 flex-1">
-                  <div className={`p-2.5 rounded-lg flex-shrink-0 ${isDisputed ? "bg-red-100" : isPending ? "bg-amber-50" : "bg-muted/60"}`}>
+                  <div className={`p-2.5 rounded-lg flex-shrink-0 ${isDisputed ? "bg-red-100 dark:bg-red-950/50" : isPending ? "bg-amber-50 dark:bg-amber-950/30" : "bg-muted/60"}`}>
                     <Icon className={`h-5 w-5 ${isDisputed ? "text-red-500" : isPending ? "text-amber-600" : "text-muted-foreground"}`} />
                   </div>
 
@@ -224,7 +224,7 @@ export default function BookingsList() {
                         </Badge>
                       )}
                       {isCompleted && (
-                        <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-xs gap-1">
+                        <Badge className="bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/30 dark:text-amber-400 dark:border-amber-800/50 text-xs gap-1">
                           <Star className="h-3 w-3 fill-amber-400 text-amber-400" /> Review Due
                         </Badge>
                       )}

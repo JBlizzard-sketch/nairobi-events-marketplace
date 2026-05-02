@@ -59,15 +59,15 @@ export default function RoleSelect() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-lg border border-amber-100 w-full max-w-lg p-8">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20 dark:bg-background flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-card rounded-2xl shadow-lg border border-amber-100 dark:border-border w-full max-w-lg p-8">
         {/* Logo + header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-amber-500 rounded-xl mb-4">
             <span className="text-white text-2xl font-bold">N</span>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">How will you use Nairobi Events?</h1>
-          <p className="text-gray-500 mt-2 text-sm">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-foreground">How will you use Nairobi Events?</h1>
+          <p className="text-gray-500 dark:text-muted-foreground mt-2 text-sm">
             Choose your role — you can always contact us to change it later.
           </p>
         </div>
@@ -78,17 +78,17 @@ export default function RoleSelect() {
             onClick={() => setSelectedRole("planner")}
             className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
               selectedRole === "planner"
-                ? "border-amber-500 bg-amber-50"
-                : "border-gray-200 hover:border-amber-300 hover:bg-amber-50/30"
+                ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                : "border-gray-200 dark:border-border hover:border-amber-300 hover:bg-amber-50/30 dark:hover:bg-amber-950/20"
             }`}
           >
             <div className="flex items-start gap-4">
-              <div className={`p-2.5 rounded-lg ${selectedRole === "planner" ? "bg-amber-500" : "bg-amber-100"}`}>
+              <div className={`p-2.5 rounded-lg ${selectedRole === "planner" ? "bg-amber-500" : "bg-amber-100 dark:bg-amber-950/40"}`}>
                 <Calendar className={`h-5 w-5 ${selectedRole === "planner" ? "text-white" : "text-amber-600"}`} />
               </div>
               <div>
-                <div className="font-semibold text-gray-900">Event Planner</div>
-                <div className="text-sm text-gray-500 mt-0.5">
+                <div className="font-semibold text-gray-900 dark:text-foreground">Event Planner</div>
+                <div className="text-sm text-gray-500 dark:text-muted-foreground mt-0.5">
                   Submit event briefs and receive competing quotes from vetted vendors within 4 hours.
                 </div>
               </div>
@@ -99,17 +99,17 @@ export default function RoleSelect() {
             onClick={() => setSelectedRole("vendor")}
             className={`w-full text-left p-5 rounded-xl border-2 transition-all ${
               selectedRole === "vendor"
-                ? "border-amber-500 bg-amber-50"
-                : "border-gray-200 hover:border-amber-300 hover:bg-amber-50/30"
+                ? "border-amber-500 bg-amber-50 dark:bg-amber-950/30"
+                : "border-gray-200 dark:border-border hover:border-amber-300 hover:bg-amber-50/30 dark:hover:bg-amber-950/20"
             }`}
           >
             <div className="flex items-start gap-4">
-              <div className={`p-2.5 rounded-lg ${selectedRole === "vendor" ? "bg-amber-500" : "bg-amber-100"}`}>
+              <div className={`p-2.5 rounded-lg ${selectedRole === "vendor" ? "bg-amber-500" : "bg-amber-100 dark:bg-amber-950/40"}`}>
                 <Briefcase className={`h-5 w-5 ${selectedRole === "vendor" ? "text-white" : "text-amber-600"}`} />
               </div>
               <div>
-                <div className="font-semibold text-gray-900">Event Vendor</div>
-                <div className="text-sm text-gray-500 mt-0.5">
+                <div className="font-semibold text-gray-900 dark:text-foreground">Event Vendor</div>
+                <div className="text-sm text-gray-500 dark:text-muted-foreground mt-0.5">
                   Get matched with planners looking for your services and grow your events business.
                 </div>
               </div>
@@ -118,7 +118,7 @@ export default function RoleSelect() {
         </div>
 
         {error && (
-          <div className="mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm">
+          <div className="mb-4 p-3 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 text-red-700 dark:text-red-400 text-sm">
             {error}
           </div>
         )}

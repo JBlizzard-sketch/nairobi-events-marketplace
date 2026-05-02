@@ -49,7 +49,7 @@ const VALUE_PROPS = [
     title: "Vetted vendors only",
     desc: "Every vendor on the platform is individually reviewed and approved by our team before they can receive a single quote request.",
     color: "text-emerald-600",
-    bg: "bg-emerald-50",
+    bg: "bg-emerald-50 dark:bg-emerald-950/40",
   },
   {
     icon: Zap,
@@ -63,7 +63,7 @@ const VALUE_PROPS = [
     title: "Escrow-protected payments",
     desc: "Your money is held securely in escrow and only released to the vendor after you confirm the service was delivered as promised.",
     color: "text-violet-600",
-    bg: "bg-violet-50",
+    bg: "bg-violet-50 dark:bg-violet-950/40",
   },
 ];
 
@@ -73,21 +73,21 @@ const TESTIMONIALS = [
     author: "Wanjiru M.",
     role: "Events Manager, Safaricom PLC",
     initials: "WM",
-    color: "bg-emerald-100 text-emerald-800",
+    color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
   },
   {
     quote: "The structured quoting format means we can actually compare apples to apples. No more guessing what's included.",
     author: "David K.",
     role: "Corporate Affairs, KCB Group",
     initials: "DK",
-    color: "bg-blue-100 text-blue-800",
+    color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
   },
   {
     quote: "As a catering vendor, this platform has tripled our corporate bookings. The escrow payment gives us confidence too.",
     author: "Amina A.",
     role: "Owner, Savanna Catering Co.",
     initials: "AA",
-    color: "bg-amber-100 text-amber-800",
+    color: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   },
 ];
 
@@ -346,7 +346,7 @@ export default function Landing() {
             {/* Vendors */}
             <div className="bg-card border border-border rounded-2xl p-8 shadow-sm flex flex-col">
               <div className="mb-6">
-                <div className="bg-emerald-50 w-11 h-11 rounded-xl flex items-center justify-center mb-4">
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 w-11 h-11 rounded-xl flex items-center justify-center mb-4">
                   <Zap className="h-6 w-6 text-emerald-600" />
                 </div>
                 <h3 className="text-2xl font-black mb-1">For Vendors</h3>

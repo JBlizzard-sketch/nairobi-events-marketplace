@@ -544,12 +544,12 @@ export default function BookingDetail() {
 
       {/* ── COMPLETED: review prompt ── */}
       {b.status === "completed" && !reviewOpen && (
-        <Card className="shadow-sm border-green-200 bg-green-50/40">
+        <Card className="shadow-sm border-green-200 bg-green-50/40 dark:border-green-800/50 dark:bg-green-950/20">
           <CardContent className="pt-5 text-center space-y-3">
             <CheckCircle2 className="h-10 w-10 text-green-600 mx-auto" />
             <div>
-              <p className="font-semibold text-green-800">Event completed!</p>
-              <p className="text-sm text-green-700/80 mt-0.5">
+              <p className="font-semibold text-green-800 dark:text-green-300">Event completed!</p>
+              <p className="text-sm text-green-700/80 dark:text-green-400/80 mt-0.5">
                 KES {Number(b.vendorPayoutAmount).toLocaleString()} has been released to the vendor.
               </p>
             </div>

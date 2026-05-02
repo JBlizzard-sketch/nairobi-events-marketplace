@@ -225,14 +225,14 @@ export default function VendorAnalytics() {
           label="Response Rate"
           value={`${responseRate}%`}
           sub={`${respondedRequests.length} of ${requests.length} requests`}
-          accent="bg-violet-50"
+          accent="bg-violet-50 dark:bg-violet-950/40"
         />
         <KpiCard
           icon={Trophy}
           label="Win Rate"
           value={`${winRate}%`}
           sub="quotes accepted"
-          accent="bg-amber-50"
+          accent="bg-amber-50 dark:bg-amber-950/40"
         />
         <KpiCard
           icon={Star}
@@ -241,7 +241,7 @@ export default function VendorAnalytics() {
             ? Number(profile.averageRating).toFixed(1)
             : "—"}
           sub={`${profile?.totalReviews ?? 0} reviews`}
-          accent="bg-emerald-50"
+          accent="bg-emerald-50 dark:bg-emerald-950/40"
         />
       </div>
 
@@ -399,7 +399,7 @@ export default function VendorAnalytics() {
           insights.push({
             icon: TrendingUp,
             color: up ? "text-emerald-600" : "text-red-500",
-            bg: up ? "bg-emerald-50" : "bg-red-50",
+            bg: up ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-red-50 dark:bg-red-950/40",
             text: up
               ? `Revenue up ${trendPct}% vs last month`
               : `Revenue down ${Math.abs(trendPct)}% vs last month`,
@@ -409,7 +409,7 @@ export default function VendorAnalytics() {
           insights.push({
             icon: Target,
             color: "text-violet-600",
-            bg: "bg-violet-50",
+            bg: "bg-violet-50 dark:bg-violet-950/40",
             text: `${acceptanceRate}% of received requests converted to completed bookings`,
           });
         }
@@ -417,7 +417,7 @@ export default function VendorAnalytics() {
           insights.push({
             icon: Trophy,
             color: "text-amber-600",
-            bg: "bg-amber-50",
+            bg: "bg-amber-50 dark:bg-amber-950/40",
             text: `Best month: ${bestMonth.label} (${formatKES(bestMonth.Revenue)})`,
           });
         }

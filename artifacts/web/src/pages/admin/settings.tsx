@@ -203,7 +203,7 @@ export default function AdminSettings() {
             <Label htmlFor="maintenance-msg" className="font-medium">
               Maintenance Message
             </Label>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-muted-foreground">
               This message will be displayed to users while the platform is in maintenance mode.
             </p>
             <Textarea

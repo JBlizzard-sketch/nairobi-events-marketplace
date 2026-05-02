@@ -42,12 +42,12 @@ function exportBookingsCSV(bookings: any[]) {
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; className: string }> = {
   pending: { label: "Pending Payment", icon: Clock, className: "bg-muted text-muted-foreground" },
-  confirmed: { label: "Confirmed", icon: CheckCircle2, className: "bg-blue-100 text-blue-800 border-blue-200" },
+  confirmed: { label: "Confirmed", icon: CheckCircle2, className: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50" },
   in_escrow: { label: "In Escrow", icon: ShieldCheck, className: "bg-primary/10 text-primary border-primary/20" },
-  completed: { label: "Completed", icon: CheckCircle2, className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  disputed: { label: "Disputed", icon: AlertTriangle, className: "bg-red-100 text-red-800 border-red-200" },
+  completed: { label: "Completed", icon: CheckCircle2, className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
+  disputed: { label: "Disputed", icon: AlertTriangle, className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50" },
   cancelled: { label: "Cancelled", icon: XCircle, className: "bg-muted text-muted-foreground" },
-  refunded: { label: "Refunded", icon: XCircle, className: "bg-orange-100 text-orange-800 border-orange-200" },
+  refunded: { label: "Refunded", icon: XCircle, className: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-700/50" },
 };
 
 const STATUS_OPTIONS = ["pending", "confirmed", "in_escrow", "completed", "disputed", "cancelled", "refunded"];
@@ -92,8 +92,8 @@ function ResolveDisputeDialog({ bookingId, bookingRef, open, onClose, onResolved
       <DialogContent className="max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-2 mb-1">
-            <div className="p-2 bg-amber-100 rounded-lg">
-              <Gavel className="h-5 w-5 text-amber-700" />
+            <div className="p-2 bg-amber-100 dark:bg-amber-950/50 rounded-lg">
+              <Gavel className="h-5 w-5 text-amber-700 dark:text-amber-400" />
             </div>
             <DialogTitle>Resolve Dispute</DialogTitle>
           </div>
@@ -112,7 +112,7 @@ function ResolveDisputeDialog({ bookingId, bookingRef, open, onClose, onResolved
                 onClick={() => setResolution("completed")}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   resolution === "completed"
-                    ? "border-emerald-500 bg-emerald-50"
+                    ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30"
                     : "border-border bg-card hover:border-emerald-300"
                 }`}
               >
@@ -127,7 +127,7 @@ function ResolveDisputeDialog({ bookingId, bookingRef, open, onClose, onResolved
                 onClick={() => setResolution("refunded")}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
                   resolution === "refunded"
-                    ? "border-orange-500 bg-orange-50"
+                    ? "border-orange-500 bg-orange-50 dark:bg-orange-950/30"
                     : "border-border bg-card hover:border-orange-300"
                 }`}
               >
@@ -229,7 +229,7 @@ export default function AdminBookings() {
               <p className="text-2xl font-bold text-primary">KES {totalFees.toLocaleString()}</p>
             </CardContent>
           </Card>
-          <Card className={`shadow-sm ${disputedCount > 0 ? "border-red-200 bg-red-50/30" : "border-border"}`}>
+          <Card className={`shadow-sm ${disputedCount > 0 ? "border-red-200 bg-red-50/30 dark:border-red-900/50 dark:bg-red-950/15" : "border-border"}`}>
             <CardContent className="p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Disputes</p>
               <p className={`text-2xl font-bold ${disputedCount > 0 ? "text-red-600" : ""}`}>{disputedCount}</p>
@@ -292,11 +292,11 @@ export default function AdminBookings() {
             const isDisputed = b.status === "disputed";
 
             return (
-              <Card key={b.id} className={`shadow-sm ${isDisputed ? "border-red-200 bg-red-50/30" : ""}`}>
+              <Card key={b.id} className={`shadow-sm ${isDisputed ? "border-red-200 bg-red-50/30 dark:border-red-900/50 dark:bg-red-950/15" : ""}`}>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex items-start gap-3 min-w-0 flex-1">
-                      <div className={`p-2.5 rounded-lg flex-shrink-0 ${isDisputed ? "bg-red-100" : "bg-muted/60"}`}>
+                      <div className={`p-2.5 rounded-lg flex-shrink-0 ${isDisputed ? "bg-red-100 dark:bg-red-950/50" : "bg-muted/60"}`}>
                         <Icon className={`h-5 w-5 ${isDisputed ? "text-red-600" : "text-muted-foreground"}`} />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -343,7 +343,7 @@ export default function AdminBookings() {
                         </div>
 
                         {isDisputed && b.cancellationReason && (
-                          <div className="mt-2 text-xs text-red-700 bg-red-50 border border-red-200 rounded-md px-2.5 py-1.5">
+                          <div className="mt-2 text-xs text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-md px-2.5 py-1.5">
                             Dispute reason: {b.cancellationReason}
                           </div>
                         )}

@@ -58,7 +58,7 @@ function useCountdown(expiresAt: string | null | undefined): { text: string; urg
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   requested: { label: "New Request", className: "bg-primary text-primary-foreground" },
-  submitted: { label: "Quote Sent", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  submitted: { label: "Quote Sent", className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
   expired: { label: "Expired", className: "bg-muted text-muted-foreground" },
 };
 
@@ -134,8 +134,8 @@ function RequestCard({
             {countdown && (
               <div className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded-md px-2.5 py-1.5 mt-2.5 border ${
                 countdown.urgent
-                  ? "text-red-700 bg-red-50 border-red-200"
-                  : "text-amber-700 bg-amber-50 border-amber-200"
+                  ? "text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950/30 dark:border-red-800/50"
+                  : "text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-400 dark:bg-amber-950/30 dark:border-amber-800/50"
               }`}>
                 <Timer className="h-3 w-3" />
                 {countdown.text}

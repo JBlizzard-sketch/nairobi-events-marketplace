@@ -80,28 +80,28 @@ const SCORE_LEVELS = [
     label: "Excellent",
     desc: "Your profile stands out to planners — submit for review.",
     bar: "bg-emerald-500",
-    badge: "bg-emerald-100 text-emerald-800 border-emerald-200",
+    badge: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50",
   },
   {
     min: 70,
     label: "Good",
     desc: "Competitive profile. Add a few more details to maximise approval chances.",
     bar: "bg-blue-500",
-    badge: "bg-blue-100 text-blue-800 border-blue-200",
+    badge: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50",
   },
   {
     min: 40,
     label: "Getting there",
     desc: "Keep filling in the sections below to strengthen your profile.",
     bar: "bg-amber-500",
-    badge: "bg-amber-100 text-amber-800 border-amber-200",
+    badge: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50",
   },
   {
     min: 0,
     label: "Incomplete",
     desc: "Complete your profile before submitting for review.",
     bar: "bg-red-500",
-    badge: "bg-red-100 text-red-800 border-red-200",
+    badge: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50",
   },
 ];
 

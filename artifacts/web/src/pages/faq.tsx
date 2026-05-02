@@ -61,7 +61,7 @@ const SECTIONS: FaqSection[] = [
   {
     id: "vendors",
     label: "For Vendors",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    color: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/50",
     items: [
       {
         q: "How do I join as a vendor?",
@@ -100,7 +100,7 @@ const SECTIONS: FaqSection[] = [
   {
     id: "payments",
     label: "Payments & Escrow",
-    color: "bg-violet-50 text-violet-700 border-violet-200",
+    color: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-400 dark:border-violet-800/50",
     items: [
       {
         q: "What is escrow and why do you use it?",
@@ -135,7 +135,7 @@ const SECTIONS: FaqSection[] = [
   {
     id: "platform",
     label: "Platform & Account",
-    color: "bg-amber-50 text-amber-700 border-amber-200",
+    color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/50",
     items: [
       {
         q: "How are vendors vetted?",

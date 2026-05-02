@@ -12,13 +12,13 @@ import {
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft:           { label: "Draft",             className: "bg-muted text-muted-foreground" },
-  brief_submitted: { label: "Brief Submitted",   className: "bg-blue-100 text-blue-800 border-blue-200" },
-  quotes_requested:{ label: "Quotes Requested",  className: "bg-amber-100 text-amber-800 border-amber-200" },
+  brief_submitted: { label: "Brief Submitted",   className: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50" },
+  quotes_requested:{ label: "Quotes Requested",  className: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50" },
   quotes_received: { label: "Quotes In",         className: "bg-primary/10 text-primary border-primary/20" },
-  vendor_selected: { label: "Vendor Chosen",     className: "bg-violet-100 text-violet-800 border-violet-200" },
-  booked:          { label: "Booked",            className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  completed:       { label: "Completed",         className: "bg-green-100 text-green-800 border-green-200" },
-  cancelled:       { label: "Cancelled",         className: "bg-red-100 text-red-800 border-red-200" },
+  vendor_selected: { label: "Vendor Chosen",     className: "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700/50" },
+  booked:          { label: "Booked",            className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
+  completed:       { label: "Completed",         className: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50" },
+  cancelled:       { label: "Cancelled",         className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50" },
 };
 
 function formatDate(d: string) {
@@ -91,7 +91,7 @@ export default function AdminEventDetail() {
             <div className="flex items-center gap-2 mt-2 flex-wrap">
               <Badge className={`text-xs ${statusCfg.className}`}>{statusCfg.label}</Badge>
               {ev.isEmergency && (
-                <Badge className="bg-red-100 text-red-800 border-red-200 text-xs gap-1">
+                <Badge className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50 text-xs gap-1">
                   <AlertTriangle className="h-3 w-3" /> Emergency
                 </Badge>
               )}
@@ -119,11 +119,11 @@ export default function AdminEventDetail() {
             </div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm border-emerald-200 bg-emerald-50/30">
+        <Card className="shadow-sm border-emerald-200 bg-emerald-50/30 dark:border-emerald-900/50 dark:bg-emerald-950/15">
           <CardContent className="p-4 flex items-center gap-3">
             <Briefcase className="h-5 w-5 text-emerald-600 flex-shrink-0" />
             <div>
-              <p className="text-2xl font-black text-emerald-700">{ev.bookingCount ?? 0}</p>
+              <p className="text-2xl font-black text-emerald-700 dark:text-emerald-400">{ev.bookingCount ?? 0}</p>
               <p className="text-xs text-muted-foreground">Booking{ev.bookingCount !== 1 ? "s" : ""}</p>
             </div>
           </CardContent>

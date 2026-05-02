@@ -275,13 +275,13 @@ export default function EventNew() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
                 <Checkbox
                   id="emergency"
                   checked={form.isEmergency}
                   onCheckedChange={v => set("isEmergency", !!v)}
                 />
-                <Label htmlFor="emergency" className="cursor-pointer text-amber-900">
+                <Label htmlFor="emergency" className="cursor-pointer text-amber-900 dark:text-amber-300">
                   Emergency booking — I need vendors within 24 hours
                 </Label>
               </div>
@@ -392,11 +392,11 @@ export default function EventNew() {
 
               {/* AI Budget Advisor */}
               {form.servicesNeeded.length > 0 && (
-                <div className="rounded-xl border border-amber-200 bg-amber-50/60 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/60">
+                <div className="rounded-xl border border-amber-200 dark:border-amber-800/50 bg-amber-50/60 dark:bg-amber-950/20 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-amber-200/60 dark:border-amber-800/40">
                     <div className="flex items-center gap-2">
                       <Sparkles className="h-4 w-4 text-amber-600" />
-                      <span className="text-sm font-semibold text-amber-900">AI Budget Advisor</span>
+                      <span className="text-sm font-semibold text-amber-900 dark:text-amber-300">AI Budget Advisor</span>
                     </div>
                     <div className="flex items-center gap-2">
                       {aiResult && (
@@ -426,7 +426,7 @@ export default function EventNew() {
                   </div>
 
                   {budgetOptimize.isPending && (
-                    <div className="px-4 py-6 flex flex-col items-center gap-2 text-amber-700">
+                    <div className="px-4 py-6 flex flex-col items-center gap-2 text-amber-700 dark:text-amber-400">
                       <Loader2 className="h-6 w-6 animate-spin" />
                       <p className="text-sm">Analysing {form.servicesNeeded.length} services for {form.guestCount} guests in {form.city}…</p>
                     </div>
@@ -436,8 +436,8 @@ export default function EventNew() {
                     <div className="px-4 py-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs text-amber-700 uppercase tracking-wider font-medium">Suggested Total Budget</p>
-                          <p className="text-lg font-bold text-amber-900">
+                          <p className="text-xs text-amber-700 dark:text-amber-400 uppercase tracking-wider font-medium">Suggested Total Budget</p>
+                          <p className="text-lg font-bold text-amber-900 dark:text-amber-300">
                             KES {Number(aiResult.suggestedMin).toLocaleString()} – {Number(aiResult.suggestedMax).toLocaleString()}
                           </p>
                         </div>
@@ -454,15 +454,15 @@ export default function EventNew() {
 
                       <div className="space-y-2">
                         {aiResult.breakdown.map(item => (
-                          <div key={item.service} className="flex items-start gap-3 bg-white/70 rounded-lg px-3 py-2.5 border border-amber-100">
+                          <div key={item.service} className="flex items-start gap-3 bg-white/70 dark:bg-amber-950/20 rounded-lg px-3 py-2.5 border border-amber-100 dark:border-amber-800/40">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center justify-between gap-2">
-                                <span className="text-sm font-medium text-gray-800">{item.label}</span>
-                                <span className="text-sm font-semibold text-amber-800 whitespace-nowrap">
+                                <span className="text-sm font-medium text-gray-800 dark:text-amber-200">{item.label}</span>
+                                <span className="text-sm font-semibold text-amber-800 dark:text-amber-300 whitespace-nowrap">
                                   KES {Number(item.amount).toLocaleString()}
                                 </span>
                               </div>
-                              <div className="mt-1.5 h-1.5 rounded-full bg-amber-100 overflow-hidden">
+                              <div className="mt-1.5 h-1.5 rounded-full bg-amber-100 dark:bg-amber-900/50 overflow-hidden">
                                 <div
                                   className="h-full rounded-full bg-amber-500"
                                   style={{ width: `${item.percentage}%` }}
@@ -470,18 +470,18 @@ export default function EventNew() {
                               </div>
                               <p className="text-xs text-muted-foreground mt-1.5">{item.rationale}</p>
                             </div>
-                            <span className="text-xs text-amber-600 font-medium shrink-0 pt-0.5">{item.percentage}%</span>
+                            <span className="text-xs text-amber-600 dark:text-amber-400 font-medium shrink-0 pt-0.5">{item.percentage}%</span>
                           </div>
                         ))}
                       </div>
 
                       {aiResult.tips.length > 0 && (
                         <div className="space-y-1.5">
-                          <p className="text-xs font-semibold text-amber-800 uppercase tracking-wider">Cost-saving tips</p>
+                          <p className="text-xs font-semibold text-amber-800 dark:text-amber-300 uppercase tracking-wider">Cost-saving tips</p>
                           <ul className="space-y-1">
                             {aiResult.tips.map((tip, i) => (
-                              <li key={i} className="flex items-start gap-2 text-xs text-amber-900">
-                                <span className="text-amber-500 mt-0.5 shrink-0">•</span>
+                              <li key={i} className="flex items-start gap-2 text-xs text-amber-900 dark:text-amber-300">
+                                <span className="text-amber-500 dark:text-amber-400 mt-0.5 shrink-0">•</span>
                                 {tip}
                               </li>
                             ))}
@@ -492,7 +492,7 @@ export default function EventNew() {
                   )}
 
                   {!aiResult && !budgetOptimize.isPending && (
-                    <div className="px-4 py-3 text-xs text-amber-700">
+                    <div className="px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
                       Get Nairobi market-rate estimates for your {form.servicesNeeded.length} selected service{form.servicesNeeded.length > 1 ? "s" : ""} based on {form.guestCount} guests.
                     </div>
                   )}

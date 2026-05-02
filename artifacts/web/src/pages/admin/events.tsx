@@ -44,13 +44,13 @@ function exportEventsCsv(events: any[]) {
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: { label: "Draft", className: "bg-muted text-muted-foreground" },
-  brief_submitted: { label: "Brief Sent", className: "bg-blue-100 text-blue-800 border-blue-200" },
-  quotes_requested: { label: "Quotes Requested", className: "bg-amber-100 text-amber-800 border-amber-200" },
+  brief_submitted: { label: "Brief Sent", className: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-700/50" },
+  quotes_requested: { label: "Quotes Requested", className: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-700/50" },
   quotes_received: { label: "Quotes In", className: "bg-primary/10 text-primary border-primary/20" },
-  vendor_selected: { label: "Vendor Chosen", className: "bg-violet-100 text-violet-800 border-violet-200" },
-  booked: { label: "Booked", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
-  completed: { label: "Completed", className: "bg-green-100 text-green-800 border-green-200" },
-  cancelled: { label: "Cancelled", className: "bg-red-100 text-red-800 border-red-200" },
+  vendor_selected: { label: "Vendor Chosen", className: "bg-violet-100 text-violet-800 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-700/50" },
+  booked: { label: "Booked", className: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-700/50" },
+  completed: { label: "Completed", className: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-700/50" },
+  cancelled: { label: "Cancelled", className: "bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50" },
 };
 
 const STATUS_OPTIONS = [
@@ -217,7 +217,7 @@ export default function AdminEvents() {
               >
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${isEmergency ? "bg-red-50" : "bg-muted/50"}`}>
+                    <div className={`flex-shrink-0 p-2.5 rounded-lg ${isEmergency ? "bg-red-50 dark:bg-red-950/40" : "bg-muted/50"}`}>
                       <FileText className={`h-5 w-5 ${isEmergency ? "text-red-500" : "text-muted-foreground"}`} />
                     </div>
 
@@ -225,7 +225,7 @@ export default function AdminEvents() {
                       <div className="flex items-center gap-2 flex-wrap mb-1.5">
                         <h3 className="font-semibold text-foreground">{ev.title}</h3>
                         {isEmergency && (
-                          <Badge className="bg-red-100 text-red-800 border-red-200 text-xs gap-1">
+                          <Badge className="bg-red-100 text-red-800 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50 text-xs gap-1">
                             <AlertTriangle className="h-3 w-3" /> Emergency
                           </Badge>
                         )}
