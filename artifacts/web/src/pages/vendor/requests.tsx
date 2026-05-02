@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   FileText, Plus, Trash2, Users, MapPin, Calendar,
   Wallet, ChevronDown, ChevronUp, CheckCircle2, Timer,
-  BookTemplate, X, MinusCircle, ArrowUpDown, Eye, EyeOff,
+  BookTemplate, X, MinusCircle, ArrowUpDown, Eye, EyeOff, AlertTriangle,
 } from "lucide-react";
 import { useQuoteTemplates } from "@/hooks/use-quote-templates";
 
@@ -201,7 +201,7 @@ function RequestCard({
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 export default function VendorRequests() {
-  const { data: requests, isLoading, refetch } = useListMyQuoteRequests({});
+  const { data: requests, isLoading, refetch, isError: requestsError } = useListMyQuoteRequests({});
   const submitQuote = useSubmitQuote();
   const { templates: quoteTemplates, saveTemplate, removeTemplate } = useQuoteTemplates();
 
@@ -346,6 +346,12 @@ export default function VendorRequests() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {requestsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load quote requests — please refresh the page.</span>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>

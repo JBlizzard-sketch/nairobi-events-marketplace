@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Save, Plus, X, Send, CheckCircle2, Clock3, XCircle, PauseCircle, Circle } from "lucide-react";
+import { Save, Plus, X, Send, CheckCircle2, Clock3, XCircle, PauseCircle, Circle, AlertTriangle } from "lucide-react";
 
 // ── Profile completeness ─────────────────────────────────────────────────────
 
@@ -185,7 +185,7 @@ const STATUS_INFO: Record<string, { icon: any; color: string; title: string; des
 };
 
 export default function VendorProfileEdit() {
-  const { data: profile, isLoading, refetch } = useGetMyVendorProfile();
+  const { data: profile, isLoading, refetch, isError: profileError } = useGetMyVendorProfile();
   const update = useUpdateVendorProfile();
   const create = useCreateVendorProfile();
   const submit = useSubmitVendorProfileForReview();
@@ -276,6 +276,12 @@ export default function VendorProfileEdit() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl">
+      {profileError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load profile data — please refresh the page.</span>
+        </div>
+      )}
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendor Profile</h1>

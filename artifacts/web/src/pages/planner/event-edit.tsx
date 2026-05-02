@@ -41,7 +41,7 @@ function toDateInput(dateStr: string): string {
 export default function EventEdit() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
-  const { data: event, isLoading } = useGetEvent(id!);
+  const { data: event, isLoading, isError: eventError } = useGetEvent(id!);
   const update = useUpdateEvent();
 
   const e = event as any;
@@ -128,12 +128,12 @@ export default function EventEdit() {
     );
   }
 
-  if (!e) {
+  if (eventError || !e) {
     return (
       <div className="max-w-2xl mx-auto">
         <Alert>
           <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>Event not found.</AlertDescription>
+          <AlertDescription>{eventError ? "Failed to load event — please refresh the page." : "Event not found."}</AlertDescription>
         </Alert>
       </div>
     );

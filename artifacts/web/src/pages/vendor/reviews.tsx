@@ -109,7 +109,7 @@ export default function VendorReviews() {
   const { data: profileRaw, isLoading: profileLoading } = useGetMyVendorProfile();
   const profile = profileRaw as any;
 
-  const { data: reviewsRaw, isLoading: reviewsLoading } = useGetVendorReviews(
+  const { data: reviewsRaw, isLoading: reviewsLoading, isError: reviewsError } = useGetVendorReviews(
     profile?.id ?? "",
     { page: 1, limit: 50 },
     { query: { enabled: !!profile?.id } as any },
@@ -142,6 +142,13 @@ export default function VendorReviews() {
           Ratings and feedback from event planners
         </p>
       </div>
+
+      {reviewsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load reviews — please refresh the page.</span>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-4">

@@ -208,7 +208,7 @@ export default function EventsList() {
   const [view, setView] = useState<"list" | "calendar">("list");
   const [search, setSearch] = useState("");
 
-  const { data, isLoading } = useListMyEvents(
+  const { data, isLoading, isError: eventsError } = useListMyEvents(
     statusFilter !== "all"
       ? { status: statusFilter as any, page: 1, limit: 50 }
       : { page: 1, limit: 50 }
@@ -231,6 +231,12 @@ export default function EventsList() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {eventsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load events — please refresh the page.</span>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>

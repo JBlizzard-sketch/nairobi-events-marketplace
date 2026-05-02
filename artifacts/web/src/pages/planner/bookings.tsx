@@ -61,7 +61,7 @@ export default function BookingsList() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [search, setSearch] = useState("");
 
-  const { data: bookings, isLoading } = useListMyBookings(
+  const { data: bookings, isLoading, isError: bookingsError } = useListMyBookings(
     statusFilter !== "all" ? { status: statusFilter as any } : {}
   );
 
@@ -86,6 +86,12 @@ export default function BookingsList() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {bookingsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load bookings — please refresh the page.</span>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Bookings</h1>

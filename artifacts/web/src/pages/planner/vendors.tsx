@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star, Search, Award, ChevronRight, MapPin, Briefcase, Heart, ArrowUpDown } from "lucide-react";
+import { Star, Search, Award, ChevronRight, MapPin, Briefcase, Heart, ArrowUpDown, AlertTriangle } from "lucide-react";
 import { useSavedVendors } from "@/hooks/use-saved-vendors";
 
 const CATEGORIES = [
@@ -78,7 +78,7 @@ export default function VendorsDirectory() {
 
   const debouncedSearch = useDebounce(search, 300);
 
-  const { data, isLoading } = useListVendors({
+  const { data, isLoading, isError: vendorsError } = useListVendors({
     q: debouncedSearch || undefined,
     category: category !== "all" ? (category as any) : undefined,
     minRating: minRating !== "any" ? Number(minRating) : undefined,
@@ -97,6 +97,13 @@ export default function VendorsDirectory() {
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Vendor Directory</h1>
         <p className="text-muted-foreground mt-1">Browse Nairobi's vetted event professionals</p>
       </div>
+
+      {vendorsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load vendors — please refresh the page.</span>
+        </div>
+      )}
 
       {/* Search bar */}
       <div className="relative">

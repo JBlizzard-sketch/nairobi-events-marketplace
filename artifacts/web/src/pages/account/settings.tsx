@@ -12,7 +12,7 @@ import { Link } from "wouter";
 import {
   Save, User, Mail, Phone, ShieldCheck, CheckCircle2,
   Calendar, Building2, Briefcase, Sparkles, Star, LayoutDashboard,
-  Users, BookOpen, ChevronRight,
+  Users, BookOpen, ChevronRight, AlertTriangle,
 } from "lucide-react";
 
 const ROLE_LABELS: Record<string, { label: string; color: string }> = {
@@ -43,7 +43,7 @@ const PORTAL_LINKS: Record<string, Array<{ href: string; icon: any; label: strin
 };
 
 export default function AccountSettings() {
-  const { data: userRaw, isLoading, refetch } = useGetMe();
+  const { data: userRaw, isLoading, refetch, isError: userError } = useGetMe();
   const updateMe = useUpdateMe();
   const user = userRaw as any;
 
@@ -88,6 +88,13 @@ export default function AccountSettings() {
         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Account Settings</h1>
         <p className="text-muted-foreground mt-1">Manage your profile and contact details</p>
       </div>
+
+      {userError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load account data — please refresh the page.</span>
+        </div>
+      )}
 
       {/* Account overview */}
       <Card className="shadow-sm">

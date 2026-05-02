@@ -78,7 +78,7 @@ function EscrowTracker({ status }: { status: string }) {
 
 export default function VendorBookingDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: booking, isLoading } = useGetBooking(id ?? "");
+  const { data: booking, isLoading, isError: bookingError } = useGetBooking(id ?? "");
 
   if (isLoading) {
     return (
@@ -93,10 +93,11 @@ export default function VendorBookingDetail() {
 
   const b = booking as any;
 
-  if (!b) {
+  if (bookingError || !b) {
     return (
       <div className="p-8 text-center text-muted-foreground">
-        <p className="font-semibold mb-2">Booking not found</p>
+        <p className="font-semibold mb-2">{bookingError ? "Failed to load booking" : "Booking not found"}</p>
+        <p className="text-sm mb-4">{bookingError ? "There was a problem fetching this booking. Try refreshing the page." : ""}</p>
         <Link href="/vendor/bookings">
           <Button variant="outline" size="sm" className="gap-2">
             <ArrowLeft className="h-4 w-4" /> Back to Bookings

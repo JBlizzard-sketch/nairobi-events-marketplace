@@ -119,7 +119,7 @@ function formatDate(d: string) {
 
 export default function BookingDetail() {
   const { id } = useParams<{ id: string }>();
-  const { data: booking, isLoading, refetch } = useGetBooking(id ?? "");
+  const { data: booking, isLoading, refetch, isError: bookingError } = useGetBooking(id ?? "");
 
   const createPI = useCreatePaymentIntent();
   const confirmBooking = useConfirmBooking();
@@ -232,7 +232,7 @@ export default function BookingDetail() {
     );
   }
 
-  if (!b) return <div className="p-8 text-center text-muted-foreground">Booking not found.</div>;
+  if (bookingError || !b) return <div className="p-8 text-center text-muted-foreground">{bookingError ? "Failed to load booking — please refresh the page." : "Booking not found."}</div>;
 
   const meta = STATUS_META[b.status] ?? { label: b.status, color: "secondary", icon: null };
 

@@ -10,7 +10,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ChevronLeft, ChevronRight, Save, CalendarRange, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Save, CalendarRange, X, AlertTriangle } from "lucide-react";
 
 function getDaysInMonth(year: number, month: number) {
   return new Date(year, month + 1, 0).getDate();
@@ -54,7 +54,7 @@ export default function VendorAvailability() {
   const fromDate = new Date(year, month, 1).toISOString().split("T")[0];
   const toDate = new Date(year, month + 1, 0).toISOString().split("T")[0];
 
-  const { data: availability, isLoading, refetch } = useGetVendorAvailability(
+  const { data: availability, isLoading, refetch, isError: availError } = useGetVendorAvailability(
     vendorId,
     { from: fromDate, to: toDate },
     { query: { enabled: !!vendorId, queryKey: getGetVendorAvailabilityQueryKey(vendorId, { from: fromDate, to: toDate }) } }
@@ -131,6 +131,12 @@ export default function VendorAvailability() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {availError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load availability data — please refresh the page.</span>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Availability Calendar</h1>

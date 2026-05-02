@@ -545,7 +545,7 @@ function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, ac
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
   const [, setLocation] = useLocation();
-  const { data: event, isLoading: loadingEvent } = useGetEvent(id ?? "");
+  const { data: event, isLoading: loadingEvent, isError: eventError } = useGetEvent(id ?? "");
   const { data: quotesData, isLoading: loadingQuotes, refetch } = useGetEventQuotes(id ?? "");
   const acceptQuote = useAcceptQuote();
   const rejectQuote = useRejectQuote();
@@ -709,8 +709,8 @@ export default function EventDetail() {
     );
   }
 
-  if (!event) {
-    return <div className="p-8 text-center text-muted-foreground">Event not found.</div>;
+  if (eventError || !event) {
+    return <div className="p-8 text-center text-muted-foreground">{eventError ? "Failed to load event — please refresh the page." : "Event not found."}</div>;
   }
 
   const e = event as any;

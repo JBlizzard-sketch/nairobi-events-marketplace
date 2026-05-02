@@ -7,7 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import {
   Star, Award, MapPin, Globe, Instagram, ShieldCheck, Briefcase,
-  MessageSquare, ArrowLeft, ArrowRight, Copy, CheckCircle2, Heart,
+  MessageSquare, ArrowLeft, ArrowRight, Copy, CheckCircle2, Heart, AlertTriangle,
 } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
@@ -211,7 +211,7 @@ function MobileCtaBar({ vendor }: { vendor: any }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 export default function VendorProfile() {
   const { id } = useParams<{ id: string }>();
-  const { data: vendor, isLoading } = useGetVendor(id ?? "");
+  const { data: vendor, isLoading, isError: vendorError } = useGetVendor(id ?? "");
   const { data: reviewsData } = useGetVendorReviews(id ?? "", { page: 1, limit: 10 });
 
   const fromDate = new Date().toISOString().split("T")[0];
@@ -228,8 +228,8 @@ export default function VendorProfile() {
     );
   }
 
-  if (!vendor) {
-    return <div className="p-8 text-center text-muted-foreground">Vendor not found.</div>;
+  if (vendorError || !vendor) {
+    return <div className="p-8 text-center text-muted-foreground">{vendorError ? "Failed to load vendor — please refresh the page." : "Vendor not found."}</div>;
   }
 
   const v = vendor as any;

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import {
   Calendar as CalendarIcon, Clock, ChevronRight, FileText,
-  Sparkles, Plus, ArrowRight, CheckCircle2, AlertCircle,
+  Sparkles, Plus, ArrowRight, CheckCircle2, AlertCircle, AlertTriangle,
   Briefcase, TrendingUp, X, ShieldCheck, Building2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -93,7 +93,7 @@ function formatEventDate(dateStr: string) {
 }
 
 export default function PlannerDashboard() {
-  const { data: events, isLoading: loadingEvents } = useListMyEvents({ limit: 10 });
+  const { data: events, isLoading: loadingEvents, isError: eventsError } = useListMyEvents({ limit: 10 });
   const { data: bookings, isLoading: loadingBookings } = useListMyBookings({});
   const [welcomeDismissed, setWelcomeDismissed] = useState(
     () => localStorage.getItem(WELCOME_DISMISSED_KEY) === "1"
@@ -172,6 +172,13 @@ export default function PlannerDashboard() {
         <WelcomeBanner onDismiss={handleDismissWelcome} />
       )}
 
+      {eventsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load dashboard data — please refresh the page.</span>
+        </div>
+      )}
+
       {/* Stats row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-sm">
@@ -182,7 +189,7 @@ export default function PlannerDashboard() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Active Events</p>
-                <p className="text-3xl font-bold mt-0.5">
+                <p className="text-2xl sm:text-3xl font-bold mt-0.5">
                   {loadingEvents ? <Skeleton className="h-8 w-10 inline-block" /> : activeEvents.length}
                 </p>
               </div>
@@ -198,7 +205,7 @@ export default function PlannerDashboard() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quotes Ready</p>
-                <p className={`text-3xl font-bold mt-0.5 ${quotesReady.length > 0 ? "text-primary" : ""}`}>
+                <p className={`text-2xl sm:text-3xl font-bold mt-0.5 ${quotesReady.length > 0 ? "text-primary" : ""}`}>
                   {loadingEvents ? <Skeleton className="h-8 w-10 inline-block" /> : quotesReady.length}
                 </p>
               </div>
@@ -217,7 +224,7 @@ export default function PlannerDashboard() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Awaiting Quotes</p>
-                <p className="text-3xl font-bold mt-0.5">
+                <p className="text-2xl sm:text-3xl font-bold mt-0.5">
                   {loadingEvents ? <Skeleton className="h-8 w-10 inline-block" /> : awaitingQuotes.length}
                 </p>
               </div>
@@ -233,7 +240,7 @@ export default function PlannerDashboard() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Bookings</p>
-                <p className="text-3xl font-bold mt-0.5">
+                <p className="text-2xl sm:text-3xl font-bold mt-0.5">
                   {loadingBookings ? <Skeleton className="h-8 w-10 inline-block" /> : confirmedBookings.length}
                 </p>
               </div>

@@ -8,7 +8,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import {
-  TrendingUp, Briefcase, Calendar, Star, Building2, Wallet, Download,
+  TrendingUp, Briefcase, Calendar, Star, Building2, Wallet, Download, AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -69,7 +69,7 @@ const CUSTOM_TOOLTIP = ({ active, payload, label }: any) => {
 };
 
 export default function PlannerAnalytics() {
-  const { data: bookingsRaw, isLoading: loadingBookings } = useListMyBookings({});
+  const { data: bookingsRaw, isLoading: loadingBookings, isError: bookingsError } = useListMyBookings({});
   const { data: eventsRaw, isLoading: loadingEvents } = useListMyEvents({} as any);
 
   const bookings = useMemo(() =>
@@ -165,6 +165,13 @@ export default function PlannerAnalytics() {
           </Button>
         )}
       </div>
+
+      {bookingsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load analytics data — please refresh the page.</span>
+        </div>
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

@@ -9,7 +9,7 @@ import {
 } from "recharts";
 import { Button } from "@/components/ui/button";
 import {
-  TrendingUp, Briefcase, Star, FileText, DollarSign, Trophy, Target, Download,
+  TrendingUp, Briefcase, Star, FileText, DollarSign, Trophy, Target, Download, AlertTriangle,
 } from "lucide-react";
 
 function exportVendorCsv(bookings: any[]) {
@@ -83,7 +83,7 @@ function KpiCard({
 }
 
 export default function VendorAnalytics() {
-  const { data: bookingsRaw, isLoading: loadingBookings } = useListMyBookings({} as any);
+  const { data: bookingsRaw, isLoading: loadingBookings, isError: bookingsError } = useListMyBookings({} as any);
   const { data: requestsRaw, isLoading: loadingRequests } = useListMyQuoteRequests({} as any);
   const { data: profileRaw } = useGetMyVendorProfile();
 
@@ -190,6 +190,12 @@ export default function VendorAnalytics() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
+      {bookingsError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load analytics data — please refresh the page.</span>
+        </div>
+      )}
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>

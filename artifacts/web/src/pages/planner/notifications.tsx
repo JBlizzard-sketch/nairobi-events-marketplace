@@ -15,6 +15,7 @@ import {
   Unlock,
   Star,
   ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Link } from "wouter";
@@ -98,7 +99,7 @@ function timeAgo(dateStr: string): string {
 export default function Notifications() {
   const [tab, setTab] = useState<"all" | "unread">("all");
 
-  const { data, isLoading, refetch } = useListNotifications(
+  const { data, isLoading, refetch, isError: notifError } = useListNotifications(
     { limit: 50 },
     { query: { refetchInterval: 30_000 } as any },
   );
@@ -123,6 +124,12 @@ export default function Notifications() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
+      {notifError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load notifications — please refresh the page.</span>
+        </div>
+      )}
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Notifications</h1>

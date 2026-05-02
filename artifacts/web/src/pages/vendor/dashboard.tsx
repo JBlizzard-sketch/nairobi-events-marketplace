@@ -176,7 +176,7 @@ function VettingBanner({ profile }: { profile: any }) {
 }
 
 export default function VendorDashboard() {
-  const { data: profile, isLoading: loadingProfile } = useGetMyVendorProfile();
+  const { data: profile, isLoading: loadingProfile, isError: profileError } = useGetMyVendorProfile();
   const { data: requests, isLoading: loadingRequests } = useListMyQuoteRequests({ status: "requested" as any });
   const { data: bookings, isLoading: loadingBookings } = useListMyBookings({});
 
@@ -235,6 +235,13 @@ export default function VendorDashboard() {
 
       {!loadingProfile && <OnboardingChecklist profile={profile_} />}
       {!loadingProfile && <VettingBanner profile={profile_} />}
+
+      {profileError && (
+        <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20 p-4 flex items-center gap-3 text-sm text-red-700 dark:text-red-400">
+          <AlertTriangle className="h-4 w-4 flex-shrink-0" />
+          <span>Failed to load dashboard data — please refresh the page.</span>
+        </div>
+      )}
 
       <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
         <Card className="shadow-sm">
