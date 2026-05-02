@@ -9,7 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import {
   FileText, ChevronRight, Star, Briefcase, Clock,
   Clock3, AlertTriangle, XCircle, PauseCircle, CheckCircle2,
-  TrendingUp, Circle, UserCog,
+  TrendingUp, Circle, UserCog, CalendarDays,
 } from "lucide-react";
 
 function OnboardingChecklist({ profile }: { profile: any }) {
@@ -443,6 +443,79 @@ export default function VendorDashboard() {
                   <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={48} />
                 </BarChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        );
+      })()}
+
+      {/* Upcoming events calendar strip */}
+      {isApproved && !loadingBookings && (() => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const upcoming = allBookings2
+          .filter((b: any) => b.eventDate && new Date(b.eventDate) >= today && ["confirmed", "in_escrow"].includes(b.status))
+          .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+          .slice(0, 5);
+        if (upcoming.length === 0) return null;
+
+        const daysUntil = (dateStr: string) => {
+          const target = new Date(dateStr);
+          target.setHours(0, 0, 0, 0);
+          return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+        };
+
+        return (
+          <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5 text-primary" />
+                  Upcoming Events
+                </CardTitle>
+                <CardDescription>Your next confirmed bookings</CardDescription>
+              </div>
+              <Link href="/vendor/bookings">
+                <Button variant="outline" size="sm">All Bookings</Button>
+              </Link>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {upcoming.map((b: any) => {
+                const days = daysUntil(b.eventDate);
+                const isUrgent = days <= 3;
+                const isSoon = days <= 7;
+                return (
+                  <div
+                    key={b.id}
+                    className={`flex items-center gap-4 p-3 rounded-xl border transition-all ${
+                      isUrgent ? "border-red-200 bg-red-50/50" :
+                      isSoon ? "border-amber-200 bg-amber-50/50" :
+                      "border-border bg-muted/10 hover:bg-muted/30"
+                    }`}
+                  >
+                    <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex flex-col items-center justify-center font-black text-xs ${
+                      isUrgent ? "bg-red-100 text-red-700" :
+                      isSoon ? "bg-amber-100 text-amber-700" :
+                      "bg-primary/10 text-primary"
+                    }`}>
+                      <span className="text-xl leading-none">{days === 0 ? "!" : days}</span>
+                      <span className="font-semibold">{days === 0 ? "Today" : "days"}</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm truncate">{b.eventTitle ?? `Booking #${b.id.slice(0, 6).toUpperCase()}`}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {new Date(b.eventDate).toLocaleDateString("en-KE", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
+                        {b.eventCity ? ` · ${b.eventCity}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex-shrink-0 text-right">
+                      <p className="text-sm font-semibold">KES {Number(b.vendorPayoutAmount).toLocaleString()}</p>
+                      <Badge variant="outline" className={`text-[10px] mt-0.5 ${isUrgent ? "border-red-300 text-red-700" : isSoon ? "border-amber-300 text-amber-700" : ""}`}>
+                        {b.status.replace(/_/g, " ")}
+                      </Badge>
+                    </div>
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         );

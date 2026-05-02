@@ -24,6 +24,7 @@ import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
 import { VendorRequestsLink } from "@/components/vendor-requests-badge";
 import { PlannerEventsLink } from "@/components/planner-events-badge";
+import { AdminVendorsLink } from "@/components/admin-vendors-badge";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { role, logout } = useAuth();
@@ -125,6 +126,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           // Planner "My Events" gets a live action-needed count badge
           if (role === "planner" && link.href === "/events") {
             return <PlannerEventsLink key={link.href} active={isActive(link.href)} />;
+          }
+          // Admin "Vendors" gets a live pending-approval badge
+          if (role === "admin" && link.href === "/admin/vendors") {
+            return <AdminVendorsLink key={link.href} active={isActive(link.href)} />;
           }
           const Icon = link.icon;
           const active = isActive(link.href);

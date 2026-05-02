@@ -40,6 +40,7 @@ import {
   Building2,
   Calendar,
   User,
+  Printer,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -214,21 +215,62 @@ export default function BookingDetail() {
 
   const meta = STATUS_META[b.status] ?? { label: b.status, color: "secondary", icon: null };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl">
+      {/* Print-only receipt */}
+      <div className="hidden print:block print:p-0">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold">Nairobi Events Marketplace</h1>
+          <p className="text-sm text-gray-500 mt-1">Booking Receipt</p>
+        </div>
+        <table className="w-full text-sm mb-6">
+          <tbody>
+            <tr className="border-b"><td className="py-2 font-medium text-gray-600 w-40">Booking Ref</td><td className="py-2 font-mono">#{b.id.slice(0, 8).toUpperCase()}</td></tr>
+            <tr className="border-b"><td className="py-2 font-medium text-gray-600">Status</td><td className="py-2 capitalize">{meta.label}</td></tr>
+            {b.eventTitle && <tr className="border-b"><td className="py-2 font-medium text-gray-600">Event</td><td className="py-2">{b.eventTitle}</td></tr>}
+            {b.eventDate && <tr className="border-b"><td className="py-2 font-medium text-gray-600">Event Date</td><td className="py-2">{formatDate(b.eventDate)}</td></tr>}
+            {b.vendorBusinessName && <tr className="border-b"><td className="py-2 font-medium text-gray-600">Vendor</td><td className="py-2">{b.vendorBusinessName}</td></tr>}
+            {b.category && <tr className="border-b"><td className="py-2 font-medium text-gray-600">Category</td><td className="py-2 capitalize">{b.category.replace(/_/g, " ")}</td></tr>}
+          </tbody>
+        </table>
+        <div className="border-t-2 border-b-2 border-gray-900 py-3 mb-4">
+          <div className="flex justify-between text-sm mb-1"><span className="text-gray-600">Vendor services total</span><span>KES {Number(b.totalAmount).toLocaleString()}</span></div>
+          <div className="flex justify-between text-sm mb-1"><span className="text-gray-600">Platform fee (10%)</span><span>KES {Number(b.platformFeeAmount).toLocaleString()}</span></div>
+          <div className="flex justify-between text-sm mb-1"><span className="text-gray-600">Vendor payout</span><span>KES {Number(b.vendorPayoutAmount).toLocaleString()}</span></div>
+          <div className="flex justify-between font-bold mt-2 text-base"><span>Amount Paid</span><span>KES {Number(b.totalAmount).toLocaleString()}</span></div>
+        </div>
+        {b.stripePaymentIntentId && <p className="text-xs text-gray-400">Payment ref: {b.stripePaymentIntentId}</p>}
+        <p className="text-xs text-gray-400 mt-1">Printed {new Date().toLocaleString("en-KE")}</p>
+      </div>
+
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Booking Details</h1>
-        <div className="flex items-center gap-3 mt-2">
-          <code className="text-sm text-muted-foreground">#{b.id.slice(0, 8).toUpperCase()}</code>
-          <Badge variant={meta.color as any} className="capitalize flex items-center gap-1.5">
-            {meta.icon}
-            {meta.label}
-          </Badge>
+      <div className="print:hidden">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Booking Details</h1>
+            <div className="flex items-center gap-3 mt-2">
+              <code className="text-sm text-muted-foreground">#{b.id.slice(0, 8).toUpperCase()}</code>
+              <Badge variant={meta.color as any} className="capitalize flex items-center gap-1.5">
+                {meta.icon}
+                {meta.label}
+              </Badge>
+            </div>
+          </div>
+          {["in_escrow", "completed", "confirmed"].includes(b.status) && (
+            <Button variant="outline" size="sm" onClick={handlePrint} className="gap-2 self-start">
+              <Printer className="h-4 w-4" />
+              Print Receipt
+            </Button>
+          )}
         </div>
       </div>
 
       {/* Context card — vendor + event */}
+      <div className="print:hidden space-y-8">
       {(b.eventTitle || b.vendorBusinessName) && (
         <Card className="shadow-sm bg-muted/30">
           <CardContent className="pt-5 pb-4">
@@ -529,6 +571,7 @@ export default function BookingDetail() {
           </CardContent>
         </Card>
       )}
+      </div>{/* end print:hidden */}
     </div>
   );
 }
