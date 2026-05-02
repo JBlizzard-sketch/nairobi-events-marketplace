@@ -3,20 +3,36 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Nairobi Events Marketplace API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: users
+    description: User management
+  - name: vendors
+    description: Vendor profiles and availability
+  - name: events
+    description: Event briefs and management
+  - name: quotes
+    description: Quote requests and submissions
+  - name: bookings
+    description: Booking and payment management
+  - name: reviews
+    description: Vendor reviews and ratings
+  - name: notifications
+    description: In-app notifications
+  - name: admin
+    description: Admin operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,13 +40,1402 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # ─── Users ──────────────────────────────────────────────────────────────────
+
+  /users/me:
+    get:
+      operationId: getMe
+      tags: [users]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    patch:
+      operationId: updateMe
+      tags: [users]
+      summary: Update current user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        "200":
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+  # ─── Vendors ────────────────────────────────────────────────────────────────
+
+  /vendors:
+    get:
+      operationId: listVendors
+      tags: [vendors]
+      summary: List approved vendors
+      parameters:
+        - name: category
+          in: query
+          schema:
+            $ref: "#/components/schemas/VendorCategory"
+        - name: date
+          in: query
+          description: Filter by availability on this date (YYYY-MM-DD)
+          schema:
+            type: string
+            format: date
+        - name: city
+          in: query
+          schema:
+            type: string
+        - name: isPremium
+          in: query
+          schema:
+            type: boolean
+        - name: minRating
+          in: query
+          schema:
+            type: number
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Paginated vendor list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorListResponse"
+
+  /vendors/{vendorId}:
+    get:
+      operationId: getVendor
+      tags: [vendors]
+      summary: Get a vendor profile
+      parameters:
+        - $ref: "#/components/parameters/vendorId"
+      responses:
+        "200":
+          description: Vendor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /vendors/me:
+    get:
+      operationId: getMyVendorProfile
+      tags: [vendors]
+      summary: Get authenticated vendor's own profile
+      responses:
+        "200":
+          description: Vendor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    post:
+      operationId: createVendorProfile
+      tags: [vendors]
+      summary: Create vendor profile (registration)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateVendorProfileRequest"
+      responses:
+        "201":
+          description: Created vendor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+        "409":
+          $ref: "#/components/responses/Conflict"
+    patch:
+      operationId: updateVendorProfile
+      tags: [vendors]
+      summary: Update authenticated vendor's profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateVendorProfileRequest"
+      responses:
+        "200":
+          description: Updated vendor profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+
+  /vendors/{vendorId}/availability:
+    get:
+      operationId: getVendorAvailability
+      tags: [vendors]
+      summary: Get vendor availability for a date range
+      parameters:
+        - $ref: "#/components/parameters/vendorId"
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Availability records
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorAvailabilityRecord"
+
+  /vendors/me/availability:
+    put:
+      operationId: setMyAvailability
+      tags: [vendors]
+      summary: Set availability for specific dates
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetAvailabilityRequest"
+      responses:
+        "200":
+          description: Updated availability
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorAvailabilityRecord"
+
+  /vendors/{vendorId}/reviews:
+    get:
+      operationId: getVendorReviews
+      tags: [vendors]
+      summary: Get reviews for a vendor
+      parameters:
+        - $ref: "#/components/parameters/vendorId"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Vendor reviews
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewListResponse"
+
+  # ─── Events ─────────────────────────────────────────────────────────────────
+
+  /events:
+    get:
+      operationId: listMyEvents
+      tags: [events]
+      summary: List events for authenticated planner
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/EventStatus"
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Planner's events
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventListResponse"
+    post:
+      operationId: createEvent
+      tags: [events]
+      summary: Create a new event brief
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateEventRequest"
+      responses:
+        "201":
+          description: Created event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{eventId}:
+    get:
+      operationId: getEvent
+      tags: [events]
+      summary: Get event details
+      parameters:
+        - $ref: "#/components/parameters/eventId"
+      responses:
+        "200":
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      operationId: updateEvent
+      tags: [events]
+      summary: Update event brief (draft only)
+      parameters:
+        - $ref: "#/components/parameters/eventId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateEventRequest"
+      responses:
+        "200":
+          description: Updated event
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{eventId}/submit:
+    post:
+      operationId: submitEventBrief
+      tags: [events]
+      summary: Submit event brief and trigger quote requests
+      parameters:
+        - $ref: "#/components/parameters/eventId"
+      responses:
+        "200":
+          description: Brief submitted, quote requests dispatched
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Event"
+
+  /events/{eventId}/quotes:
+    get:
+      operationId: getEventQuotes
+      tags: [events]
+      summary: Get all quotes received for an event (comparison view)
+      parameters:
+        - $ref: "#/components/parameters/eventId"
+      responses:
+        "200":
+          description: Quotes grouped by category
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EventQuotesResponse"
+
+  # ─── Quotes ─────────────────────────────────────────────────────────────────
+
+  /quotes/requests:
+    get:
+      operationId: listMyQuoteRequests
+      tags: [quotes]
+      summary: List quote requests for authenticated vendor
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/QuoteStatus"
+      responses:
+        "200":
+          description: Quote requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/QuoteRequest"
+
+  /quotes/requests/{requestId}/submit:
+    post:
+      operationId: submitQuote
+      tags: [quotes]
+      summary: Vendor submits a quote for a request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitQuoteRequest"
+      responses:
+        "201":
+          description: Quote submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+
+  /quotes/{quoteId}/accept:
+    post:
+      operationId: acceptQuote
+      tags: [quotes]
+      summary: Planner accepts a quote (initiates booking)
+      parameters:
+        - $ref: "#/components/parameters/quoteId"
+      responses:
+        "200":
+          description: Quote accepted, booking created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /quotes/{quoteId}/reject:
+    post:
+      operationId: rejectQuote
+      tags: [quotes]
+      summary: Planner rejects a quote
+      parameters:
+        - $ref: "#/components/parameters/quoteId"
+      responses:
+        "200":
+          description: Quote rejected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Quote"
+
+  # ─── Bookings ────────────────────────────────────────────────────────────────
+
+  /bookings:
+    get:
+      operationId: listMyBookings
+      tags: [bookings]
+      summary: List bookings for authenticated user (planner or vendor)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            $ref: "#/components/schemas/BookingStatus"
+      responses:
+        "200":
+          description: Bookings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /bookings/{bookingId}:
+    get:
+      operationId: getBooking
+      tags: [bookings]
+      summary: Get booking details
+      parameters:
+        - $ref: "#/components/parameters/bookingId"
+      responses:
+        "200":
+          description: Booking details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /bookings/{bookingId}/confirm:
+    post:
+      operationId: confirmBooking
+      tags: [bookings]
+      summary: Confirm booking and initiate escrow payment
+      parameters:
+        - $ref: "#/components/parameters/bookingId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmBookingRequest"
+      responses:
+        "200":
+          description: Booking confirmed with payment intent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingConfirmResponse"
+
+  # ─── Reviews ─────────────────────────────────────────────────────────────────
+
+  /reviews:
+    post:
+      operationId: createReview
+      tags: [reviews]
+      summary: Submit post-event review for a vendor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateReviewRequest"
+      responses:
+        "201":
+          description: Review created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Review"
+
+  # ─── Notifications ───────────────────────────────────────────────────────────
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List notifications for current user
+      parameters:
+        - name: isRead
+          in: query
+          schema:
+            type: boolean
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        "200":
+          description: Notifications
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/NotificationListResponse"
+
+  /notifications/{notificationId}/read:
+    patch:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Notification marked read
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Notification"
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      responses:
+        "200":
+          description: All marked read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                required: [count]
+
+  # ─── Admin ───────────────────────────────────────────────────────────────────
+
+  /admin/vendors/pending:
+    get:
+      operationId: adminListPendingVendors
+      tags: [admin]
+      summary: List vendors awaiting vetting
+      responses:
+        "200":
+          description: Pending vendors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorProfile"
+
+  /admin/vendors/{vendorId}/approve:
+    post:
+      operationId: adminApproveVendor
+      tags: [admin]
+      summary: Approve a vendor
+      parameters:
+        - $ref: "#/components/parameters/vendorId"
+      responses:
+        "200":
+          description: Vendor approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+
+  /admin/vendors/{vendorId}/suspend:
+    post:
+      operationId: adminSuspendVendor
+      tags: [admin]
+      summary: Suspend a vendor
+      parameters:
+        - $ref: "#/components/parameters/vendorId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+              required: [reason]
+      responses:
+        "200":
+          description: Vendor suspended
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Platform-wide stats
+      responses:
+        "200":
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+# ─── Components ──────────────────────────────────────────────────────────────
+
 components:
+  parameters:
+    vendorId:
+      name: vendorId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    eventId:
+      name: eventId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    quoteId:
+      name: quoteId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+    bookingId:
+      name: bookingId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Resource already exists
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error, message]
+
+    # ─── Enums ────────────────────────────────────────────────────────────────
+
+    UserRole:
+      type: string
+      enum: [planner, vendor, admin]
+
+    EventType:
+      type: string
+      enum: [corporate, wedding, birthday, product_launch, conference, private_party, other]
+
+    EventStatus:
+      type: string
+      enum: [draft, brief_submitted, quotes_requested, quotes_received, vendor_selected, booked, completed, cancelled]
+
+    VendorCategory:
+      type: string
+      enum: [catering, mc, photography, videography, floristry, av_technical, tent_furniture, security, entertainment, decor, transportation, other]
+
+    VendorStatus:
+      type: string
+      enum: [pending_review, approved, suspended, rejected]
+
+    QuoteStatus:
+      type: string
+      enum: [requested, submitted, revision_requested, accepted, rejected, expired]
+
+    BookingStatus:
+      type: string
+      enum: [pending, confirmed, in_escrow, completed, disputed, cancelled, refunded]
+
+    # ─── User ─────────────────────────────────────────────────────────────────
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        clerkId:
+          type: string
+        email:
+          type: string
+          format: email
+        fullName:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          $ref: "#/components/schemas/UserRole"
+        avatarUrl:
+          type: string
+          nullable: true
+        isActive:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, clerkId, email, fullName, role, isActive, createdAt]
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        fullName:
+          type: string
+        phone:
+          type: string
+
+    # ─── Vendor ───────────────────────────────────────────────────────────────
+
+    VendorProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        businessName:
+          type: string
+        category:
+          $ref: "#/components/schemas/VendorCategory"
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/VendorStatus"
+        averageRating:
+          type: string
+          nullable: true
+        totalReviews:
+          type: integer
+        totalBookings:
+          type: integer
+        isPremium:
+          type: boolean
+        city:
+          type: string
+        serviceAreas:
+          type: array
+          items:
+            type: string
+        websiteUrl:
+          type: string
+          nullable: true
+        instagramHandle:
+          type: string
+          nullable: true
+        portfolioUrls:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, businessName, category, description, status, totalReviews, totalBookings, isPremium, city, createdAt]
+
+    CreateVendorProfileRequest:
+      type: object
+      properties:
+        businessName:
+          type: string
+        category:
+          $ref: "#/components/schemas/VendorCategory"
+        description:
+          type: string
+        kraPin:
+          type: string
+        businessRegNumber:
+          type: string
+        city:
+          type: string
+        serviceAreas:
+          type: array
+          items:
+            type: string
+        websiteUrl:
+          type: string
+        instagramHandle:
+          type: string
+      required: [businessName, category, description]
+
+    UpdateVendorProfileRequest:
+      type: object
+      properties:
+        businessName:
+          type: string
+        description:
+          type: string
+        city:
+          type: string
+        serviceAreas:
+          type: array
+          items:
+            type: string
+        websiteUrl:
+          type: string
+        instagramHandle:
+          type: string
+
+    VendorAvailabilityRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        vendorId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        isAvailable:
+          type: boolean
+        note:
+          type: string
+          nullable: true
+      required: [id, vendorId, date, isAvailable]
+
+    SetAvailabilityRequest:
+      type: object
+      properties:
+        dates:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              isAvailable:
+                type: boolean
+              note:
+                type: string
+            required: [date, isAvailable]
+      required: [dates]
+
+    VendorListResponse:
+      type: object
+      properties:
+        vendors:
+          type: array
+          items:
+            $ref: "#/components/schemas/VendorProfile"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required: [vendors, total, page, limit]
+
+    # ─── Event ────────────────────────────────────────────────────────────────
+
+    Event:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        plannerId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        status:
+          $ref: "#/components/schemas/EventStatus"
+        eventDate:
+          type: string
+          format: date
+        eventEndDate:
+          type: string
+          format: date
+          nullable: true
+        venue:
+          type: string
+          nullable: true
+        city:
+          type: string
+        guestCount:
+          type: integer
+        budgetMin:
+          type: string
+          nullable: true
+        budgetMax:
+          type: string
+          nullable: true
+        currency:
+          type: string
+        servicesNeeded:
+          type: array
+          items:
+            type: string
+        specialRequirements:
+          type: string
+          nullable: true
+        isEmergency:
+          type: boolean
+        quotesDeadline:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, plannerId, title, eventType, status, eventDate, city, guestCount, currency, servicesNeeded, isEmergency, createdAt, updatedAt]
+
+    CreateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        eventDate:
+          type: string
+          format: date
+        eventEndDate:
+          type: string
+          format: date
+        venue:
+          type: string
+        city:
+          type: string
+        guestCount:
+          type: integer
+        budgetMin:
+          type: string
+        budgetMax:
+          type: string
+        currency:
+          type: string
+          default: KES
+        servicesNeeded:
+          type: array
+          items:
+            type: string
+        specialRequirements:
+          type: string
+        isEmergency:
+          type: boolean
+          default: false
+      required: [title, eventType, eventDate, city, guestCount, servicesNeeded]
+
+    UpdateEventRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        eventDate:
+          type: string
+          format: date
+        venue:
+          type: string
+        guestCount:
+          type: integer
+        budgetMin:
+          type: string
+        budgetMax:
+          type: string
+        servicesNeeded:
+          type: array
+          items:
+            type: string
+        specialRequirements:
+          type: string
+
+    EventListResponse:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/Event"
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+      required: [events, total, page, limit]
+
+    EventQuotesResponse:
+      type: object
+      properties:
+        eventId:
+          type: string
+          format: uuid
+        quotesByCategory:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              $ref: "#/components/schemas/Quote"
+      required: [eventId, quotesByCategory]
+
+    # ─── Quote ────────────────────────────────────────────────────────────────
+
+    QuoteLineItem:
+      type: object
+      properties:
+        description:
+          type: string
+        quantity:
+          type: number
+        unitPrice:
+          type: number
+        total:
+          type: number
+      required: [description, quantity, unitPrice, total]
+
+    Quote:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        quoteRequestId:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        vendorId:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/VendorCategory"
+        status:
+          $ref: "#/components/schemas/QuoteStatus"
+        totalAmount:
+          type: string
+        currency:
+          type: string
+        depositPercent:
+          type: integer
+          nullable: true
+        lineItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteLineItem"
+        inclusions:
+          type: array
+          items:
+            type: string
+        exclusions:
+          type: array
+          items:
+            type: string
+        terms:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        version:
+          type: integer
+        submittedAt:
+          type: string
+          format: date-time
+        vendor:
+          $ref: "#/components/schemas/VendorProfile"
+      required: [id, quoteRequestId, eventId, vendorId, category, status, totalAmount, currency, lineItems, version, submittedAt]
+
+    QuoteRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        vendorId:
+          type: string
+          format: uuid
+        category:
+          $ref: "#/components/schemas/VendorCategory"
+        status:
+          $ref: "#/components/schemas/QuoteStatus"
+        requestedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        event:
+          $ref: "#/components/schemas/Event"
+      required: [id, eventId, vendorId, category, status, requestedAt, expiresAt]
+
+    SubmitQuoteRequest:
+      type: object
+      properties:
+        totalAmount:
+          type: string
+        depositPercent:
+          type: integer
+        lineItems:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuoteLineItem"
+        inclusions:
+          type: array
+          items:
+            type: string
+        exclusions:
+          type: array
+          items:
+            type: string
+        terms:
+          type: string
+        notes:
+          type: string
+        validUntil:
+          type: string
+          format: date-time
+      required: [totalAmount, lineItems]
+
+    # ─── Booking ──────────────────────────────────────────────────────────────
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        eventId:
+          type: string
+          format: uuid
+        quoteId:
+          type: string
+          format: uuid
+        vendorId:
+          type: string
+          format: uuid
+        plannerId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/BookingStatus"
+        totalAmount:
+          type: string
+        platformFeeAmount:
+          type: string
+        vendorPayoutAmount:
+          type: string
+        currency:
+          type: string
+        stripePaymentIntentId:
+          type: string
+          nullable: true
+        contractUrl:
+          type: string
+          nullable: true
+        confirmedAt:
+          type: string
+          format: date-time
+          nullable: true
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, eventId, quoteId, vendorId, plannerId, status, totalAmount, platformFeeAmount, vendorPayoutAmount, currency, createdAt]
+
+    ConfirmBookingRequest:
+      type: object
+      properties:
+        paymentMethodId:
+          type: string
+      required: [paymentMethodId]
+
+    BookingConfirmResponse:
+      type: object
+      properties:
+        booking:
+          $ref: "#/components/schemas/Booking"
+        clientSecret:
+          type: string
+      required: [booking, clientSecret]
+
+    # ─── Review ───────────────────────────────────────────────────────────────
+
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        bookingId:
+          type: string
+          format: uuid
+        vendorId:
+          type: string
+          format: uuid
+        reviewerId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        qualityRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        punctualityRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        valueRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+          nullable: true
+        comment:
+          type: string
+          nullable: true
+        isNoShow:
+          type: boolean
+        vendorReply:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, bookingId, vendorId, reviewerId, rating, isNoShow, createdAt]
+
+    CreateReviewRequest:
+      type: object
+      properties:
+        bookingId:
+          type: string
+          format: uuid
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        qualityRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        punctualityRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        valueRating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+        isNoShow:
+          type: boolean
+      required: [bookingId, rating]
+
+    ReviewListResponse:
+      type: object
+      properties:
+        reviews:
+          type: array
+          items:
+            $ref: "#/components/schemas/Review"
+        total:
+          type: integer
+        averageRating:
+          type: number
+      required: [reviews, total, averageRating]
+
+    # ─── Notification ─────────────────────────────────────────────────────────
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        type:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        isRead:
+          type: boolean
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, userId, type, title, body, isRead, createdAt]
+
+    NotificationListResponse:
+      type: object
+      properties:
+        notifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Notification"
+        unreadCount:
+          type: integer
+      required: [notifications, unreadCount]
+
+    # ─── Admin ────────────────────────────────────────────────────────────────
+
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: integer
+        totalVendors:
+          type: integer
+        pendingVendors:
+          type: integer
+        totalEvents:
+          type: integer
+        totalBookings:
+          type: integer
+        totalRevenue:
+          type: string
+        activeEvents:
+          type: integer
+      required: [totalUsers, totalVendors, pendingVendors, totalEvents, totalBookings, totalRevenue, activeEvents]
