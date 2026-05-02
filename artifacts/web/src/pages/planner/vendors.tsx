@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Star, Search, Award, ChevronRight, MapPin, Briefcase } from "lucide-react";
 
 const CATEGORIES = [
+  { value: "all", label: "All" },
   { value: "catering", label: "Catering" },
   { value: "mc", label: "MC / Emcee" },
   { value: "photography", label: "Photography" },
@@ -21,6 +22,13 @@ const CATEGORIES = [
   { value: "decor", label: "Decor" },
   { value: "transportation", label: "Transportation" },
   { value: "other", label: "Other" },
+];
+
+const RATING_OPTIONS = [
+  { value: "any", label: "Any Rating" },
+  { value: "3", label: "3+ Stars" },
+  { value: "4", label: "4+ Stars" },
+  { value: "4.5", label: "4.5+ Stars" },
 ];
 
 function StarRating({ rating }: { rating: number | string | null }) {
@@ -62,35 +70,48 @@ export default function VendorsDirectory() {
   const vendors = data?.vendors ?? [];
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Vendor Directory</h1>
         <p className="text-muted-foreground mt-1">Browse Nairobi's vetted event professionals</p>
       </div>
 
-      <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-48">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            className="pl-9"
-            placeholder="Search by name or description..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          className="pl-9 h-11"
+          placeholder="Search by name or description..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
+      {/* Category chips — horizontal scroll on mobile */}
+      <div className="relative">
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
+          {CATEGORIES.map(({ value, label }) => (
+            <button
+              key={value}
+              onClick={() => setCategory(value)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-medium border transition-all ${
+                category === value
+                  ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                  : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </div>
-        <Select value={category} onValueChange={setCategory}>
-          <SelectTrigger className="w-full sm:w-52">
-            <SelectValue placeholder="All categories" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Categories</SelectItem>
-            {CATEGORIES.map(c => (
-              <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {/* fade-out hint on right edge for mobile */}
+        <div className="pointer-events-none absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-background to-transparent" />
+      </div>
+
+      {/* Secondary filters row */}
+      <div className="flex flex-wrap gap-3">
         <Select value={city} onValueChange={setCity}>
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-40 h-9 text-sm">
             <SelectValue placeholder="All cities" />
           </SelectTrigger>
           <SelectContent>
@@ -101,24 +122,34 @@ export default function VendorsDirectory() {
           </SelectContent>
         </Select>
         <Select value={minRating} onValueChange={setMinRating}>
-          <SelectTrigger className="w-full sm:w-40">
+          <SelectTrigger className="w-40 h-9 text-sm">
             <SelectValue placeholder="Any rating" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="any">Any Rating</SelectItem>
-            <SelectItem value="3">3+ Stars</SelectItem>
-            <SelectItem value="4">4+ Stars</SelectItem>
-            <SelectItem value="4.5">4.5+ Stars</SelectItem>
+            {RATING_OPTIONS.map(o => (
+              <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+            ))}
           </SelectContent>
         </Select>
+
+        {/* Active filter summary */}
+        {(category !== "all" || minRating !== "any" || city !== "all" || debouncedSearch) && (
+          <button
+            onClick={() => { setCategory("all"); setMinRating("any"); setCity("all"); setSearch(""); }}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline transition-colors ml-1"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
+      {/* Results */}
       {isLoading ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} className="h-52 rounded-lg" />)}
         </div>
       ) : vendors.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground">
+        <div className="text-center py-20 text-muted-foreground border rounded-xl border-dashed">
           <Search className="h-10 w-10 mx-auto mb-4 opacity-30" />
           <h3 className="font-semibold text-lg mb-1">No vendors found</h3>
           <p className="text-sm">
@@ -129,7 +160,10 @@ export default function VendorsDirectory() {
         </div>
       ) : (
         <>
-          <p className="text-sm text-muted-foreground">{data?.total ?? vendors.length} vetted vendor{(data?.total ?? vendors.length) !== 1 ? "s" : ""}</p>
+          <p className="text-sm text-muted-foreground">
+            {data?.total ?? vendors.length} vetted vendor{(data?.total ?? vendors.length) !== 1 ? "s" : ""}
+            {category !== "all" && ` in ${CATEGORIES.find(c => c.value === category)?.label}`}
+          </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {vendors.map((vendor: any) => (
               <Link key={vendor.id} href={`/vendors/${vendor.id}`}>
