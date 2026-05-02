@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "wouter";
 
 const STATUS_COLORS: Record<string, string> = {
@@ -228,6 +228,79 @@ function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValu
   );
 }
 
+// ── Live 4-hour quote deadline countdown ──────────────────────────────────────
+function QuoteCountdown({ submittedAt }: { submittedAt: string }) {
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const deadline = new Date(submittedAt).getTime() + 4 * 3_600_000;
+  const diff = deadline - now;
+
+  if (diff <= 0) {
+    return (
+      <div className="rounded-xl border border-muted bg-muted/30 p-4 flex items-center gap-3">
+        <Clock className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+        <span className="text-sm text-muted-foreground font-medium">
+          Quote window closed — vendors may still be preparing responses.
+        </span>
+      </div>
+    );
+  }
+
+  const h = Math.floor(diff / 3_600_000);
+  const m = Math.floor((diff % 3_600_000) / 60_000);
+  const s = Math.floor((diff % 60_000) / 1_000);
+
+  const isCritical = diff < 15 * 60_000;
+  const isUrgent = diff < 60 * 60_000;
+
+  const borderBg = isCritical
+    ? "border-red-200 bg-red-50"
+    : isUrgent
+    ? "border-amber-200 bg-amber-50"
+    : "border-emerald-200 bg-emerald-50";
+
+  const monoColor = isCritical ? "text-red-700" : isUrgent ? "text-amber-700" : "text-emerald-700";
+  const dotColor = isCritical ? "bg-red-500" : isUrgent ? "bg-amber-500" : "bg-emerald-500";
+  const pingColor = isCritical ? "bg-red-400" : isUrgent ? "bg-amber-400" : "bg-emerald-400";
+  const labelColor = isCritical ? "text-red-600" : isUrgent ? "text-amber-600" : "text-emerald-600";
+
+  return (
+    <div className={`rounded-xl border p-5 ${borderBg} transition-colors`}>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-3 w-3 flex-shrink-0">
+            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${pingColor} opacity-75`} />
+            <span className={`relative inline-flex rounded-full h-3 w-3 ${dotColor}`} />
+          </div>
+          <div>
+            <p className={`text-xs font-bold uppercase tracking-wider ${labelColor}`}>
+              Quote Deadline
+            </p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Vendors must submit by{" "}
+              {new Date(deadline).toLocaleTimeString("en-KE", { hour: "2-digit", minute: "2-digit" })}
+              {" "}today
+            </p>
+          </div>
+        </div>
+        <div className={`font-mono text-4xl font-black tracking-tight tabular-nums ${monoColor}`}>
+          {String(h).padStart(2, "0")}:{String(m).padStart(2, "0")}:{String(s).padStart(2, "0")}
+        </div>
+      </div>
+      {isCritical && (
+        <p className="text-xs text-red-600 font-medium mt-3 border-t border-red-200 pt-3">
+          Final 15 minutes — if vendors miss this window, the request will be extended automatically.
+        </p>
+      )}
+    </div>
+  );
+}
+
 function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, acceptIsPending, rejectIsPending }: any) {
   const submitted = quotes.filter((q: any) => q.status === "submitted");
   const lowestAmount = submitted.length > 0
@@ -359,6 +432,10 @@ export default function EventDetail() {
       </div>
 
       <EventStepper status={e.status} />
+
+      {e.status === "quotes_requested" && e.updatedAt && (
+        <QuoteCountdown submittedAt={e.updatedAt} />
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[

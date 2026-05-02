@@ -38,6 +38,16 @@ export default function EventNew() {
   const [step, setStep] = useState(0);
   const [, setLocation] = useLocation();
 
+  // Pre-select a service category from URL params (e.g. ?service=catering)
+  const preselectedService = (() => {
+    try {
+      const s = new URLSearchParams(window.location.search).get("service") ?? "";
+      return SERVICES.find(svc => svc.id === s) ? s : "";
+    } catch {
+      return "";
+    }
+  })();
+
   const [form, setForm] = useState({
     title: "",
     eventType: "corporate" as string,
@@ -48,7 +58,7 @@ export default function EventNew() {
     budgetMin: "",
     budgetMax: "",
     currency: "KES",
-    servicesNeeded: [] as string[],
+    servicesNeeded: preselectedService ? [preselectedService] : [] as string[],
     isEmergency: false,
   });
 

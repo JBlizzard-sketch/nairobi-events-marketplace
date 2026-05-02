@@ -27,7 +27,7 @@ function useCountdown(expiresAt: string | null | undefined): { text: string; urg
 
   useEffect(() => {
     if (!expiresAt) return;
-    const id = setInterval(() => setNow(Date.now()), 30_000);
+    const id = setInterval(() => setNow(Date.now()), 1_000);
     return () => clearInterval(id);
   }, [expiresAt]);
 
