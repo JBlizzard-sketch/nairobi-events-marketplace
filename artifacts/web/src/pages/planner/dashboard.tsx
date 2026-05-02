@@ -6,7 +6,7 @@ import { Link } from "wouter";
 import {
   Calendar as CalendarIcon, Clock, ChevronRight, FileText,
   Sparkles, Plus, ArrowRight, CheckCircle2, AlertCircle,
-  Briefcase, TrendingUp, X, ShieldCheck,
+  Briefcase, TrendingUp, X, ShieldCheck, Building2,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -365,6 +365,66 @@ export default function PlannerDashboard() {
             </CardContent>
           </Card>
 
+          {/* Upcoming confirmed bookings */}
+          {(() => {
+            const upcoming = bookingList
+              .filter((b: any) =>
+                ["confirmed", "in_escrow"].includes(b.status) &&
+                b.eventDate &&
+                new Date(b.eventDate) >= today
+              )
+              .sort((a: any, b: any) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime())
+              .slice(0, 3);
+            if (loadingBookings || upcoming.length === 0) return null;
+            return (
+              <Card className="shadow-sm">
+                <CardHeader className="pb-3 flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Briefcase className="h-4 w-4 text-primary" />
+                      Upcoming Bookings
+                    </CardTitle>
+                  </div>
+                  <Link href="/bookings">
+                    <span className="text-xs text-muted-foreground hover:text-foreground transition-colors">View all</span>
+                  </Link>
+                </CardHeader>
+                <CardContent className="space-y-2 pt-0">
+                  {upcoming.map((b: any) => {
+                    const days = daysUntil(b.eventDate);
+                    const isUrgent = days <= 3;
+                    const isSoon = days <= 7;
+                    return (
+                      <Link key={b.id} href={`/bookings/${b.id}`}>
+                        <div className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
+                          isUrgent ? "border-red-200 bg-red-50/50" :
+                          isSoon ? "border-amber-200 bg-amber-50/50" :
+                          "border-border hover:border-primary/30 hover:bg-muted/30"
+                        }`}>
+                          <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex flex-col items-center justify-center text-xs font-black leading-none ${
+                            isUrgent ? "bg-red-100 text-red-700" :
+                            isSoon ? "bg-amber-100 text-amber-700" :
+                            "bg-primary/10 text-primary"
+                          }`}>
+                            <span className="text-base">{days === 0 ? "!" : days}</span>
+                            <span className="text-[9px] font-semibold">{days === 0 ? "Today" : "days"}</span>
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{(b as any).eventTitle ?? "Event"}</p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {(b as any).vendorBusinessName ?? "Vendor"}
+                            </p>
+                          </div>
+                          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            );
+          })()}
+
           {/* Quick shortcuts */}
           <Card className="shadow-sm">
             <CardHeader className="pb-3">
@@ -373,7 +433,7 @@ export default function PlannerDashboard() {
             <CardContent className="space-y-2">
               {[
                 { href: "/events/new", icon: Plus, label: "New Event Brief" },
-                { href: "/vendors", icon: TrendingUp, label: "Browse Vendors" },
+                { href: "/vendors", icon: Building2, label: "Browse Vendors" },
                 { href: "/budget", icon: Sparkles, label: "AI Budget Planner" },
                 { href: "/bookings", icon: Briefcase, label: "My Bookings" },
               ].map(({ href, icon: Icon, label }) => (

@@ -271,19 +271,6 @@ export default function AdminBookings() {
         </div>
       )}
 
-      {/* Status dropdown */}
-      <Select value={statusFilter} onValueChange={setStatusFilter}>
-        <SelectTrigger className="w-52">
-          <SelectValue placeholder="All statuses" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Statuses</SelectItem>
-          {STATUS_OPTIONS.map(s => (
-            <SelectItem key={s} value={s}>{STATUS_CONFIG[s]?.label ?? s}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-
       {/* Booking list */}
       {isLoading ? (
         <div className="space-y-3">
