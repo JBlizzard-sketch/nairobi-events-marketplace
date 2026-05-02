@@ -14,6 +14,15 @@ export interface ErrorResponse {
   message: string;
 }
 
+export interface AdminApproveVendorBody {
+  /** Optional admin note visible to vendor */
+  note?: string;
+}
+
+export interface AdminActionWithReasonBody {
+  reason: string;
+}
+
 export type UserRole = (typeof UserRole)[keyof typeof UserRole];
 
 export const UserRole = {
@@ -535,6 +544,17 @@ export type MarkAllNotificationsRead200 = {
   count: number;
 };
 
-export type AdminSuspendVendorBody = {
-  reason: string;
+export type AdminListVendorsParams = {
+  status?: AdminListVendorsStatus;
+  limit?: number;
 };
+
+export type AdminListVendorsStatus =
+  (typeof AdminListVendorsStatus)[keyof typeof AdminListVendorsStatus];
+
+export const AdminListVendorsStatus = {
+  pending_review: "pending_review",
+  approved: "approved",
+  rejected: "rejected",
+  suspended: "suspended",
+} as const;

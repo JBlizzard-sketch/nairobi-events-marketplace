@@ -708,6 +708,32 @@ paths:
 
   # ─── Admin ───────────────────────────────────────────────────────────────────
 
+  /admin/vendors:
+    get:
+      operationId: adminListVendors
+      tags: [admin]
+      summary: List all vendors with optional status filter
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pending_review, approved, rejected, suspended]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: Vendor list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/VendorProfile"
+
   /admin/vendors/pending:
     get:
       operationId: adminListPendingVendors
@@ -730,9 +756,35 @@ paths:
       summary: Approve a vendor
       parameters:
         - $ref: "#/components/parameters/vendorId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminApproveVendorBody"
       responses:
         "200":
           description: Vendor approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+
+  /admin/vendors/{vendorId}/reject:
+    post:
+      operationId: adminRejectVendor
+      tags: [admin]
+      summary: Reject a vendor application
+      parameters:
+        - $ref: "#/components/parameters/vendorId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminActionWithReasonBody"
+      responses:
+        "200":
+          description: Vendor rejected
           content:
             application/json:
               schema:
@@ -742,7 +794,7 @@ paths:
     post:
       operationId: adminSuspendVendor
       tags: [admin]
-      summary: Suspend a vendor
+      summary: Suspend an approved vendor
       parameters:
         - $ref: "#/components/parameters/vendorId"
       requestBody:
@@ -750,11 +802,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                reason:
-                  type: string
-              required: [reason]
+              $ref: "#/components/schemas/AdminActionWithReasonBody"
       responses:
         "200":
           description: Vendor suspended
@@ -762,6 +810,23 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/VendorProfile"
+
+  /vendor/profile/submit:
+    post:
+      operationId: submitVendorProfileForReview
+      tags: [vendors]
+      summary: Submit completed vendor profile for admin vetting
+      responses:
+        "200":
+          description: Profile submitted for review
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VendorProfile"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
 
   /admin/stats:
     get:
@@ -851,6 +916,20 @@ components:
         message:
           type: string
       required: [error, message]
+
+    AdminApproveVendorBody:
+      type: object
+      properties:
+        note:
+          type: string
+          description: Optional admin note visible to vendor
+
+    AdminActionWithReasonBody:
+      type: object
+      properties:
+        reason:
+          type: string
+      required: [reason]
 
     # ─── Enums ────────────────────────────────────────────────────────────────
 

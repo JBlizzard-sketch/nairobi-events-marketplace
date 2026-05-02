@@ -1,5 +1,10 @@
 import { useState, useEffect } from "react";
-import { useGetMyVendorProfile, useUpdateVendorProfile, useCreateVendorProfile } from "@workspace/api-client-react";
+import {
+  useGetMyVendorProfile,
+  useUpdateVendorProfile,
+  useCreateVendorProfile,
+  useSubmitVendorProfileForReview,
+} from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,17 +13,46 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Save, Plus, X } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Save, Plus, X, Send, CheckCircle2, Clock3, XCircle, PauseCircle } from "lucide-react";
 
 const CATEGORIES = [
   "catering", "mc", "photography", "videography", "floristry",
   "av_technical", "tent_furniture", "security", "entertainment", "decor", "transportation", "other"
 ];
 
+const STATUS_INFO: Record<string, { icon: any; color: string; title: string; desc: string }> = {
+  pending_review: {
+    icon: Clock3,
+    color: "text-amber-600",
+    title: "Under Review",
+    desc: "Your profile has been submitted and is being reviewed by our team. You'll be notified within 1–2 business days.",
+  },
+  approved: {
+    icon: CheckCircle2,
+    color: "text-emerald-600",
+    title: "Approved",
+    desc: "Your profile is active and visible to planners. You're receiving quote requests.",
+  },
+  rejected: {
+    icon: XCircle,
+    color: "text-red-600",
+    title: "Not Approved",
+    desc: "Your application was not approved. Update your profile below and resubmit.",
+  },
+  suspended: {
+    icon: PauseCircle,
+    color: "text-slate-600",
+    title: "Suspended",
+    desc: "Your account is suspended. Contact support for assistance.",
+  },
+};
+
 export default function VendorProfileEdit() {
   const { data: profile, isLoading, refetch } = useGetMyVendorProfile();
   const update = useUpdateVendorProfile();
   const create = useCreateVendorProfile();
+  const submit = useSubmitVendorProfileForReview();
 
   const p = profile as any;
 
@@ -34,6 +68,8 @@ export default function VendorProfileEdit() {
   const [areaInput, setAreaInput] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (p) {
@@ -74,6 +110,23 @@ export default function VendorProfileEdit() {
     }
   };
 
+  const handleSubmitForReview = async () => {
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      await submit.mutateAsync();
+      refetch();
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to submit. Please try again.";
+      setSubmitError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const canSubmit = p && form.businessName.trim() && ["rejected", "suspended", undefined].includes(p.status) || (!p?.status && form.businessName.trim());
+  const showSubmitButton = p && p.status !== "pending_review" && p.status !== "approved";
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -83,20 +136,47 @@ export default function VendorProfileEdit() {
     );
   }
 
+  const statusInfo = p?.status ? STATUS_INFO[p.status] : null;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-2xl">
-      <div className="flex items-end justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Vendor Profile</h1>
           <p className="text-muted-foreground mt-1">
-            {p ? (
-              <Badge variant={p.status === "approved" ? "secondary" : "outline"} className="capitalize">
-                {p.status?.replace(/_/g, " ")}
-              </Badge>
-            ) : "Create your vendor profile to start receiving quote requests"}
+            {p
+              ? "Manage your business information and vetting status"
+              : "Create your vendor profile to start receiving quote requests"}
           </p>
         </div>
+        {p?.status && statusInfo && (
+          <Badge
+            variant="outline"
+            className={`capitalize text-xs gap-1.5 px-3 py-1 ${statusInfo.color}`}
+          >
+            <statusInfo.icon className="h-3.5 w-3.5" />
+            {p.status.replace(/_/g, " ")}
+          </Badge>
+        )}
       </div>
+
+      {statusInfo && (
+        <Alert className={
+          p?.status === "approved" ? "border-emerald-300 bg-emerald-50" :
+          p?.status === "pending_review" ? "border-amber-300 bg-amber-50" :
+          p?.status === "rejected" ? "border-red-300 bg-red-50" :
+          "border-slate-300 bg-slate-50"
+        }>
+          <statusInfo.icon className={`h-4 w-4 ${statusInfo.color}`} />
+          <AlertTitle className="font-semibold">{statusInfo.title}</AlertTitle>
+          <AlertDescription>
+            {statusInfo.desc}
+            {p?.adminNotes && p.status !== "approved" && (
+              <p className="mt-1"><span className="font-medium">Admin note:</span> {p.adminNotes}</p>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="shadow-sm">
         <CardHeader><CardTitle>Business Details</CardTitle></CardHeader>
@@ -198,15 +278,38 @@ export default function VendorProfileEdit() {
         </CardContent>
       </Card>
 
-      <Button
-        size="lg"
-        className="w-full font-semibold gap-2"
-        onClick={handleSave}
-        disabled={saving || !form.businessName.trim()}
-      >
-        <Save className="h-4 w-4" />
-        {saving ? "Saving..." : saved ? "Saved!" : p ? "Save Changes" : "Create Profile"}
-      </Button>
+      <div className="space-y-3">
+        <Button
+          size="lg"
+          className="w-full font-semibold gap-2"
+          onClick={handleSave}
+          disabled={saving || !form.businessName.trim()}
+        >
+          <Save className="h-4 w-4" />
+          {saving ? "Saving..." : saved ? "Saved!" : p ? "Save Changes" : "Create Profile"}
+        </Button>
+
+        {showSubmitButton && (
+          <div className="space-y-2">
+            {submitError && (
+              <p className="text-sm text-red-600 text-center">{submitError}</p>
+            )}
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full font-semibold gap-2 border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              onClick={handleSubmitForReview}
+              disabled={submitting || !form.businessName.trim()}
+            >
+              <Send className="h-4 w-4" />
+              {submitting ? "Submitting..." : p?.status === "rejected" ? "Resubmit for Review" : "Submit for Review"}
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              Make sure your profile is complete before submitting. Our team will review within 1–2 business days.
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

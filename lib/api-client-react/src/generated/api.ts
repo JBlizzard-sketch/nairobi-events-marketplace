@@ -17,8 +17,10 @@ import type {
 } from "@tanstack/react-query";
 
 import type {
+  AdminActionWithReasonBody,
+  AdminApproveVendorBody,
+  AdminListVendorsParams,
   AdminStats,
-  AdminSuspendVendorBody,
   BadRequestResponse,
   Booking,
   BookingConfirmResponse,
@@ -2917,6 +2919,103 @@ export const useMarkAllNotificationsRead = <
 };
 
 /**
+ * @summary List all vendors with optional status filter
+ */
+export const getAdminListVendorsUrl = (params?: AdminListVendorsParams) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? "null" : value.toString());
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0
+    ? `/api/admin/vendors?${stringifiedParams}`
+    : `/api/admin/vendors`;
+};
+
+export const adminListVendors = async (
+  params?: AdminListVendorsParams,
+  options?: RequestInit,
+): Promise<VendorProfile[]> => {
+  return customFetch<VendorProfile[]>(getAdminListVendorsUrl(params), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminListVendorsQueryKey = (
+  params?: AdminListVendorsParams,
+) => {
+  return [`/api/admin/vendors`, ...(params ? [params] : [])] as const;
+};
+
+export const getAdminListVendorsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminListVendors>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AdminListVendorsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminListVendors>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey =
+    queryOptions?.queryKey ?? getAdminListVendorsQueryKey(params);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminListVendors>>
+  > = ({ signal }) => adminListVendors(params, { signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminListVendors>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminListVendorsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminListVendors>>
+>;
+export type AdminListVendorsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List all vendors with optional status filter
+ */
+
+export function useAdminListVendors<
+  TData = Awaited<ReturnType<typeof adminListVendors>>,
+  TError = ErrorType<unknown>,
+>(
+  params?: AdminListVendorsParams,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof adminListVendors>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminListVendorsQueryOptions(params, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary List vendors awaiting vetting
  */
 export const getAdminListPendingVendorsUrl = () => {
@@ -3001,11 +3100,14 @@ export const getAdminApproveVendorUrl = (vendorId: string) => {
 
 export const adminApproveVendor = async (
   vendorId: string,
+  adminApproveVendorBody: AdminApproveVendorBody,
   options?: RequestInit,
 ): Promise<VendorProfile> => {
   return customFetch<VendorProfile>(getAdminApproveVendorUrl(vendorId), {
     ...options,
     method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminApproveVendorBody),
   });
 };
 
@@ -3016,14 +3118,14 @@ export const getAdminApproveVendorMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof adminApproveVendor>>,
     TError,
-    { vendorId: string },
+    { vendorId: string; data: BodyType<AdminApproveVendorBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof adminApproveVendor>>,
   TError,
-  { vendorId: string },
+  { vendorId: string; data: BodyType<AdminApproveVendorBody> },
   TContext
 > => {
   const mutationKey = ["adminApproveVendor"];
@@ -3037,11 +3139,11 @@ export const getAdminApproveVendorMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof adminApproveVendor>>,
-    { vendorId: string }
+    { vendorId: string; data: BodyType<AdminApproveVendorBody> }
   > = (props) => {
-    const { vendorId } = props ?? {};
+    const { vendorId, data } = props ?? {};
 
-    return adminApproveVendor(vendorId, requestOptions);
+    return adminApproveVendor(vendorId, data, requestOptions);
   };
 
   return { mutationFn, ...mutationOptions };
@@ -3050,7 +3152,7 @@ export const getAdminApproveVendorMutationOptions = <
 export type AdminApproveVendorMutationResult = NonNullable<
   Awaited<ReturnType<typeof adminApproveVendor>>
 >;
-
+export type AdminApproveVendorMutationBody = BodyType<AdminApproveVendorBody>;
 export type AdminApproveVendorMutationError = ErrorType<unknown>;
 
 /**
@@ -3063,21 +3165,108 @@ export const useAdminApproveVendor = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof adminApproveVendor>>,
     TError,
-    { vendorId: string },
+    { vendorId: string; data: BodyType<AdminApproveVendorBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof adminApproveVendor>>,
   TError,
-  { vendorId: string },
+  { vendorId: string; data: BodyType<AdminApproveVendorBody> },
   TContext
 > => {
   return useMutation(getAdminApproveVendorMutationOptions(options));
 };
 
 /**
- * @summary Suspend a vendor
+ * @summary Reject a vendor application
+ */
+export const getAdminRejectVendorUrl = (vendorId: string) => {
+  return `/api/admin/vendors/${vendorId}/reject`;
+};
+
+export const adminRejectVendor = async (
+  vendorId: string,
+  adminActionWithReasonBody: AdminActionWithReasonBody,
+  options?: RequestInit,
+): Promise<VendorProfile> => {
+  return customFetch<VendorProfile>(getAdminRejectVendorUrl(vendorId), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminActionWithReasonBody),
+  });
+};
+
+export const getAdminRejectVendorMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminRejectVendor>>,
+    TError,
+    { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminRejectVendor>>,
+  TError,
+  { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
+  TContext
+> => {
+  const mutationKey = ["adminRejectVendor"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminRejectVendor>>,
+    { vendorId: string; data: BodyType<AdminActionWithReasonBody> }
+  > = (props) => {
+    const { vendorId, data } = props ?? {};
+
+    return adminRejectVendor(vendorId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminRejectVendorMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminRejectVendor>>
+>;
+export type AdminRejectVendorMutationBody = BodyType<AdminActionWithReasonBody>;
+export type AdminRejectVendorMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Reject a vendor application
+ */
+export const useAdminRejectVendor = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminRejectVendor>>,
+    TError,
+    { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminRejectVendor>>,
+  TError,
+  { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
+  TContext
+> => {
+  return useMutation(getAdminRejectVendorMutationOptions(options));
+};
+
+/**
+ * @summary Suspend an approved vendor
  */
 export const getAdminSuspendVendorUrl = (vendorId: string) => {
   return `/api/admin/vendors/${vendorId}/suspend`;
@@ -3085,14 +3274,14 @@ export const getAdminSuspendVendorUrl = (vendorId: string) => {
 
 export const adminSuspendVendor = async (
   vendorId: string,
-  adminSuspendVendorBody: AdminSuspendVendorBody,
+  adminActionWithReasonBody: AdminActionWithReasonBody,
   options?: RequestInit,
 ): Promise<VendorProfile> => {
   return customFetch<VendorProfile>(getAdminSuspendVendorUrl(vendorId), {
     ...options,
     method: "POST",
     headers: { "Content-Type": "application/json", ...options?.headers },
-    body: JSON.stringify(adminSuspendVendorBody),
+    body: JSON.stringify(adminActionWithReasonBody),
   });
 };
 
@@ -3103,14 +3292,14 @@ export const getAdminSuspendVendorMutationOptions = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof adminSuspendVendor>>,
     TError,
-    { vendorId: string; data: BodyType<AdminSuspendVendorBody> },
+    { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationOptions<
   Awaited<ReturnType<typeof adminSuspendVendor>>,
   TError,
-  { vendorId: string; data: BodyType<AdminSuspendVendorBody> },
+  { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
   TContext
 > => {
   const mutationKey = ["adminSuspendVendor"];
@@ -3124,7 +3313,7 @@ export const getAdminSuspendVendorMutationOptions = <
 
   const mutationFn: MutationFunction<
     Awaited<ReturnType<typeof adminSuspendVendor>>,
-    { vendorId: string; data: BodyType<AdminSuspendVendorBody> }
+    { vendorId: string; data: BodyType<AdminActionWithReasonBody> }
   > = (props) => {
     const { vendorId, data } = props ?? {};
 
@@ -3137,11 +3326,12 @@ export const getAdminSuspendVendorMutationOptions = <
 export type AdminSuspendVendorMutationResult = NonNullable<
   Awaited<ReturnType<typeof adminSuspendVendor>>
 >;
-export type AdminSuspendVendorMutationBody = BodyType<AdminSuspendVendorBody>;
+export type AdminSuspendVendorMutationBody =
+  BodyType<AdminActionWithReasonBody>;
 export type AdminSuspendVendorMutationError = ErrorType<unknown>;
 
 /**
- * @summary Suspend a vendor
+ * @summary Suspend an approved vendor
  */
 export const useAdminSuspendVendor = <
   TError = ErrorType<unknown>,
@@ -3150,17 +3340,100 @@ export const useAdminSuspendVendor = <
   mutation?: UseMutationOptions<
     Awaited<ReturnType<typeof adminSuspendVendor>>,
     TError,
-    { vendorId: string; data: BodyType<AdminSuspendVendorBody> },
+    { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
     TContext
   >;
   request?: SecondParameter<typeof customFetch>;
 }): UseMutationResult<
   Awaited<ReturnType<typeof adminSuspendVendor>>,
   TError,
-  { vendorId: string; data: BodyType<AdminSuspendVendorBody> },
+  { vendorId: string; data: BodyType<AdminActionWithReasonBody> },
   TContext
 > => {
   return useMutation(getAdminSuspendVendorMutationOptions(options));
+};
+
+/**
+ * @summary Submit completed vendor profile for admin vetting
+ */
+export const getSubmitVendorProfileForReviewUrl = () => {
+  return `/api/vendor/profile/submit`;
+};
+
+export const submitVendorProfileForReview = async (
+  options?: RequestInit,
+): Promise<VendorProfile> => {
+  return customFetch<VendorProfile>(getSubmitVendorProfileForReviewUrl(), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getSubmitVendorProfileForReviewMutationOptions = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitVendorProfileForReview>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof submitVendorProfileForReview>>,
+  TError,
+  void,
+  TContext
+> => {
+  const mutationKey = ["submitVendorProfileForReview"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof submitVendorProfileForReview>>,
+    void
+  > = () => {
+    return submitVendorProfileForReview(requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type SubmitVendorProfileForReviewMutationResult = NonNullable<
+  Awaited<ReturnType<typeof submitVendorProfileForReview>>
+>;
+
+export type SubmitVendorProfileForReviewMutationError = ErrorType<
+  BadRequestResponse | UnauthorizedResponse
+>;
+
+/**
+ * @summary Submit completed vendor profile for admin vetting
+ */
+export const useSubmitVendorProfileForReview = <
+  TError = ErrorType<BadRequestResponse | UnauthorizedResponse>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof submitVendorProfileForReview>>,
+    TError,
+    void,
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof submitVendorProfileForReview>>,
+  TError,
+  void,
+  TContext
+> => {
+  return useMutation(getSubmitVendorProfileForReviewMutationOptions(options));
 };
 
 /**

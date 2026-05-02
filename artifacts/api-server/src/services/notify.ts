@@ -8,7 +8,12 @@ type NotificationType =
   | "booking_confirmed"
   | "payment_received"
   | "payment_released"
-  | "review_reminder";
+  | "review_reminder"
+  | "event_reminder"
+  | "vendor_approved"
+  | "vendor_rejected"
+  | "vendor_suspended"
+  | "system";
 
 export interface NotifyOptions {
   userId: string;

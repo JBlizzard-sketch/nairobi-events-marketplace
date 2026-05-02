@@ -1285,6 +1285,51 @@ export const MarkAllNotificationsReadResponse = zod.object({
 });
 
 /**
+ * @summary List all vendors with optional status filter
+ */
+export const adminListVendorsQueryLimitDefault = 50;
+
+export const AdminListVendorsQueryParams = zod.object({
+  status: zod
+    .enum(["pending_review", "approved", "rejected", "suspended"])
+    .optional(),
+  limit: zod.coerce.number().default(adminListVendorsQueryLimitDefault),
+});
+
+export const AdminListVendorsResponseItem = zod.object({
+  id: zod.string().uuid(),
+  userId: zod.string().uuid(),
+  businessName: zod.string(),
+  category: zod.enum([
+    "catering",
+    "mc",
+    "photography",
+    "videography",
+    "floristry",
+    "av_technical",
+    "tent_furniture",
+    "security",
+    "entertainment",
+    "decor",
+    "transportation",
+    "other",
+  ]),
+  description: zod.string(),
+  status: zod.enum(["pending_review", "approved", "suspended", "rejected"]),
+  averageRating: zod.string().nullish(),
+  totalReviews: zod.number(),
+  totalBookings: zod.number(),
+  isPremium: zod.boolean(),
+  city: zod.string(),
+  serviceAreas: zod.array(zod.string()).optional(),
+  websiteUrl: zod.string().nullish(),
+  instagramHandle: zod.string().nullish(),
+  portfolioUrls: zod.array(zod.string()).optional(),
+  createdAt: zod.coerce.date(),
+});
+export const AdminListVendorsResponse = zod.array(AdminListVendorsResponseItem);
+
+/**
  * @summary List vendors awaiting vetting
  */
 export const AdminListPendingVendorsResponseItem = zod.object({
@@ -1329,6 +1374,13 @@ export const AdminApproveVendorParams = zod.object({
   vendorId: zod.coerce.string().uuid(),
 });
 
+export const AdminApproveVendorBody = zod.object({
+  note: zod
+    .string()
+    .optional()
+    .describe("Optional admin note visible to vendor"),
+});
+
 export const AdminApproveVendorResponse = zod.object({
   id: zod.string().uuid(),
   userId: zod.string().uuid(),
@@ -1362,7 +1414,50 @@ export const AdminApproveVendorResponse = zod.object({
 });
 
 /**
- * @summary Suspend a vendor
+ * @summary Reject a vendor application
+ */
+export const AdminRejectVendorParams = zod.object({
+  vendorId: zod.coerce.string().uuid(),
+});
+
+export const AdminRejectVendorBody = zod.object({
+  reason: zod.string(),
+});
+
+export const AdminRejectVendorResponse = zod.object({
+  id: zod.string().uuid(),
+  userId: zod.string().uuid(),
+  businessName: zod.string(),
+  category: zod.enum([
+    "catering",
+    "mc",
+    "photography",
+    "videography",
+    "floristry",
+    "av_technical",
+    "tent_furniture",
+    "security",
+    "entertainment",
+    "decor",
+    "transportation",
+    "other",
+  ]),
+  description: zod.string(),
+  status: zod.enum(["pending_review", "approved", "suspended", "rejected"]),
+  averageRating: zod.string().nullish(),
+  totalReviews: zod.number(),
+  totalBookings: zod.number(),
+  isPremium: zod.boolean(),
+  city: zod.string(),
+  serviceAreas: zod.array(zod.string()).optional(),
+  websiteUrl: zod.string().nullish(),
+  instagramHandle: zod.string().nullish(),
+  portfolioUrls: zod.array(zod.string()).optional(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Suspend an approved vendor
  */
 export const AdminSuspendVendorParams = zod.object({
   vendorId: zod.coerce.string().uuid(),
@@ -1373,6 +1468,41 @@ export const AdminSuspendVendorBody = zod.object({
 });
 
 export const AdminSuspendVendorResponse = zod.object({
+  id: zod.string().uuid(),
+  userId: zod.string().uuid(),
+  businessName: zod.string(),
+  category: zod.enum([
+    "catering",
+    "mc",
+    "photography",
+    "videography",
+    "floristry",
+    "av_technical",
+    "tent_furniture",
+    "security",
+    "entertainment",
+    "decor",
+    "transportation",
+    "other",
+  ]),
+  description: zod.string(),
+  status: zod.enum(["pending_review", "approved", "suspended", "rejected"]),
+  averageRating: zod.string().nullish(),
+  totalReviews: zod.number(),
+  totalBookings: zod.number(),
+  isPremium: zod.boolean(),
+  city: zod.string(),
+  serviceAreas: zod.array(zod.string()).optional(),
+  websiteUrl: zod.string().nullish(),
+  instagramHandle: zod.string().nullish(),
+  portfolioUrls: zod.array(zod.string()).optional(),
+  createdAt: zod.coerce.date(),
+});
+
+/**
+ * @summary Submit completed vendor profile for admin vetting
+ */
+export const SubmitVendorProfileForReviewResponse = zod.object({
   id: zod.string().uuid(),
   userId: zod.string().uuid(),
   businessName: zod.string(),

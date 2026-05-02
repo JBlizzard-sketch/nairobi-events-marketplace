@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export type AdminSuspendVendorBody = {
-  reason: string;
-};
+export interface AdminApproveVendorBody {
+  /** Optional admin note visible to vendor */
+  note?: string;
+}

@@ -99,6 +99,8 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "payment_released",
   "review_reminder",
   "event_reminder",
+  "vendor_approved",
+  "vendor_rejected",
   "vendor_suspended",
   "system",
 ]);

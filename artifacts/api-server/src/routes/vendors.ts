@@ -286,4 +286,40 @@ router.get("/vendors/:vendorId/reviews", async (req, res): Promise<void> => {
   });
 });
 
+// ── POST /vendor/profile/submit — submit for vetting ─────────────────────────
+
+router.post("/vendor/profile/submit", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
+
+  const user = await db.query.users.findFirst({ where: eq(users.clerkId, clerkId) });
+  if (!user) { res.status(404).json({ error: "not_found", message: "User not found" }); return; }
+
+  const existing = await db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.userId, user.id) });
+  if (!existing) { res.status(404).json({ error: "not_found", message: "Please create a vendor profile first" }); return; }
+
+  if (existing.status === "approved") {
+    res.status(400).json({ error: "already_approved", message: "Your profile is already approved" });
+    return;
+  }
+
+  if (existing.status === "pending_review") {
+    res.status(400).json({ error: "already_pending", message: "Your profile is already under review" });
+    return;
+  }
+
+  if (!existing.businessName?.trim()) {
+    res.status(400).json({ error: "incomplete_profile", message: "Please complete your business name before submitting" });
+    return;
+  }
+
+  const [updated] = await db
+    .update(vendorProfiles)
+    .set({ status: "pending_review", updatedAt: new Date() })
+    .where(eq(vendorProfiles.userId, user.id))
+    .returning();
+
+  res.json(updated);
+});
+
 export default router;
