@@ -1,7 +1,6 @@
 import { useParams } from "wouter";
 import { Link } from "wouter";
-import { useAdminListEvents } from "@workspace/api-client-react";
-import { useMemo } from "react";
+import { useGetEvent } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,17 +43,11 @@ function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label:
 export default function AdminEventDetail() {
   const { id } = useParams<{ id: string }>();
 
-  const { data, isLoading } = useAdminListEvents(
-    { limit: 1000 },
-    { query: { enabled: !!id } as any },
-  );
+  const { data: evRaw, isLoading, isError } = useGetEvent(id!, {
+    query: { enabled: !!id } as any,
+  });
 
-  const events = useMemo(() => {
-    const raw = data as any;
-    return (Array.isArray(raw) ? raw : raw?.events ?? []) as any[];
-  }, [data]);
-
-  const ev = useMemo(() => events.find((e: any) => e.id === id), [events, id]);
+  const ev = evRaw as any;
 
   if (isLoading) {
     return (
@@ -66,7 +59,7 @@ export default function AdminEventDetail() {
     );
   }
 
-  if (!ev) {
+  if (isError || !ev) {
     return (
       <div className="p-8 text-center text-muted-foreground">
         <p className="font-semibold mb-2">Event not found.</p>

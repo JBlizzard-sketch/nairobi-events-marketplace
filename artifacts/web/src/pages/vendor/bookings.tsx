@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import {
   Briefcase, ChevronRight, ShieldCheck, CheckCircle2,
-  XCircle, AlertTriangle, Clock, Calendar, User, TrendingUp, Search,
+  XCircle, AlertTriangle, Clock, Calendar, User, TrendingUp, Search, Download, Zap,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -43,6 +43,25 @@ const CUSTOM_TOOLTIP = ({ active, payload, label }: any) => {
     </div>
   );
 };
+
+function exportCSV(rows: any[]) {
+  const headers = ["Ref", "Event", "Event Date", "Planner", "Status", "Your Payout (KES)", "Booked On"];
+  const lines = rows.map(b => [
+    `#${b.id.slice(0, 8).toUpperCase()}`,
+    b.eventTitle ?? "",
+    b.eventDate ? new Date(b.eventDate).toLocaleDateString("en-KE") : "",
+    b.plannerName ?? "",
+    STATUS_CONFIG[b.status]?.label ?? b.status,
+    Number(b.vendorPayoutAmount).toFixed(2),
+    b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-KE") : "",
+  ]);
+  const csv = [headers, ...lines].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+  a.download = `vendor-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
 
 export default function VendorBookings() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -128,6 +147,12 @@ export default function VendorBookings() {
               ))}
             </SelectContent>
           </Select>
+          {list.length > 0 && (
+            <Button variant="outline" size="sm" className="gap-2" onClick={() => exportCSV(list)}>
+              <Download className="h-4 w-4" />
+              Export CSV
+            </Button>
+          )}
         </div>
       </div>
 
@@ -231,16 +256,33 @@ export default function VendorBookings() {
             const cfg = STATUS_CONFIG[b.status] ?? { label: b.status, icon: Briefcase, className: "bg-muted text-muted-foreground" };
             const Icon = cfg.icon;
             const isDisputed = b.status === "disputed";
+            const daysUntilEvent = b.eventDate
+              ? Math.ceil((new Date(b.eventDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000)
+              : null;
+            const isUpcoming =
+              daysUntilEvent !== null &&
+              daysUntilEvent >= 0 &&
+              daysUntilEvent <= 14 &&
+              ["confirmed", "in_escrow"].includes(b.status);
+            const isImminent = isUpcoming && daysUntilEvent! <= 3;
 
             return (
               <Card
                 key={b.id}
-                className={`shadow-sm transition-all hover:shadow-md ${isDisputed ? "border-red-200" : ""}`}
+                className={`shadow-sm transition-all hover:shadow-md ${
+                  isDisputed
+                    ? "border-red-200"
+                    : isImminent
+                    ? "border-amber-300 bg-amber-50/30 dark:bg-amber-950/20"
+                    : isUpcoming
+                    ? "border-primary/30"
+                    : ""
+                }`}
               >
                 <CardContent className="p-5">
                   <div className="flex items-start gap-4">
-                    <div className={`p-2.5 rounded-lg flex-shrink-0 ${isDisputed ? "bg-red-50" : "bg-muted/50"}`}>
-                      <Icon className={`h-5 w-5 ${isDisputed ? "text-red-500" : "text-muted-foreground"}`} />
+                    <div className={`p-2.5 rounded-lg flex-shrink-0 ${isDisputed ? "bg-red-50" : isImminent ? "bg-amber-100" : "bg-muted/50"}`}>
+                      <Icon className={`h-5 w-5 ${isDisputed ? "text-red-500" : isImminent ? "text-amber-600" : "text-muted-foreground"}`} />
                     </div>
 
                     <div className="flex-1 min-w-0">
@@ -259,6 +301,18 @@ export default function VendorBookings() {
                         {isDisputed && (
                           <Badge className="bg-red-600 text-white text-xs gap-1">
                             <AlertTriangle className="h-3 w-3" /> Under Review
+                          </Badge>
+                        )}
+                        {isImminent && (
+                          <Badge className="bg-amber-100 text-amber-800 border border-amber-300 text-xs gap-1">
+                            <Zap className="h-3 w-3" />
+                            {daysUntilEvent === 0 ? "Today!" : `${daysUntilEvent}d away`}
+                          </Badge>
+                        )}
+                        {!isImminent && isUpcoming && (
+                          <Badge className="bg-primary/10 text-primary border border-primary/20 text-xs gap-1">
+                            <Zap className="h-3 w-3" />
+                            {daysUntilEvent}d away
                           </Badge>
                         )}
                       </div>
