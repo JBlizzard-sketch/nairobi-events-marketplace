@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link } from "wouter";
 import { useListMyBookings } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -5,9 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import {
   Briefcase, ChevronRight, ShieldCheck, CheckCircle2,
-  XCircle, AlertTriangle, Clock, Calendar, User,
+  XCircle, AlertTriangle, Clock, Calendar, User, TrendingUp,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -25,6 +27,22 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 
+function formatKES(n: number) {
+  if (n >= 1_000_000) return `KES ${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `KES ${(n / 1_000).toFixed(0)}K`;
+  return `KES ${n.toLocaleString()}`;
+}
+
+const CUSTOM_TOOLTIP = ({ active, payload, label }: any) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div className="bg-card border border-border rounded-xl shadow-lg px-3 py-2 text-sm">
+      <p className="font-semibold mb-1">{label}</p>
+      <p style={{ color: "hsl(var(--primary))" }}>{formatKES(payload[0]?.value ?? 0)}</p>
+    </div>
+  );
+};
+
 export default function VendorBookings() {
   const [statusFilter, setStatusFilter] = useState("all");
 
@@ -41,6 +59,32 @@ export default function VendorBookings() {
   const inEscrow = list
     .filter(b => b.status === "in_escrow")
     .reduce((s: number, b: any) => s + Number(b.vendorPayoutAmount), 0);
+
+  const activeCount = list.filter(b => ["confirmed", "in_escrow"].includes(b.status)).length;
+
+  const completedList = list.filter(b => b.status === "completed");
+  const avgPayout = completedList.length > 0
+    ? completedList.reduce((s: number, b: any) => s + Number(b.vendorPayoutAmount), 0) / completedList.length
+    : 0;
+
+  // ── Monthly earnings chart (last 6 months) ────────────────────────────────
+  const monthlyData = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 6 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+      const key = d.toLocaleDateString("en-KE", { month: "short", year: "2-digit" });
+      const total = list
+        .filter(b => {
+          if (b.status !== "completed") return false;
+          const bd = new Date(b.createdAt);
+          return bd.getFullYear() === d.getFullYear() && bd.getMonth() === d.getMonth();
+        })
+        .reduce((s: number, b: any) => s + Number(b.vendorPayoutAmount), 0);
+      return { month: key, earnings: total };
+    });
+  }, [list]);
+
+  const hasChartData = monthlyData.some(d => d.earnings > 0);
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
@@ -64,24 +108,79 @@ export default function VendorBookings() {
         </Select>
       </div>
 
-      {/* Earnings summary */}
+      {/* Stats cards */}
       {!isLoading && list.length > 0 && (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <Card className="shadow-sm border-emerald-100">
             <CardContent className="p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Total Earned</p>
-              <p className="text-2xl font-bold text-emerald-700">KES {totalEarned.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">From completed bookings</p>
+              <p className="text-xl font-bold text-emerald-700">{formatKES(totalEarned)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">From completed</p>
             </CardContent>
           </Card>
           <Card className="shadow-sm border-primary/20">
             <CardContent className="p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">In Escrow</p>
-              <p className="text-2xl font-bold text-primary">KES {inEscrow.toLocaleString()}</p>
-              <p className="text-xs text-muted-foreground mt-1">Pending release</p>
+              <p className="text-xl font-bold text-primary">{formatKES(inEscrow)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Pending release</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Active</p>
+              <p className="text-xl font-bold">{activeCount}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Confirmed / in escrow</p>
+            </CardContent>
+          </Card>
+          <Card className="shadow-sm">
+            <CardContent className="p-4">
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Avg Payout</p>
+              <p className="text-xl font-bold">{avgPayout > 0 ? formatKES(avgPayout) : "—"}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Per completed booking</p>
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Monthly earnings chart */}
+      {!isLoading && hasChartData && (
+        <Card className="shadow-sm">
+          <CardContent className="pt-5 pb-2">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="bg-primary/10 p-1.5 rounded-md">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
+              <div>
+                <p className="font-semibold text-sm">Monthly Earnings</p>
+                <p className="text-xs text-muted-foreground">Last 6 months · completed bookings</p>
+              </div>
+            </div>
+            <ResponsiveContainer width="100%" height={180}>
+              <BarChart data={monthlyData} margin={{ top: 4, right: 4, left: 0, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+                  axisLine={false}
+                  tickLine={false}
+                  tickFormatter={(v: number) => v >= 1000 ? `${(v / 1000).toFixed(0)}K` : String(v)}
+                  width={40}
+                />
+                <Tooltip content={<CUSTOM_TOOLTIP />} cursor={{ fill: "hsl(var(--muted))" }} />
+                <Bar
+                  dataKey="earnings"
+                  fill="hsl(var(--primary))"
+                  radius={[4, 4, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       )}
 
       {isLoading ? (
@@ -176,6 +275,11 @@ export default function VendorBookings() {
                       {b.status === "completed" && (
                         <p className="text-xs text-emerald-600 font-medium mt-1">Released ✓</p>
                       )}
+                      <Link href={`/bookings/${b.id}`}>
+                        <button className="mt-2 flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors">
+                          View details <ChevronRight className="h-3 w-3" />
+                        </button>
+                      </Link>
                     </div>
                   </div>
 

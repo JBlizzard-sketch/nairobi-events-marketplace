@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Calendar, ChevronRight, Plus, FileText, Pencil, CalendarDays, List, ChevronLeft } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calendar, ChevronRight, Plus, FileText, Pencil, CalendarDays, List, ChevronLeft, Search, X } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
@@ -184,6 +185,7 @@ function CalendarView({ events }: { events: any[] }) {
 export default function EventsList() {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [view, setView] = useState<"list" | "calendar">("list");
+  const [search, setSearch] = useState("");
 
   const { data, isLoading } = useListMyEvents(
     statusFilter !== "all"
@@ -191,7 +193,20 @@ export default function EventsList() {
       : { page: 1, limit: 50 }
   );
 
-  const events = data?.events ?? [];
+  const allEvents = data?.events ?? [];
+
+  // Client-side text search across title, venue, city, eventType
+  const events = search.trim()
+    ? allEvents.filter(e => {
+        const q = search.toLowerCase();
+        return (
+          (e.title ?? "").toLowerCase().includes(q) ||
+          (e.venue ?? "").toLowerCase().includes(q) ||
+          (e.city ?? "").toLowerCase().includes(q) ||
+          (e.eventType ?? "").replace(/_/g, " ").toLowerCase().includes(q)
+        );
+      })
+    : allEvents;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -200,7 +215,11 @@ export default function EventsList() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Events</h1>
           <p className="text-muted-foreground mt-1">
-            {isLoading ? "Loading…" : `${data?.total ?? 0} event${(data?.total ?? 0) !== 1 ? "s" : ""} total`}
+            {isLoading
+              ? "Loading…"
+              : search.trim()
+                ? `${events.length} result${events.length !== 1 ? "s" : ""} for "${search}"`
+                : `${data?.total ?? 0} event${(data?.total ?? 0) !== 1 ? "s" : ""} total`}
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -238,8 +257,28 @@ export default function EventsList() {
         </div>
       </div>
 
+      {/* Search bar */}
+      <div className="relative">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Input
+          className="pl-9 pr-9 h-11"
+          placeholder="Search events by name, venue, city or type…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        {search && (
+          <button
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={() => setSearch("")}
+            aria-label="Clear search"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
       {/* Status chip filters (list view only) */}
-      {view === "list" && (
+      {view === "list" && !search && (
         <div className="relative">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none -mx-1 px-1">
             {CHIP_FILTERS.map(({ value, label }) => (
