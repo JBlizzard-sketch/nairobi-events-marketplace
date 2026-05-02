@@ -26,6 +26,7 @@ import VendorProfile from "@/pages/planner/vendor-profile";
 import BookingsList from "@/pages/planner/bookings";
 import BookingDetail from "@/pages/planner/booking-detail";
 import Notifications from "@/pages/planner/notifications";
+import BudgetOptimizer from "@/pages/planner/budget";
 
 // Pages — vendor
 import VendorDashboard from "@/pages/vendor/dashboard";
@@ -237,6 +238,9 @@ function Router() {
       </Route>
       <Route path="/notifications">
         <ProtectedRoute component={Notifications} allowedRoles={["planner"]} />
+      </Route>
+      <Route path="/budget">
+        <ProtectedRoute component={BudgetOptimizer} allowedRoles={["planner"]} />
       </Route>
 
       {/* Vendor routes */}

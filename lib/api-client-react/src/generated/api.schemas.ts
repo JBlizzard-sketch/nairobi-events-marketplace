@@ -499,6 +499,10 @@ export type NotFoundResponse = ErrorResponse;
 export type ConflictResponse = ErrorResponse;
 
 export type ListVendorsParams = {
+  /**
+   * Full-text search on business name and description
+   */
+  q?: string;
   category?: VendorCategory;
   /**
    * Filter by availability on this date (YYYY-MM-DD)

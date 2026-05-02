@@ -193,7 +193,7 @@ router.post("/events/:eventId/submit", async (req, res): Promise<void> => {
   res.json(updated);
 });
 
-// GET /events/:eventId/quotes — quotes grouped by category
+// GET /events/:eventId/quotes — quotes grouped by category, enriched with vendor info
 router.get("/events/:eventId/quotes", async (req, res): Promise<void> => {
   const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) { res.status(401).json({ error: "unauthorized", message: "Authentication required" }); return; }
@@ -205,8 +205,28 @@ router.get("/events/:eventId/quotes", async (req, res): Promise<void> => {
     orderBy: quotes.totalAmount,
   });
 
-  const quotesByCategory: Record<string, typeof quoteList> = {};
-  for (const quote of quoteList) {
+  // Enrich quotes with vendor business name and rating
+  const vendorIds = [...new Set(quoteList.map(q => q.vendorId))];
+  const vendorMap = new Map<string, { businessName: string | null; averageRating: string | null; totalReviews: number | null; city: string | null }>();
+  if (vendorIds.length > 0) {
+    const vendorRows = await db.query.vendorProfiles.findMany({
+      where: (vp, { inArray }) => inArray(vp.id, vendorIds),
+    });
+    for (const v of vendorRows) {
+      vendorMap.set(v.id, { businessName: v.businessName, averageRating: v.averageRating, totalReviews: v.totalReviews, city: v.city });
+    }
+  }
+
+  const enriched = quoteList.map(q => ({
+    ...q,
+    vendorBusinessName: vendorMap.get(q.vendorId)?.businessName ?? null,
+    vendorAverageRating: vendorMap.get(q.vendorId)?.averageRating ?? null,
+    vendorTotalReviews: vendorMap.get(q.vendorId)?.totalReviews ?? null,
+    vendorCity: vendorMap.get(q.vendorId)?.city ?? null,
+  }));
+
+  const quotesByCategory: Record<string, typeof enriched> = {};
+  for (const quote of enriched) {
     if (!quotesByCategory[quote.category]) quotesByCategory[quote.category] = [];
     quotesByCategory[quote.category].push(quote);
   }

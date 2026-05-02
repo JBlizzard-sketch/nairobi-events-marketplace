@@ -7,7 +7,7 @@ import {
   reviews,
   users,
 } from "@workspace/db";
-import { eq, and, sql, gte, desc } from "drizzle-orm";
+import { eq, and, sql, gte, desc, ilike, or } from "drizzle-orm";
 import {
   ListVendorsQueryParams,
   CreateVendorProfileBody,
@@ -27,13 +27,17 @@ router.get("/vendors", async (req, res): Promise<void> => {
     return;
   }
 
-  const { category, city, isPremium, minRating, page = 1, limit = 20 } = parsed.data;
+  const { q, category, city, isPremium, minRating, page = 1, limit = 20 } = parsed.data as any;
 
   const conditions = [eq(vendorProfiles.status, "approved")];
   if (category) conditions.push(eq(vendorProfiles.category, category));
   if (city) conditions.push(eq(vendorProfiles.city, city));
   if (isPremium) conditions.push(eq(vendorProfiles.isPremium, true));
   if (minRating) conditions.push(gte(vendorProfiles.averageRating, String(minRating)));
+  if (q && q.trim()) {
+    const term = `%${q.trim()}%`;
+    conditions.push(or(ilike(vendorProfiles.businessName, term), ilike(vendorProfiles.description, term))!);
+  }
 
   const offset = (page - 1) * limit;
 

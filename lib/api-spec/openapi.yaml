@@ -112,6 +112,11 @@ paths:
       tags: [vendors]
       summary: List approved vendors
       parameters:
+        - name: q
+          in: query
+          description: Full-text search on business name and description
+          schema:
+            type: string
         - name: category
           in: query
           schema:

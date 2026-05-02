@@ -88,6 +88,10 @@ export const listVendorsQueryPageDefault = 1;
 export const listVendorsQueryLimitDefault = 20;
 
 export const ListVendorsQueryParams = zod.object({
+  q: zod.coerce
+    .string()
+    .optional()
+    .describe("Full-text search on business name and description"),
   category: zod
     .enum([
       "catering",

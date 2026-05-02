@@ -11,6 +11,7 @@ import {
   Briefcase,
   FileText,
   BarChart,
+  Sparkles,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 
@@ -31,6 +32,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/events", label: "My Events", icon: Calendar },
     { href: "/vendors", label: "Vendors", icon: Users },
     { href: "/bookings", label: "Bookings", icon: Briefcase },
+    { href: "/budget", label: "Budget AI", icon: Sparkles },
   ];
 
   const vendorLinks = [
@@ -42,7 +44,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const adminLinks = [
     { href: "/admin", label: "Stats", icon: BarChart },
-    { href: "/admin/vendors", label: "Pending Vendors", icon: Users },
+    { href: "/admin/vendors", label: "Vendor Management", icon: Users },
   ];
 
   const links =
