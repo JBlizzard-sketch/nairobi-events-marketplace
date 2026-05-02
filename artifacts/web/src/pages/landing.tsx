@@ -273,6 +273,118 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* ── Pricing ────────────────────────────────────────────────────────── */}
+        <section className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-5xl">
+          <div className="text-center mb-14">
+            <h2 className="text-4xl md:text-5xl font-black tracking-tight mb-4">Simple, transparent pricing</h2>
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto">
+              No subscriptions. No setup fees. You only pay when a booking is confirmed.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* Planners */}
+            <div className="bg-card border border-border rounded-2xl p-8 shadow-sm flex flex-col">
+              <div className="mb-6">
+                <div className="bg-primary/10 w-11 h-11 rounded-xl flex items-center justify-center mb-4">
+                  <CheckCircle2 className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="text-2xl font-black mb-1">For Event Planners</h3>
+                <p className="text-sm text-muted-foreground">Everything you need to run a professional event.</p>
+              </div>
+
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-5xl font-black">Free</span>
+                <span className="text-muted-foreground mb-1.5 text-sm">to start</span>
+              </div>
+
+              <ul className="space-y-3 mb-8 flex-1">
+                {[
+                  { text: "Unlimited event briefs", free: true },
+                  { text: "Up to 3 quotes per service category", free: true },
+                  { text: "Side-by-side quote comparison", free: true },
+                  { text: "AI budget optimisation", free: true },
+                  { text: "Escrow-protected payments", free: true },
+                  { text: "5% platform fee on confirmed bookings", free: false },
+                ].map(({ text, free }) => (
+                  <li key={text} className="flex items-start gap-3 text-sm">
+                    <CheckCircle2 className={`h-4 w-4 mt-0.5 flex-shrink-0 ${free ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className={free ? "text-foreground" : "text-muted-foreground"}>{text}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="rounded-xl bg-muted/50 border border-border px-4 py-3 text-xs text-muted-foreground">
+                The 5% fee covers escrow holding, vendor vetting, dispute resolution, and platform operations. No other charges.
+              </div>
+
+              <Link href="/sign-up" className="mt-6">
+                <button className="w-full h-12 rounded-lg bg-primary text-primary-foreground font-semibold text-sm hover:bg-primary/90 transition-colors">
+                  Start planning for free
+                </button>
+              </Link>
+            </div>
+
+            {/* Vendors */}
+            <div className="bg-card border border-border rounded-2xl p-8 shadow-sm flex flex-col">
+              <div className="mb-6">
+                <div className="bg-emerald-50 w-11 h-11 rounded-xl flex items-center justify-center mb-4">
+                  <Zap className="h-6 w-6 text-emerald-600" />
+                </div>
+                <h3 className="text-2xl font-black mb-1">For Vendors</h3>
+                <p className="text-sm text-muted-foreground">Grow your event business with qualified leads.</p>
+              </div>
+
+              <div className="flex items-end gap-1 mb-6">
+                <span className="text-5xl font-black">Free</span>
+                <span className="text-muted-foreground mb-1.5 text-sm">to join</span>
+              </div>
+
+              <ul className="space-y-3 mb-8 flex-1">
+                {[
+                  { text: "Free profile listing & vetting", free: true },
+                  { text: "Receive unlimited quote requests", free: true },
+                  { text: "Reusable quote templates", free: true },
+                  { text: "Availability calendar management", free: true },
+                  { text: "Escrow-guaranteed payment on delivery", free: true },
+                  { text: "10% commission per completed booking", free: false },
+                ].map(({ text, free }) => (
+                  <li key={text} className="flex items-start gap-3 text-sm">
+                    <CheckCircle2 className={`h-4 w-4 mt-0.5 flex-shrink-0 ${free ? "text-emerald-600" : "text-muted-foreground"}`} />
+                    <span className={free ? "text-foreground" : "text-muted-foreground"}>{text}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="rounded-xl bg-muted/50 border border-border px-4 py-3 text-xs text-muted-foreground">
+                Commission is only deducted from confirmed, delivered bookings. No monthly fees, no listing fees, no hidden charges.
+              </div>
+
+              <Link href="/sign-up" className="mt-6">
+                <button className="w-full h-12 rounded-lg border border-border font-semibold text-sm hover:bg-muted transition-colors">
+                  Apply as a vendor
+                </button>
+              </Link>
+            </div>
+          </div>
+
+          {/* Bottom trust note */}
+          <div className="mt-8 text-center">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-6 text-sm text-muted-foreground">
+              {[
+                { icon: Shield, text: "All payments held in escrow" },
+                { icon: ShieldCheck, text: "Dispute resolution included" },
+                { icon: CheckCircle2, text: "No credit card required to sign up" },
+              ].map(({ icon: Icon, text }) => (
+                <span key={text} className="flex items-center gap-2">
+                  <Icon className="h-4 w-4 text-primary flex-shrink-0" />
+                  {text}
+                </span>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* ── Vendor CTA ─────────────────────────────────────────────────────── */}
         <section className="py-20 md:py-28 container mx-auto px-4 md:px-8 max-w-6xl">
           <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 rounded-3xl p-10 md:p-16 text-center">
