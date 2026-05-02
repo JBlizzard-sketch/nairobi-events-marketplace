@@ -25,6 +25,7 @@ import {
   Sun,
   Moon,
   Star,
+  HelpCircle,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
@@ -194,6 +195,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             {isDark ? "Light mode" : "Dark mode"}
           </span>
         </button>
+        {/* Help / FAQ */}
+        <Link href="/faq">
+          <button
+            onClick={() => setMobileOpen(false)}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-md text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-sm"
+          >
+            <HelpCircle className="h-4 w-4" />
+            Help &amp; FAQ
+          </button>
+        </Link>
         <Button
           variant="ghost"
           size="sm"

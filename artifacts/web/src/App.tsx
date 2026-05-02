@@ -12,6 +12,9 @@ import { AppLayout } from "@/components/layout/app-layout";
 // Pages — shared
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import FAQ from "@/pages/faq";
+import Terms from "@/pages/terms";
+import Privacy from "@/pages/privacy";
 
 // Pages — auth
 import RoleSelect from "@/pages/auth/role-select";
@@ -312,6 +315,11 @@ function Router() {
       <Route path="/admin">
         <ProtectedRoute component={AdminStats} allowedRoles={["admin"]} />
       </Route>
+
+      {/* Public pages */}
+      <Route path="/faq" component={FAQ} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/privacy" component={Privacy} />
 
       <Route component={NotFound} />
     </Switch>

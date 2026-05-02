@@ -333,9 +333,12 @@ export default function Landing() {
             <div className="w-7 h-7 bg-primary rounded-md flex items-center justify-center text-primary-foreground font-black text-sm">N</div>
             <span className="font-bold text-sm">Nairobi Events Marketplace</span>
           </div>
-          <div className="flex items-center gap-8 text-sm text-muted-foreground">
+          <div className="flex items-center flex-wrap justify-center gap-6 text-sm text-muted-foreground">
             <Link href="/sign-up"><span className="hover:text-foreground transition-colors cursor-pointer">For Planners</span></Link>
             <Link href="/sign-up"><span className="hover:text-foreground transition-colors cursor-pointer">For Vendors</span></Link>
+            <Link href="/faq"><span className="hover:text-foreground transition-colors cursor-pointer">FAQ</span></Link>
+            <Link href="/terms"><span className="hover:text-foreground transition-colors cursor-pointer">Terms</span></Link>
+            <Link href="/privacy"><span className="hover:text-foreground transition-colors cursor-pointer">Privacy</span></Link>
             <Link href="/sign-in"><span className="hover:text-foreground transition-colors cursor-pointer">Sign In</span></Link>
           </div>
           <p className="text-sm text-muted-foreground">
