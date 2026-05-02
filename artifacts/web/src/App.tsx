@@ -29,6 +29,7 @@ import BookingDetail from "@/pages/planner/booking-detail";
 import Notifications from "@/pages/planner/notifications";
 import BudgetOptimizer from "@/pages/planner/budget";
 import PlannerAnalytics from "@/pages/planner/analytics";
+import SavedVendors from "@/pages/planner/saved-vendors";
 
 // Pages — vendor
 import VendorDashboard from "@/pages/vendor/dashboard";
@@ -36,6 +37,7 @@ import VendorRequests from "@/pages/vendor/requests";
 import VendorProfileEdit from "@/pages/vendor/profile";
 import VendorAvailability from "@/pages/vendor/availability";
 import VendorBookings from "@/pages/vendor/bookings";
+import VendorAnalytics from "@/pages/vendor/analytics";
 
 // Pages — admin
 import AdminStats from "@/pages/admin/stats";
@@ -234,6 +236,9 @@ function Router() {
       <Route path="/events">
         <ProtectedRoute component={EventsList} allowedRoles={["planner"]} />
       </Route>
+      <Route path="/vendors/saved">
+        <ProtectedRoute component={SavedVendors} allowedRoles={["planner"]} />
+      </Route>
       <Route path="/vendors/:id">
         <ProtectedRoute component={VendorProfile} allowedRoles={["planner"]} />
       </Route>
@@ -271,6 +276,9 @@ function Router() {
       </Route>
       <Route path="/vendor/availability">
         <ProtectedRoute component={VendorAvailability} allowedRoles={["vendor"]} />
+      </Route>
+      <Route path="/vendor/analytics">
+        <ProtectedRoute component={VendorAnalytics} allowedRoles={["vendor"]} />
       </Route>
 
       {/* Admin routes */}

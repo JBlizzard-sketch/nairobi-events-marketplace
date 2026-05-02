@@ -19,6 +19,8 @@ import {
   X,
   SlidersHorizontal,
   Search,
+  Heart,
+  TrendingUp,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
@@ -54,13 +56,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     setLocation("/");
   };
 
-  const isActive = (href: string) =>
-    location === href || location.startsWith(href + "/");
+  const isActive = (href: string) => {
+    if (location === href) return true;
+    if (href === "/vendors") return location.startsWith("/vendors/") && !location.startsWith("/vendors/saved");
+    return location.startsWith(href + "/");
+  };
 
   const plannerLinks = [
     { href: "/dashboard", label: "Dashboard", icon: Home },
     { href: "/events", label: "My Events", icon: Calendar },
     { href: "/vendors", label: "Vendors", icon: Users },
+    { href: "/vendors/saved", label: "Saved Vendors", icon: Heart },
     { href: "/bookings", label: "Bookings", icon: Briefcase },
     { href: "/analytics", label: "Analytics", icon: PieChart },
     { href: "/budget", label: "Budget AI", icon: Sparkles },
@@ -72,6 +78,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/vendor/bookings", label: "My Bookings", icon: Briefcase },
     { href: "/vendor/profile", label: "Profile", icon: Settings },
     { href: "/vendor/availability", label: "Availability", icon: Calendar },
+    { href: "/vendor/analytics", label: "Analytics", icon: TrendingUp },
   ];
 
   const adminLinks = [

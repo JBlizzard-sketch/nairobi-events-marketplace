@@ -41,6 +41,7 @@ import {
   Calendar,
   User,
   Printer,
+  UserX,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -137,6 +138,7 @@ export default function BookingDetail() {
   const [comment, setComment] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
   const [releasing, setReleasing] = useState(false);
+  const [noShowing, setNoShowing] = useState(false);
 
   const b = booking as any;
 
@@ -168,6 +170,25 @@ export default function BookingDetail() {
       refetch();
     } finally {
       setReleasing(false);
+    }
+  };
+
+  // ── No-show report ──────────────────────────────────────────────────────────
+  const handleNoShow = async () => {
+    if (!b) return;
+    setNoShowing(true);
+    try {
+      await createReview.mutateAsync({
+        data: {
+          bookingId: b.id,
+          rating: 1,
+          isNoShow: true,
+          comment: "Vendor did not show up to the event.",
+        },
+      });
+      refetch();
+    } finally {
+      setNoShowing(false);
     }
   };
 
@@ -485,6 +506,35 @@ export default function BookingDetail() {
                   className="bg-destructive hover:bg-destructive/90"
                 >
                   Submit Dispute
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="sm" className="w-full gap-2 text-muted-foreground hover:text-destructive">
+                <UserX className="h-4 w-4" />
+                Vendor Didn't Show Up
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Report vendor as no-show?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will log a no-show report against{b.vendorBusinessName ? ` ${b.vendorBusinessName}` : " this vendor"}. A 1-star record is submitted on your behalf and the vendor's reliability score is updated. This cannot be undone — only use this if the vendor genuinely failed to appear.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleNoShow}
+                  disabled={noShowing}
+                  className="bg-destructive hover:bg-destructive/90"
+                >
+                  {noShowing
+                    ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Reporting…</>
+                    : "Yes, report no-show"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
