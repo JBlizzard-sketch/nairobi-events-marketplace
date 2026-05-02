@@ -1707,3 +1707,73 @@ export const AdminGetStatsResponse = zod.object({
   totalRevenue: zod.string(),
   activeEvents: zod.number(),
 });
+
+/**
+ * @summary Resolve a disputed booking
+ */
+export const AdminResolveDisputeParams = zod.object({
+  bookingId: zod.coerce.string().uuid(),
+});
+
+export const AdminResolveDisputeBody = zod.object({
+  resolution: zod.enum(["completed", "refunded"]),
+  adminNotes: zod.string().optional(),
+});
+
+export const AdminResolveDisputeResponse = zod.object({
+  id: zod.string().uuid(),
+  eventId: zod.string().uuid(),
+  quoteId: zod.string().uuid(),
+  vendorId: zod.string().uuid(),
+  plannerId: zod.string().uuid(),
+  status: zod.enum([
+    "pending",
+    "confirmed",
+    "in_escrow",
+    "completed",
+    "disputed",
+    "cancelled",
+    "refunded",
+  ]),
+  totalAmount: zod.string(),
+  platformFeeAmount: zod.string(),
+  vendorPayoutAmount: zod.string(),
+  currency: zod.string(),
+  stripePaymentIntentId: zod.string().nullish(),
+  contractUrl: zod.string().nullish(),
+  cancellationReason: zod.string().nullish(),
+  confirmedAt: zod.coerce.date().nullish(),
+  completedAt: zod.coerce.date().nullish(),
+  createdAt: zod.coerce.date(),
+  vendorBusinessName: zod.string().nullish(),
+  eventTitle: zod.string().nullish(),
+  eventDate: zod.coerce.date().nullish(),
+  category: zod.string().nullish(),
+  plannerName: zod.string().nullish(),
+});
+
+/**
+ * @summary Get platform settings
+ */
+export const AdminGetSettingsResponse = zod.object({
+  platformFeePercent: zod.number().optional(),
+  maintenanceMode: zod.boolean().optional(),
+  maintenanceMessage: zod.string().optional(),
+  updatedAt: zod.coerce.date().optional(),
+});
+
+/**
+ * @summary Update platform settings
+ */
+export const AdminUpdateSettingsBody = zod.object({
+  platformFeePercent: zod.number().optional(),
+  maintenanceMode: zod.boolean().optional(),
+  maintenanceMessage: zod.string().optional(),
+});
+
+export const AdminUpdateSettingsResponse = zod.object({
+  platformFeePercent: zod.number().optional(),
+  maintenanceMode: zod.boolean().optional(),
+  maintenanceMessage: zod.string().optional(),
+  updatedAt: zod.coerce.date().optional(),
+});

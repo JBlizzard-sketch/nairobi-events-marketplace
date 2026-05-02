@@ -3,7 +3,16 @@ import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { vendorProfiles, users, events, bookings, quoteRequests } from "@workspace/db";
 import { eq, sql, and } from "drizzle-orm";
+
 import { notify } from "../services/notify";
+
+// ── In-memory platform settings (persists for server lifetime) ────────────────
+let platformSettings = {
+  platformFeePercent: 10,
+  maintenanceMode: false,
+  maintenanceMessage: "The platform is temporarily down for maintenance. We'll be back shortly.",
+  updatedAt: new Date().toISOString(),
+};
 
 const router: IRouter = Router();
 
@@ -308,6 +317,88 @@ router.get("/admin/bookings", async (req, res): Promise<void> => {
   }));
 
   res.json({ bookings: enriched, total: Number(total ?? 0) });
+});
+
+// ── PUT /admin/bookings/:bookingId/resolve — resolve a dispute ────────────────
+
+router.put("/admin/bookings/:bookingId/resolve", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  const admin = await requireAdmin(clerkId);
+  if (!admin) { res.status(403).json({ error: "forbidden", message: "Admin access required" }); return; }
+
+  const { bookingId } = req.params;
+  const body = req.body as { resolution: string; adminNotes?: string };
+
+  if (!body.resolution || !["completed", "refunded"].includes(body.resolution)) {
+    res.status(400).json({ error: "validation_error", message: "resolution must be 'completed' or 'refunded'" });
+    return;
+  }
+
+  const booking = await db.query.bookings.findFirst({ where: eq(bookings.id, bookingId) });
+  if (!booking) { res.status(404).json({ error: "not_found", message: "Booking not found" }); return; }
+  if (booking.status !== "disputed") {
+    res.status(400).json({ error: "invalid_state", message: "Only disputed bookings can be resolved" }); return;
+  }
+
+  const [updated] = await db
+    .update(bookings)
+    .set({
+      status: body.resolution as "completed" | "refunded",
+      cancellationReason: body.adminNotes ?? null,
+      updatedAt: new Date(),
+    })
+    .where(eq(bookings.id, bookingId))
+    .returning();
+
+  // Notify both parties
+  const [planner, vendor] = await Promise.all([
+    db.query.users.findFirst({ where: eq(users.id, booking.plannerId) }),
+    db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.id, booking.vendorId) })
+      .then(vp => vp ? db.query.users.findFirst({ where: eq(users.id, vp.userId) }) : null),
+  ]);
+
+  const resolutionLabel = body.resolution === "completed" ? "in favour of the vendor" : "as a refund to the planner";
+  const message = `The dispute on booking #${bookingId.slice(0, 8).toUpperCase()} has been resolved ${resolutionLabel}.${body.adminNotes ? ` Admin note: ${body.adminNotes}` : ""}`;
+
+  if (planner) {
+    notify({ userId: planner.id, type: "booking_confirmed", title: "Dispute Resolved", body: message });
+  }
+  if (vendor) {
+    notify({ userId: vendor.id, type: "payment_released", title: "Dispute Resolved", body: message });
+  }
+
+  res.json(updated);
+});
+
+// ── GET /admin/settings ───────────────────────────────────────────────────────
+
+router.get("/admin/settings", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  const admin = await requireAdmin(clerkId);
+  if (!admin) { res.status(403).json({ error: "forbidden", message: "Admin access required" }); return; }
+  res.json(platformSettings);
+});
+
+// ── PUT /admin/settings ───────────────────────────────────────────────────────
+
+router.put("/admin/settings", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  const admin = await requireAdmin(clerkId);
+  if (!admin) { res.status(403).json({ error: "forbidden", message: "Admin access required" }); return; }
+
+  const body = req.body as { platformFeePercent?: number; maintenanceMode?: boolean; maintenanceMessage?: string };
+
+  if (body.platformFeePercent !== undefined) {
+    if (typeof body.platformFeePercent !== "number" || body.platformFeePercent < 0 || body.platformFeePercent > 50) {
+      res.status(400).json({ error: "validation_error", message: "platformFeePercent must be between 0 and 50" }); return;
+    }
+    platformSettings.platformFeePercent = body.platformFeePercent;
+  }
+  if (body.maintenanceMode !== undefined) platformSettings.maintenanceMode = body.maintenanceMode;
+  if (body.maintenanceMessage !== undefined) platformSettings.maintenanceMessage = body.maintenanceMessage;
+  platformSettings.updatedAt = new Date().toISOString();
+
+  res.json(platformSettings);
 });
 
 // ── GET /admin/stats ──────────────────────────────────────────────────────────

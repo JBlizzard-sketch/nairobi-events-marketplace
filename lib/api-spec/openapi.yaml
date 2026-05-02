@@ -959,6 +959,57 @@ paths:
               schema:
                 $ref: "#/components/schemas/AdminStats"
 
+  /admin/bookings/{bookingId}/resolve:
+    put:
+      operationId: adminResolveDispute
+      tags: [admin]
+      summary: Resolve a disputed booking
+      parameters:
+        - $ref: "#/components/parameters/bookingId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminResolveDisputeRequest"
+      responses:
+        "200":
+          description: Booking resolved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /admin/settings:
+    get:
+      operationId: adminGetSettings
+      tags: [admin]
+      summary: Get platform settings
+      responses:
+        "200":
+          description: Platform settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformSettings"
+    put:
+      operationId: adminUpdateSettings
+      tags: [admin]
+      summary: Update platform settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePlatformSettingsRequest"
+      responses:
+        "200":
+          description: Updated settings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PlatformSettings"
+
 # ─── Components ──────────────────────────────────────────────────────────────
 
 components:
@@ -1783,6 +1834,39 @@ components:
       required: [notifications, unreadCount]
 
     # ─── Admin ────────────────────────────────────────────────────────────────
+
+    AdminResolveDisputeRequest:
+      type: object
+      required: [resolution]
+      properties:
+        resolution:
+          type: string
+          enum: [completed, refunded]
+        adminNotes:
+          type: string
+
+    PlatformSettings:
+      type: object
+      properties:
+        platformFeePercent:
+          type: number
+        maintenanceMode:
+          type: boolean
+        maintenanceMessage:
+          type: string
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdatePlatformSettingsRequest:
+      type: object
+      properties:
+        platformFeePercent:
+          type: number
+        maintenanceMode:
+          type: boolean
+        maintenanceMessage:
+          type: string
 
     AdminStats:
       type: object

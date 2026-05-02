@@ -26,6 +26,7 @@ import type {
   AdminListUsers200,
   AdminListUsersParams,
   AdminListVendorsParams,
+  AdminResolveDisputeRequest,
   AdminStats,
   BadRequestResponse,
   Booking,
@@ -55,6 +56,7 @@ import type {
   Notification,
   NotificationListResponse,
   PaymentIntentResult,
+  PlatformSettings,
   Quote,
   QuoteRequest,
   Review,
@@ -63,6 +65,7 @@ import type {
   SubmitQuoteRequest,
   UnauthorizedResponse,
   UpdateEventRequest,
+  UpdatePlatformSettingsRequest,
   UpdateUserRequest,
   UpdateVendorProfileRequest,
   User,
@@ -3801,3 +3804,253 @@ export function useAdminGetStats<
 
   return { ...query, queryKey: queryOptions.queryKey };
 }
+
+/**
+ * @summary Resolve a disputed booking
+ */
+export const getAdminResolveDisputeUrl = (bookingId: string) => {
+  return `/api/admin/bookings/${bookingId}/resolve`;
+};
+
+export const adminResolveDispute = async (
+  bookingId: string,
+  adminResolveDisputeRequest: AdminResolveDisputeRequest,
+  options?: RequestInit,
+): Promise<Booking> => {
+  return customFetch<Booking>(getAdminResolveDisputeUrl(bookingId), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(adminResolveDisputeRequest),
+  });
+};
+
+export const getAdminResolveDisputeMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminResolveDispute>>,
+    TError,
+    { bookingId: string; data: BodyType<AdminResolveDisputeRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminResolveDispute>>,
+  TError,
+  { bookingId: string; data: BodyType<AdminResolveDisputeRequest> },
+  TContext
+> => {
+  const mutationKey = ["adminResolveDispute"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminResolveDispute>>,
+    { bookingId: string; data: BodyType<AdminResolveDisputeRequest> }
+  > = (props) => {
+    const { bookingId, data } = props ?? {};
+
+    return adminResolveDispute(bookingId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminResolveDisputeMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminResolveDispute>>
+>;
+export type AdminResolveDisputeMutationBody =
+  BodyType<AdminResolveDisputeRequest>;
+export type AdminResolveDisputeMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Resolve a disputed booking
+ */
+export const useAdminResolveDispute = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminResolveDispute>>,
+    TError,
+    { bookingId: string; data: BodyType<AdminResolveDisputeRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminResolveDispute>>,
+  TError,
+  { bookingId: string; data: BodyType<AdminResolveDisputeRequest> },
+  TContext
+> => {
+  return useMutation(getAdminResolveDisputeMutationOptions(options));
+};
+
+/**
+ * @summary Get platform settings
+ */
+export const getAdminGetSettingsUrl = () => {
+  return `/api/admin/settings`;
+};
+
+export const adminGetSettings = async (
+  options?: RequestInit,
+): Promise<PlatformSettings> => {
+  return customFetch<PlatformSettings>(getAdminGetSettingsUrl(), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getAdminGetSettingsQueryKey = () => {
+  return [`/api/admin/settings`] as const;
+};
+
+export const getAdminGetSettingsQueryOptions = <
+  TData = Awaited<ReturnType<typeof adminGetSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getAdminGetSettingsQueryKey();
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof adminGetSettings>>
+  > = ({ signal }) => adminGetSettings({ signal, ...requestOptions });
+
+  return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetSettings>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type AdminGetSettingsQueryResult = NonNullable<
+  Awaited<ReturnType<typeof adminGetSettings>>
+>;
+export type AdminGetSettingsQueryError = ErrorType<unknown>;
+
+/**
+ * @summary Get platform settings
+ */
+
+export function useAdminGetSettings<
+  TData = Awaited<ReturnType<typeof adminGetSettings>>,
+  TError = ErrorType<unknown>,
+>(options?: {
+  query?: UseQueryOptions<
+    Awaited<ReturnType<typeof adminGetSettings>>,
+    TError,
+    TData
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getAdminGetSettingsQueryOptions(options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Update platform settings
+ */
+export const getAdminUpdateSettingsUrl = () => {
+  return `/api/admin/settings`;
+};
+
+export const adminUpdateSettings = async (
+  updatePlatformSettingsRequest: UpdatePlatformSettingsRequest,
+  options?: RequestInit,
+): Promise<PlatformSettings> => {
+  return customFetch<PlatformSettings>(getAdminUpdateSettingsUrl(), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updatePlatformSettingsRequest),
+  });
+};
+
+export const getAdminUpdateSettingsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateSettings>>,
+    TError,
+    { data: BodyType<UpdatePlatformSettingsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof adminUpdateSettings>>,
+  TError,
+  { data: BodyType<UpdatePlatformSettingsRequest> },
+  TContext
+> => {
+  const mutationKey = ["adminUpdateSettings"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof adminUpdateSettings>>,
+    { data: BodyType<UpdatePlatformSettingsRequest> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return adminUpdateSettings(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type AdminUpdateSettingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof adminUpdateSettings>>
+>;
+export type AdminUpdateSettingsMutationBody =
+  BodyType<UpdatePlatformSettingsRequest>;
+export type AdminUpdateSettingsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update platform settings
+ */
+export const useAdminUpdateSettings = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof adminUpdateSettings>>,
+    TError,
+    { data: BodyType<UpdatePlatformSettingsRequest> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof adminUpdateSettings>>,
+  TError,
+  { data: BodyType<UpdatePlatformSettingsRequest> },
+  TContext
+> => {
+  return useMutation(getAdminUpdateSettingsMutationOptions(options));
+};

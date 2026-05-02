@@ -1,13 +1,19 @@
 import { useState } from "react";
-import { useAdminListBookings } from "@workspace/api-client-react";
+import { useAdminListBookings, useAdminResolveDispute } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 import {
   Briefcase, ShieldCheck, CheckCircle2, XCircle, AlertTriangle,
-  Clock, CreditCard, Building2, Calendar, User,
+  Clock, CreditCard, Building2, Calendar, User, Gavel,
 } from "lucide-react";
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; className: string }> = {
@@ -26,10 +32,131 @@ function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
 }
 
+interface ResolveDialogProps {
+  bookingId: string;
+  bookingRef: string;
+  open: boolean;
+  onClose: () => void;
+  onResolved: () => void;
+}
+
+function ResolveDisputeDialog({ bookingId, bookingRef, open, onClose, onResolved }: ResolveDialogProps) {
+  const [resolution, setResolution] = useState<"completed" | "refunded">("completed");
+  const [adminNotes, setAdminNotes] = useState("");
+  const [saving, setSaving] = useState(false);
+  const resolve = useAdminResolveDispute();
+
+  const handleResolve = async () => {
+    setSaving(true);
+    try {
+      await resolve.mutateAsync({
+        bookingId,
+        data: { resolution, adminNotes: adminNotes.trim() || undefined },
+      });
+      onResolved();
+      onClose();
+      setAdminNotes("");
+    } catch {
+      // error is surfaced by the mutation
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={open => { if (!open) onClose(); }}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Gavel className="h-5 w-5 text-amber-700" />
+            </div>
+            <DialogTitle>Resolve Dispute</DialogTitle>
+          </div>
+          <DialogDescription>
+            Booking <code className="font-mono text-xs bg-muted px-1 py-0.5 rounded">#{bookingRef}</code> is marked as disputed.
+            Choose a resolution and add any admin notes. Both the planner and vendor will be notified.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-2">
+            <Label className="font-semibold">Resolution</Label>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setResolution("completed")}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  resolution === "completed"
+                    ? "border-emerald-500 bg-emerald-50"
+                    : "border-border bg-card hover:border-emerald-300"
+                }`}
+              >
+                <CheckCircle2 className={`h-5 w-5 mb-1 ${resolution === "completed" ? "text-emerald-600" : "text-muted-foreground"}`} />
+                <p className="font-semibold text-sm">Completed</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Vendor wins — payment released from escrow
+                </p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setResolution("refunded")}
+                className={`p-3 rounded-lg border-2 text-left transition-all ${
+                  resolution === "refunded"
+                    ? "border-orange-500 bg-orange-50"
+                    : "border-border bg-card hover:border-orange-300"
+                }`}
+              >
+                <XCircle className={`h-5 w-5 mb-1 ${resolution === "refunded" ? "text-orange-600" : "text-muted-foreground"}`} />
+                <p className="font-semibold text-sm">Refunded</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Planner wins — funds returned to planner
+                </p>
+              </button>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="admin-notes" className="font-semibold">
+              Admin Notes <span className="text-muted-foreground font-normal">(optional)</span>
+            </Label>
+            <Textarea
+              id="admin-notes"
+              rows={3}
+              value={adminNotes}
+              onChange={e => setAdminNotes(e.target.value)}
+              placeholder="Explain the resolution reason. This will be included in the notification to both parties."
+              className="resize-none"
+            />
+          </div>
+        </div>
+
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleResolve}
+            disabled={saving}
+            className={resolution === "refunded"
+              ? "bg-orange-600 hover:bg-orange-700 text-white"
+              : "bg-emerald-600 hover:bg-emerald-700 text-white"
+            }
+          >
+            <Gavel className="h-4 w-4 mr-1.5" />
+            {saving ? "Resolving…" : `Mark as ${resolution === "completed" ? "Completed" : "Refunded"}`}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 export default function AdminBookings() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [resolveBooking, setResolveBooking] = useState<{ id: string; ref: string } | null>(null);
 
-  const { data, isLoading } = useAdminListBookings({
+  const { data, isLoading, refetch } = useAdminListBookings({
     status: statusFilter !== "all" ? statusFilter : undefined,
     page: 1,
     limit: 100,
@@ -37,7 +164,6 @@ export default function AdminBookings() {
 
   const bookingList = (data?.bookings ?? []) as any[];
 
-  // Totals
   const totalAmount = bookingList.reduce((s, b) => s + Number(b.totalAmount), 0);
   const totalFees = bookingList.reduce((s, b) => s + Number(b.platformFeeAmount), 0);
   const disputedCount = bookingList.filter(b => b.status === "disputed").length;
@@ -66,10 +192,13 @@ export default function AdminBookings() {
               <p className="text-2xl font-bold text-primary">KES {totalFees.toLocaleString()}</p>
             </CardContent>
           </Card>
-          <Card className={`shadow-sm ${disputedCount > 0 ? "border-red-200" : "border-border"}`}>
+          <Card className={`shadow-sm ${disputedCount > 0 ? "border-red-200 bg-red-50/30" : "border-border"}`}>
             <CardContent className="p-4">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Disputes</p>
               <p className={`text-2xl font-bold ${disputedCount > 0 ? "text-red-600" : ""}`}>{disputedCount}</p>
+              {disputedCount > 0 && (
+                <p className="text-xs text-red-600 mt-0.5">Require resolution</p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -105,7 +234,7 @@ export default function AdminBookings() {
         </div>
       )}
 
-      {/* Status dropdown for cleaner selection when filtered */}
+      {/* Status dropdown */}
       <Select value={statusFilter} onValueChange={setStatusFilter}>
         <SelectTrigger className="w-52">
           <SelectValue placeholder="All statuses" />
@@ -201,14 +330,27 @@ export default function AdminBookings() {
                       </div>
                     </div>
 
-                    <div className="text-right flex-shrink-0">
-                      <p className="text-lg font-bold">KES {Number(b.totalAmount).toLocaleString()}</p>
-                      <p className="text-xs text-muted-foreground">
-                        Fee: KES {Number(b.platformFeeAmount).toLocaleString()}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Payout: KES {Number(b.vendorPayoutAmount).toLocaleString()}
-                      </p>
+                    <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                      <div className="text-right">
+                        <p className="text-lg font-bold">KES {Number(b.totalAmount).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Fee: KES {Number(b.platformFeeAmount).toLocaleString()}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Payout: KES {Number(b.vendorPayoutAmount).toLocaleString()}
+                        </p>
+                      </div>
+                      {isDisputed && (
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="gap-1.5 bg-amber-600 hover:bg-amber-700"
+                          onClick={() => setResolveBooking({ id: b.id, ref: b.id.slice(0, 8).toUpperCase() })}
+                        >
+                          <Gavel className="h-3.5 w-3.5" />
+                          Resolve
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -216,6 +358,17 @@ export default function AdminBookings() {
             );
           })}
         </div>
+      )}
+
+      {/* Resolve dispute dialog */}
+      {resolveBooking && (
+        <ResolveDisputeDialog
+          bookingId={resolveBooking.id}
+          bookingRef={resolveBooking.ref}
+          open={!!resolveBooking}
+          onClose={() => setResolveBooking(null)}
+          onResolved={() => refetch()}
+        />
       )}
     </div>
   );

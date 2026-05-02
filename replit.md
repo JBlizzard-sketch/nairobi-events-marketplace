@@ -2,7 +2,7 @@
 
 ## Overview
 
-Full production-grade event vendor discovery and quoting marketplace for the Nairobi corporate/social events market. Planners submit event briefs, receive 3 competing quotes from vetted vendors within 4 hours. Features: quote comparison, escrow payments, vendor vetting, availability calendar, AI budget optimization, admin panel.
+Full production-grade event vendor discovery and quoting marketplace for the Nairobi corporate/social events market. Planners submit event briefs, receive 3 competing quotes from vetted vendors within 4 hours. Features: quote comparison, escrow payments, vendor vetting, availability calendar, AI budget optimization, admin panel with dispute resolution and platform settings, contextual notification action links.
 
 pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 

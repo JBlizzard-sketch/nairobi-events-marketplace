@@ -445,6 +445,32 @@ export interface NotificationListResponse {
   unreadCount: number;
 }
 
+export type AdminResolveDisputeRequestResolution =
+  (typeof AdminResolveDisputeRequestResolution)[keyof typeof AdminResolveDisputeRequestResolution];
+
+export const AdminResolveDisputeRequestResolution = {
+  completed: "completed",
+  refunded: "refunded",
+} as const;
+
+export interface AdminResolveDisputeRequest {
+  resolution: AdminResolveDisputeRequestResolution;
+  adminNotes?: string;
+}
+
+export interface PlatformSettings {
+  platformFeePercent?: number;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
+  updatedAt?: string;
+}
+
+export interface UpdatePlatformSettingsRequest {
+  platformFeePercent?: number;
+  maintenanceMode?: boolean;
+  maintenanceMessage?: string;
+}
+
 export interface AdminStats {
   totalUsers: number;
   totalVendors: number;

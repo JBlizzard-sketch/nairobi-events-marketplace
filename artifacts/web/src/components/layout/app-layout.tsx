@@ -17,6 +17,7 @@ import {
   PieChart,
   Menu,
   X,
+  SlidersHorizontal,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 
@@ -61,6 +62,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     { href: "/admin/vendors", label: "Vendors", icon: Users },
     { href: "/admin/events", label: "Events", icon: CalendarDays },
     { href: "/admin/bookings", label: "Bookings", icon: Briefcase },
+    { href: "/admin/settings", label: "Settings", icon: SlidersHorizontal },
   ];
 
   const links =

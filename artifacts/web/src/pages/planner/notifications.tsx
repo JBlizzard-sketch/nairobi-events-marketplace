@@ -14,40 +14,72 @@ import {
   CreditCard,
   Unlock,
   Star,
+  ArrowRight,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Link } from "wouter";
 
-const TYPE_CONFIG: Record<string, { label: string; icon: React.ReactNode; color: string }> = {
+const TYPE_CONFIG: Record<
+  string,
+  { label: string; icon: React.ReactNode; color: string; getLink?: (n: any) => string | null }
+> = {
   quote_requested: {
     label: "Quote Request",
     icon: <FileText className="h-4 w-4" />,
     color: "text-blue-600 bg-blue-50 border-blue-100",
+    getLink: (n) => {
+      const match = (n.body ?? n.message ?? "").match(/[a-f0-9-]{36}/i);
+      return match ? `/events/${match[0]}` : "/events";
+    },
   },
   quote_received: {
     label: "New Quote",
     icon: <FileText className="h-4 w-4" />,
     color: "text-primary bg-primary/5 border-primary/15",
+    getLink: (n) => {
+      const match = (n.body ?? n.message ?? "").match(/[a-f0-9-]{36}/i);
+      return match ? `/events/${match[0]}` : "/events";
+    },
   },
   booking_confirmed: {
     label: "Booking Confirmed",
     icon: <ShieldCheck className="h-4 w-4" />,
     color: "text-green-700 bg-green-50 border-green-100",
+    getLink: (n) => {
+      const match = (n.body ?? n.message ?? "").match(/[a-f0-9-]{36}/i);
+      return match ? `/bookings/${match[0]}` : "/bookings";
+    },
   },
   payment_received: {
     label: "Payment",
     icon: <CreditCard className="h-4 w-4" />,
     color: "text-emerald-700 bg-emerald-50 border-emerald-100",
+    getLink: () => "/bookings",
   },
   payment_released: {
     label: "Payment Released",
     icon: <Unlock className="h-4 w-4" />,
     color: "text-emerald-700 bg-emerald-50 border-emerald-100",
+    getLink: () => "/bookings",
   },
   review_reminder: {
     label: "Review",
     icon: <Star className="h-4 w-4" />,
     color: "text-amber-700 bg-amber-50 border-amber-100",
+    getLink: (n) => {
+      const match = (n.body ?? n.message ?? "").match(/[a-f0-9-]{36}/i);
+      return match ? `/bookings/${match[0]}` : "/bookings";
+    },
   },
+};
+
+const ACTION_LABELS: Record<string, string> = {
+  quote_requested: "View Event",
+  quote_received: "Compare Quotes",
+  booking_confirmed: "View Booking",
+  payment_received: "View Bookings",
+  payment_released: "View Bookings",
+  review_reminder: "Leave Review",
 };
 
 function timeAgo(dateStr: string): string {
@@ -130,7 +162,11 @@ export default function Notifications() {
               label: n.type,
               icon: <Bell className="h-4 w-4" />,
               color: "text-muted-foreground bg-muted border-border",
+              getLink: null,
             };
+            const actionLink = cfg.getLink ? cfg.getLink(n) : null;
+            const actionLabel = ACTION_LABELS[n.type] ?? "View";
+
             return (
               <div
                 key={n.id}
@@ -165,6 +201,18 @@ export default function Notifications() {
                         <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
                           {n.body ?? n.message}
                         </p>
+                      )}
+
+                      {/* Action link */}
+                      {actionLink && (
+                        <Link
+                          href={actionLink}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline mt-1.5"
+                          onClick={() => { if (!n.isRead) handleMarkRead(n.id); }}
+                        >
+                          {actionLabel}
+                          <ArrowRight className="h-3 w-3" />
+                        </Link>
                       )}
                     </div>
                     <span className="text-xs text-muted-foreground flex-shrink-0 mt-0.5">
