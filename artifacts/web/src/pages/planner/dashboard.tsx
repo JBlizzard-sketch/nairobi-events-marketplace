@@ -1,140 +1,323 @@
-import { useAuth } from "@/hooks/use-auth";
-import { useListMyEvents, useListMyQuoteRequests, useListMyBookings } from "@workspace/api-client-react";
+import { useListMyEvents, useListMyBookings } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
-import { Calendar as CalendarIcon, Clock, CheckCircle2, ChevronRight, FileText } from "lucide-react";
+import {
+  Calendar as CalendarIcon, Clock, ChevronRight, FileText,
+  Sparkles, Plus, ArrowRight, CheckCircle2, AlertCircle,
+  Briefcase, TrendingUp,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
+const EVENT_STATUS_BADGE: Record<string, { label: string; variant: any; className?: string }> = {
+  draft: { label: "Draft", variant: "outline" },
+  brief_submitted: { label: "Brief Sent", variant: "outline" },
+  quotes_requested: { label: "Awaiting Quotes", variant: "outline", className: "border-amber-300 text-amber-700 bg-amber-50" },
+  quotes_received: { label: "Quotes Ready", variant: "default", className: "bg-primary text-primary-foreground" },
+  vendor_selected: { label: "Vendor Chosen", variant: "secondary" },
+  booked: { label: "Booked", variant: "secondary", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  completed: { label: "Completed", variant: "secondary" },
+  cancelled: { label: "Cancelled", variant: "destructive" },
+};
+
+function daysUntil(dateStr: string): number {
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  const target = new Date(dateStr);
+  target.setHours(0, 0, 0, 0);
+  return Math.ceil((target.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatEventDate(dateStr: string) {
+  return new Date(dateStr).toLocaleDateString("en-KE", {
+    day: "numeric", month: "short", year: "numeric",
+  });
+}
+
 export default function PlannerDashboard() {
-  const { data: events, isLoading: loadingEvents } = useListMyEvents({ limit: 5 });
+  const { data: events, isLoading: loadingEvents } = useListMyEvents({ limit: 10 });
   const { data: bookings, isLoading: loadingBookings } = useListMyBookings({});
-  
-  // Pending quotes could be derived from events or quotes requested
-  
-  const activeEvents = events?.events.filter(e => e.status !== "completed" && e.status !== "cancelled") || [];
-  
+
+  const eventList = events?.events ?? [];
+  const bookingList = Array.isArray(bookings) ? bookings : [];
+
+  const activeEvents = eventList.filter(e => !["completed", "cancelled"].includes(e.status));
+  const quotesReady = eventList.filter(e => e.status === "quotes_received");
+  const awaitingQuotes = eventList.filter(e => e.status === "quotes_requested");
+  const confirmedBookings = bookingList.filter((b: any) => ["confirmed", "in_escrow", "completed"].includes(b.status));
+
+  // Next upcoming event (future dates, sorted ascending)
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const upcomingEvents = eventList
+    .filter(e => new Date(e.eventDate) >= today && !["completed", "cancelled"].includes(e.status))
+    .sort((a, b) => new Date(a.eventDate).getTime() - new Date(b.eventDate).getTime());
+  const nextEvent = upcomingEvents[0];
+  const daysToNext = nextEvent ? daysUntil(nextEvent.eventDate) : null;
+
+  // Next steps — real actions based on event state
+  const nextSteps: Array<{ label: string; href: string; icon: any; color: string }> = [];
+  if (quotesReady.length > 0) {
+    quotesReady.forEach(e => nextSteps.push({
+      label: `Review ${quotesReady.length > 1 ? `${quotesReady.length} events with ` : ""}quotes for ${e.title}`,
+      href: `/events/${e.id}`,
+      icon: AlertCircle,
+      color: "text-primary",
+    }));
+  }
+  if (eventList.length === 0) {
+    nextSteps.push({ label: "Create your first event brief", href: "/events/new", icon: Plus, color: "text-primary" });
+  }
+  if (nextSteps.length < 3) {
+    nextSteps.push({ label: "Explore the vendor directory", href: "/vendors", icon: FileText, color: "text-muted-foreground" });
+  }
+  if (nextSteps.length < 3) {
+    nextSteps.push({ label: "Optimise your budget with AI", href: "/budget", icon: Sparkles, color: "text-muted-foreground" });
+  }
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Overview</h1>
-          <p className="text-muted-foreground mt-1">Welcome back. Here is what's happening with your events.</p>
+          <h1 className="text-3xl font-bold tracking-tight">Overview</h1>
+          <p className="text-muted-foreground mt-1">
+            {loadingEvents ? "Loading your events..." : "Welcome back. Here's what's happening."}
+          </p>
         </div>
-        <Link href="/events/new">
-          <Button className="font-semibold shadow-sm">
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            Create New Event
-          </Button>
-        </Link>
+        <div className="flex gap-2">
+          <Link href="/budget">
+            <Button variant="outline" className="gap-2 font-medium">
+              <Sparkles className="h-4 w-4 text-primary" />
+              Budget AI
+            </Button>
+          </Link>
+          <Link href="/events/new">
+            <Button className="font-semibold shadow-sm gap-2">
+              <Plus className="h-4 w-4" />
+              New Event
+            </Button>
+          </Link>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      {/* Stats row */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Active Events</CardDescription>
-            <CardTitle className="text-4xl text-primary">{loadingEvents ? <Skeleton className="h-10 w-16" /> : activeEvents.length}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">Currently in planning</div>
-          </CardContent>
-        </Card>
-        
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Pending Quotes</CardDescription>
-            <CardTitle className="text-4xl text-foreground">{loadingEvents ? <Skeleton className="h-10 w-16" /> : "0"}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">Awaiting your review</div>
-          </CardContent>
-        </Card>
-
-        <Card className="shadow-sm">
-          <CardHeader className="pb-2">
-            <CardDescription className="font-medium text-muted-foreground uppercase tracking-wider text-xs">Confirmed Bookings</CardDescription>
-            <CardTitle className="text-4xl text-foreground">{loadingBookings ? <Skeleton className="h-10 w-16" /> : bookings?.length || 0}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-sm text-muted-foreground">Ready to go</div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2 shadow-sm">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="space-y-1">
-              <CardTitle>Recent Events</CardTitle>
-              <CardDescription>Your latest event briefs and planning status</CardDescription>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 p-2.5 rounded-lg">
+                <CalendarIcon className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Active Events</p>
+                <p className="text-3xl font-bold mt-0.5">
+                  {loadingEvents ? <Skeleton className="h-8 w-10 inline-block" /> : activeEvents.length}
+                </p>
+              </div>
             </div>
-            <Link href="/events">
-              <Button variant="outline" size="sm">View All</Button>
-            </Link>
-          </CardHeader>
-          <CardContent>
-            {loadingEvents ? (
-              <div className="space-y-4">
-                {[1, 2, 3].map(i => <Skeleton key={i} className="h-20 w-full rounded-md" />)}
+          </CardContent>
+        </Card>
+
+        <Card className={`shadow-sm ${quotesReady.length > 0 ? "border-primary/40 bg-primary/3" : ""}`}>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className={`${quotesReady.length > 0 ? "bg-primary/15" : "bg-muted"} p-2.5 rounded-lg`}>
+                <AlertCircle className={`h-5 w-5 ${quotesReady.length > 0 ? "text-primary" : "text-muted-foreground"}`} />
               </div>
-            ) : events?.events.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center border rounded-lg bg-muted/20 border-dashed">
-                <div className="bg-primary/10 p-3 rounded-full mb-4">
-                  <CalendarIcon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-lg mb-1">No events yet</h3>
-                <p className="text-muted-foreground text-sm max-w-sm mb-4">Create your first event brief to start receiving quotes from Nairobi's best vendors within 4 hours.</p>
-                <Link href="/events/new">
-                  <Button variant="outline">Create Event</Button>
-                </Link>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Quotes Ready</p>
+                <p className={`text-3xl font-bold mt-0.5 ${quotesReady.length > 0 ? "text-primary" : ""}`}>
+                  {loadingEvents ? <Skeleton className="h-8 w-10 inline-block" /> : quotesReady.length}
+                </p>
               </div>
-            ) : (
-              <div className="space-y-4">
-                {events?.events.slice(0, 5).map((event) => (
-                  <Link key={event.id} href={`/events/${event.id}`}>
-                    <div className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/50 transition-colors cursor-pointer hover:bg-muted/30 group">
-                      <div className="flex items-start gap-4">
-                        <div className="bg-primary/10 text-primary p-2 rounded-md hidden sm:block">
-                          <FileText className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground group-hover:text-primary transition-colors">{event.title}</h4>
-                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                            <span className="flex items-center"><Clock className="mr-1 h-3 w-3" /> {new Date(event.eventDate).toLocaleDateString()}</span>
-                            <span className="capitalize">{event.eventType.replace('_', ' ')}</span>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <Badge variant="secondary" className="capitalize">
-                          {event.status.replace('_', ' ')}
-                        </Badge>
-                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
+            </div>
+            {quotesReady.length > 0 && (
+              <p className="text-xs text-primary font-medium mt-2">Awaiting your review</p>
             )}
           </CardContent>
         </Card>
 
         <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Next Steps</CardTitle>
-            <CardDescription>Actions needing your attention</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center py-8 text-center h-full">
-                <div className="bg-muted p-3 rounded-full mb-4">
-                  <CheckCircle2 className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <h3 className="font-medium">You're all caught up</h3>
-                <p className="text-muted-foreground text-sm mt-1">No pending actions right now.</p>
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="bg-amber-50 p-2.5 rounded-lg">
+                <Clock className="h-5 w-5 text-amber-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Awaiting Quotes</p>
+                <p className="text-3xl font-bold mt-0.5">
+                  {loadingEvents ? <Skeleton className="h-8 w-10 inline-block" /> : awaitingQuotes.length}
+                </p>
+              </div>
             </div>
           </CardContent>
         </Card>
+
+        <Card className="shadow-sm">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-3">
+              <div className="bg-emerald-50 p-2.5 rounded-lg">
+                <Briefcase className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Bookings</p>
+                <p className="text-3xl font-bold mt-0.5">
+                  {loadingBookings ? <Skeleton className="h-8 w-10 inline-block" /> : confirmedBookings.length}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Next event countdown banner */}
+      {!loadingEvents && nextEvent && daysToNext !== null && daysToNext <= 30 && (
+        <Link href={`/events/${nextEvent.id}`}>
+          <div className={`rounded-xl border p-4 flex items-center gap-4 cursor-pointer hover:shadow-md transition-all ${
+            daysToNext <= 7 ? "border-red-200 bg-red-50" :
+            daysToNext <= 14 ? "border-amber-200 bg-amber-50" :
+            "border-primary/20 bg-primary/5"
+          }`}>
+            <div className={`flex-shrink-0 w-14 h-14 rounded-xl flex flex-col items-center justify-center font-black ${
+              daysToNext <= 7 ? "bg-red-100 text-red-700" :
+              daysToNext <= 14 ? "bg-amber-100 text-amber-700" :
+              "bg-primary/10 text-primary"
+            }`}>
+              <span className="text-2xl leading-none">{daysToNext}</span>
+              <span className="text-xs font-semibold">days</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold truncate">{nextEvent.title}</p>
+              <p className="text-sm text-muted-foreground">{formatEventDate(nextEvent.eventDate)} · {(nextEvent as any).venue ?? "Venue TBD"}</p>
+            </div>
+            <ChevronRight className="h-5 w-5 text-muted-foreground flex-shrink-0" />
+          </div>
+        </Link>
+      )}
+
+      {/* Main content grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent events — takes 2 cols */}
+        <Card className="lg:col-span-2 shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <div>
+              <CardTitle>Recent Events</CardTitle>
+              <CardDescription>Your latest event briefs</CardDescription>
+            </div>
+            <Link href="/events">
+              <Button variant="outline" size="sm" className="gap-1">View All <ChevronRight className="h-3.5 w-3.5" /></Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {loadingEvents ? (
+              <div className="space-y-3">
+                {[1, 2, 3].map(i => <Skeleton key={i} className="h-18 w-full rounded-lg" />)}
+              </div>
+            ) : eventList.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 text-center border rounded-xl bg-muted/20 border-dashed">
+                <div className="bg-primary/10 p-3 rounded-full mb-3">
+                  <CalendarIcon className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-lg mb-1">No events yet</h3>
+                <p className="text-muted-foreground text-sm max-w-sm mb-4">
+                  Create your first event brief and receive competing quotes from vetted vendors within 4 hours.
+                </p>
+                <Link href="/events/new">
+                  <Button size="sm" className="gap-2"><Plus className="h-4 w-4" />Create Event</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {eventList.slice(0, 6).map((event) => {
+                  const statusInfo = EVENT_STATUS_BADGE[event.status] ?? { label: event.status, variant: "outline" };
+                  const days = daysUntil(event.eventDate);
+                  return (
+                    <Link key={event.id} href={`/events/${event.id}`}>
+                      <div className="flex items-center justify-between p-3.5 rounded-xl border hover:border-primary/40 transition-all cursor-pointer hover:bg-muted/20 group">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="bg-muted group-hover:bg-primary/10 p-2 rounded-lg transition-colors flex-shrink-0">
+                            <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-semibold text-sm group-hover:text-primary transition-colors truncate">{event.title}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {formatEventDate(event.eventDate)}
+                              {days >= 0 && days <= 60 && ` · ${days === 0 ? "Today" : days === 1 ? "Tomorrow" : `in ${days}d`}`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0 ml-2">
+                          <Badge
+                            variant={statusInfo.variant}
+                            className={`text-xs ${statusInfo.className ?? ""}`}
+                          >
+                            {statusInfo.label}
+                          </Badge>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Right column */}
+        <div className="space-y-6">
+          {/* Next Steps */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Next Steps</CardTitle>
+              <CardDescription>Actions for you</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {nextSteps.slice(0, 3).map(({ label, href, icon: Icon, color }, i) => (
+                <Link key={i} href={href}>
+                  <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group">
+                    <div className="bg-muted group-hover:bg-muted/80 p-1.5 rounded-md flex-shrink-0">
+                      <Icon className={`h-3.5 w-3.5 ${color}`} />
+                    </div>
+                    <span className="text-sm font-medium truncate">{label}</span>
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground ml-auto flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Link>
+              ))}
+              {quotesReady.length === 0 && awaitingQuotes.length === 0 && activeEvents.length === 0 && (
+                <div className="flex items-center gap-2 p-2.5 text-sm text-muted-foreground">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500 flex-shrink-0" />
+                  All caught up!
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Quick shortcuts */}
+          <Card className="shadow-sm">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base">Quick Access</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {[
+                { href: "/events/new", icon: Plus, label: "New Event Brief" },
+                { href: "/vendors", icon: TrendingUp, label: "Browse Vendors" },
+                { href: "/budget", icon: Sparkles, label: "AI Budget Planner" },
+                { href: "/bookings", icon: Briefcase, label: "My Bookings" },
+              ].map(({ href, icon: Icon, label }) => (
+                <Link key={href} href={href}>
+                  <div className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer group text-sm">
+                    <Icon className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    <span className="font-medium">{label}</span>
+                    <ChevronRight className="h-3.5 w-3.5 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

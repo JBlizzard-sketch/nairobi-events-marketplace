@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { useListMyQuoteRequests, useSubmitQuote } from "@workspace/api-client-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import {
+  FileText, Plus, Trash2, Clock, Users, MapPin, Calendar,
+  Wallet, ChevronDown, ChevronUp, CheckCircle2,
+} from "lucide-react";
 
 interface LineItem {
   description: string;
@@ -17,17 +21,29 @@ interface LineItem {
   total: number;
 }
 
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  requested: { label: "New Request", className: "bg-primary text-primary-foreground" },
+  submitted: { label: "Quote Sent", className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  expired: { label: "Expired", className: "bg-muted text-muted-foreground" },
+};
+
 export default function VendorRequests() {
   const { data: requests, isLoading, refetch } = useListMyQuoteRequests({});
   const submitQuote = useSubmitQuote();
 
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
-  const [lineItems, setLineItems] = useState<LineItem[]>([{ description: "", quantity: 1, unitPrice: 0, total: 0 }]);
+  const [lineItems, setLineItems] = useState<LineItem[]>([
+    { description: "", quantity: 1, unitPrice: 0, total: 0 },
+  ]);
   const [depositPercent, setDepositPercent] = useState(30);
+  const [inclusions, setInclusions] = useState("");
+  const [exclusions, setExclusions] = useState("");
   const [terms, setTerms] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const requestList = Array.isArray(requests) ? requests : [];
+  const pendingCount = requestList.filter(r => (r as any).status === "requested").length;
 
   const updateLineItem = (i: number, field: keyof LineItem, value: string | number) => {
     setLineItems(items => items.map((item, idx) => {
@@ -41,6 +57,16 @@ export default function VendorRequests() {
   };
 
   const totalAmount = lineItems.reduce((sum, i) => sum + i.total, 0);
+  const depositAmount = Math.round(totalAmount * depositPercent / 100);
+
+  const openQuoteDialog = (req: any) => {
+    setSelectedRequest(req);
+    setLineItems([{ description: "", quantity: 1, unitPrice: 0, total: 0 }]);
+    setDepositPercent(30);
+    setInclusions("");
+    setExclusions("");
+    setTerms("Payment due 7 days before event. Cancellations within 14 days forfeit deposit.");
+  };
 
   const handleSubmit = async () => {
     if (!selectedRequest) return;
@@ -53,6 +79,8 @@ export default function VendorRequests() {
           currency: "KES",
           depositPercent,
           lineItems,
+          inclusions: inclusions.split("\n").map(s => s.trim()).filter(Boolean),
+          exclusions: exclusions.split("\n").map(s => s.trim()).filter(Boolean),
           terms,
         } as any,
       });
@@ -63,22 +91,22 @@ export default function VendorRequests() {
     }
   };
 
-  const STATUS_COLORS: Record<string, any> = {
-    requested: "default",
-    submitted: "secondary",
-    expired: "destructive",
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Quote Requests</h1>
-        <p className="text-muted-foreground mt-1">{requestList.length} total</p>
+        <p className="text-muted-foreground mt-1">
+          {isLoading ? "Loading..." : (
+            pendingCount > 0
+              ? <span className="text-primary font-medium">{pendingCount} request{pendingCount !== 1 ? "s" : ""} awaiting your quote</span>
+              : `${requestList.length} total request${requestList.length !== 1 ? "s" : ""}`
+          )}
+        </p>
       </div>
 
       {isLoading ? (
         <div className="space-y-4">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-lg" />)}
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
         </div>
       ) : requestList.length === 0 ? (
         <Card className="border-dashed">
@@ -87,67 +115,124 @@ export default function VendorRequests() {
               <FileText className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">No requests yet</h3>
-            <p className="text-muted-foreground text-sm">Quote requests from event planners will appear here.</p>
+            <p className="text-muted-foreground text-sm max-w-xs">
+              Once your profile is approved, quote requests from event planners will appear here.
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          {requestList.map((req: any) => (
-            <Card key={req.id} className="shadow-sm">
-              <CardContent className="p-5">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold">{req.event?.title ?? "Event Brief"}</h3>
-                      <Badge variant={STATUS_COLORS[req.status] ?? "secondary"} className="capitalize">
-                        {req.status}
-                      </Badge>
-                    </div>
-                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                      <span className="capitalize">{req.category?.replace(/_/g, " ")}</span>
-                      {req.event?.guestCount && <span>{req.event.guestCount} guests</span>}
-                      {req.event?.eventDate && (
-                        <span>{new Date(req.event.eventDate).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</span>
+          {requestList.map((req: any) => {
+            const statusCfg = STATUS_CONFIG[req.status] ?? { label: req.status, className: "bg-muted text-muted-foreground" };
+            const isExpanded = expandedId === req.id;
+            return (
+              <Card key={req.id} className={`shadow-sm transition-all ${req.status === "requested" ? "border-primary/30 hover:border-primary/50 hover:shadow-md" : ""}`}>
+                <CardContent className="p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2.5 mb-2 flex-wrap">
+                        <h3 className="font-semibold text-base">{req.event?.title ?? "Event Brief"}</h3>
+                        <Badge className={`text-xs px-2 py-0.5 ${statusCfg.className}`}>
+                          {statusCfg.label}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs capitalize">
+                          {req.category?.replace(/_/g, " ")}
+                        </Badge>
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        {req.event?.eventDate && (
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {new Date(req.event.eventDate).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                          </span>
+                        )}
+                        {req.event?.guestCount && (
+                          <span className="flex items-center gap-1.5">
+                            <Users className="h-3.5 w-3.5" />
+                            {req.event.guestCount} guests
+                          </span>
+                        )}
+                        {req.event?.venue && (
+                          <span className="flex items-center gap-1.5">
+                            <MapPin className="h-3.5 w-3.5" />
+                            {req.event.venue}
+                          </span>
+                        )}
+                        {req.event?.budgetMax && (
+                          <span className="flex items-center gap-1.5">
+                            <Wallet className="h-3.5 w-3.5" />
+                            Budget: KES {Number(req.event.budgetMax).toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+
+                      {req.expiresAt && req.status === "requested" && (
+                        <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5 mt-2.5 w-fit">
+                          <Clock className="h-3 w-3" />
+                          Deadline: {new Date(req.expiresAt).toLocaleString("en-KE")}
+                        </div>
                       )}
-                      {req.event?.venue && <span>{req.event.venue}</span>}
+
+                      {/* Expanded brief details */}
+                      {isExpanded && req.event?.description && (
+                        <div className="mt-3 text-sm text-muted-foreground bg-muted/30 rounded-lg p-3 leading-relaxed">
+                          {req.event.description}
+                        </div>
+                      )}
                     </div>
-                    {req.event?.budgetMax && (
-                      <p className="text-sm mt-1">
-                        Budget: <span className="font-medium">KES {Number(req.event.budgetMax).toLocaleString()}</span>
-                      </p>
-                    )}
-                    {req.expiresAt && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Deadline: {new Date(req.expiresAt).toLocaleString("en-KE")}
-                      </p>
-                    )}
+
+                    <div className="flex flex-col gap-2 flex-shrink-0">
+                      {req.status === "requested" && (
+                        <Button onClick={() => openQuoteDialog(req)} className="font-semibold gap-2" size="sm">
+                          Submit Quote
+                        </Button>
+                      )}
+                      {req.status === "submitted" && (
+                        <div className="flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                          <CheckCircle2 className="h-4 w-4" />
+                          Quote sent
+                        </div>
+                      )}
+                      {req.event?.description && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-xs text-muted-foreground gap-1"
+                          onClick={() => setExpandedId(isExpanded ? null : req.id)}
+                        >
+                          {isExpanded ? <><ChevronUp className="h-3 w-3" /> Less</> : <><ChevronDown className="h-3 w-3" /> Brief</>}
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  {req.status === "requested" && (
-                    <Button onClick={() => setSelectedRequest(req)} className="font-semibold flex-shrink-0">
-                      Submit Quote
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
+      {/* Quote submission dialog */}
       <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Submit Quote — {selectedRequest?.event?.title}</DialogTitle>
+            <DialogTitle>Submit Quote</DialogTitle>
+            <DialogDescription>
+              {selectedRequest?.event?.title} · {selectedRequest?.category?.replace(/_/g, " ")}
+            </DialogDescription>
           </DialogHeader>
-          <div className="space-y-6 py-2">
+
+          <div className="space-y-6 py-1">
+            {/* Line items */}
             <div>
-              <Label className="mb-3 block font-medium">Line Items</Label>
-              <div className="space-y-3">
+              <Label className="mb-3 block font-semibold">Line Items</Label>
+              <div className="space-y-2.5">
                 {lineItems.map((item, i) => (
                   <div key={i} className="grid grid-cols-12 gap-2 items-start">
                     <div className="col-span-5">
                       <Input
-                        placeholder="Description"
+                        placeholder="Description (e.g. Buffet per person)"
                         value={item.description}
                         onChange={e => updateLineItem(i, "description", e.target.value)}
                       />
@@ -164,20 +249,22 @@ export default function VendorRequests() {
                     <div className="col-span-3">
                       <Input
                         type="number"
-                        placeholder="Unit price"
+                        placeholder="Unit price (KES)"
                         value={item.unitPrice || ""}
                         onChange={e => updateLineItem(i, "unitPrice", parseFloat(e.target.value) || 0)}
                       />
                     </div>
                     <div className="col-span-1 flex items-center justify-center h-10">
-                      <span className="text-sm font-medium">{(item.total / 1000).toFixed(0)}K</span>
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {item.total > 0 ? `${(item.total / 1000).toFixed(0)}K` : "—"}
+                      </span>
                     </div>
                     <div className="col-span-1">
                       {lineItems.length > 1 && (
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-10 w-10 p-0 text-muted-foreground"
+                          className="h-10 w-10 p-0 text-muted-foreground hover:text-destructive"
                           onClick={() => setLineItems(items => items.filter((_, idx) => idx !== i))}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -190,44 +277,88 @@ export default function VendorRequests() {
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-3 gap-2"
+                className="mt-3 gap-2 text-xs"
                 onClick={() => setLineItems(items => [...items, { description: "", quantity: 1, unitPrice: 0, total: 0 }])}
               >
-                <Plus className="h-4 w-4" />
-                Add Line
+                <Plus className="h-3.5 w-3.5" /> Add Line Item
               </Button>
             </div>
 
-            <div className="flex justify-between p-4 rounded-lg bg-muted/40 font-semibold">
-              <span>Total</span>
-              <span className="text-primary text-lg">KES {totalAmount.toLocaleString()}</span>
+            {/* Total summary */}
+            <div className="bg-muted/40 rounded-xl p-4 space-y-2">
+              <div className="flex justify-between items-center font-semibold">
+                <span>Total Quote</span>
+                <span className="text-primary text-xl">KES {totalAmount.toLocaleString()}</span>
+              </div>
+              {totalAmount > 0 && (
+                <>
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Deposit Required</Label>
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={depositPercent}
+                        onChange={e => setDepositPercent(parseInt(e.target.value) || 0)}
+                        className="w-20 h-8 text-sm"
+                      />
+                      <span className="text-sm text-muted-foreground">%</span>
+                      <span className="text-sm font-medium">= KES {depositAmount.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="space-y-2">
-              <Label>Deposit Required (%)</Label>
-              <Input
-                type="number"
-                min={0}
-                max={100}
-                value={depositPercent}
-                onChange={e => setDepositPercent(parseInt(e.target.value) || 0)}
-              />
+            <Separator />
+
+            {/* Inclusions & Exclusions */}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="font-semibold">
+                  What's Included
+                  <span className="text-xs text-muted-foreground ml-1.5 font-normal">one per line</span>
+                </Label>
+                <Textarea
+                  placeholder={"Setup & breakdown\nWaiting staff (6 persons)\nServing equipment"}
+                  value={inclusions}
+                  onChange={e => setInclusions(e.target.value)}
+                  rows={4}
+                  className="text-sm resize-none"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="font-semibold">
+                  What's Excluded
+                  <span className="text-xs text-muted-foreground ml-1.5 font-normal">one per line</span>
+                </Label>
+                <Textarea
+                  placeholder={"Venue hire\nDrinks\nExtra hours beyond 8pm"}
+                  value={exclusions}
+                  onChange={e => setExclusions(e.target.value)}
+                  rows={4}
+                  className="text-sm resize-none"
+                />
+              </div>
             </div>
 
+            {/* Terms */}
             <div className="space-y-2">
-              <Label>Terms & Conditions</Label>
+              <Label className="font-semibold">Terms & Conditions</Label>
               <Textarea
-                placeholder="Payment terms, cancellation policy, inclusions..."
+                placeholder="Payment terms, cancellation policy, special conditions..."
                 value={terms}
                 onChange={e => setTerms(e.target.value)}
                 rows={3}
+                className="text-sm"
               />
             </div>
 
             <Button
-              className="w-full font-semibold"
+              className="w-full font-semibold h-12"
               onClick={handleSubmit}
-              disabled={submitting || totalAmount === 0}
+              disabled={submitting || totalAmount === 0 || lineItems.every(i => !i.description.trim())}
             >
               {submitting ? "Submitting..." : `Submit Quote — KES ${totalAmount.toLocaleString()}`}
             </Button>
