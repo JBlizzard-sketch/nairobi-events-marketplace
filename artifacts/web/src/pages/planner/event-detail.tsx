@@ -1,11 +1,11 @@
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useGetEvent, useGetEventQuotes, useAcceptQuote, useRejectQuote } from "@workspace/api-client-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp, Printer, ExternalLink, ShieldCheck } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp, Printer, ExternalLink, ShieldCheck, Copy, LayoutGrid, LayoutList } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import {
@@ -374,12 +374,13 @@ function QuoteCountdown({ submittedAt }: { submittedAt: string }) {
 }
 
 function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, acceptIsPending, rejectIsPending }: any) {
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+
   const submitted = quotes.filter((q: any) => q.status === "submitted");
   const lowestAmount = submitted.length > 0
     ? Math.min(...submitted.map((q: any) => Number(q.totalAmount)))
     : null;
 
-  // Best value = lowest price among submitted, with a rating boost tie-break
   const bestValue = submitted.length > 0
     ? submitted.reduce((best: any, q: any) => {
         const score = Number(q.totalAmount) * (1 - Math.min(Number(q.vendorAverageRating ?? 0) * 0.01, 0.1));
@@ -394,44 +395,178 @@ function QuoteCategorySection({ category, quotes, onAccept, onReject, acting, ac
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
         <h3 className="font-semibold text-lg capitalize flex items-center gap-2">
           {category.replace(/_/g, " ")}
           <Badge variant="outline" className="text-xs">
             {quotes.length} quote{quotes.length !== 1 ? "s" : ""}
           </Badge>
         </h3>
-        {totalAccepted > 0 && (
-          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
-            Accepted: KES {totalAccepted.toLocaleString()}
-          </span>
-        )}
+        <div className="flex items-center gap-3">
+          {totalAccepted > 0 && (
+            <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+              Accepted: KES {totalAccepted.toLocaleString()}
+            </span>
+          )}
+          {quotes.length > 1 && (
+            <div className="flex items-center rounded-lg border border-border overflow-hidden">
+              <button
+                onClick={() => setViewMode("cards")}
+                className={`p-1.5 transition-colors ${viewMode === "cards" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                aria-label="Card view"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode("table")}
+                className={`p-1.5 transition-colors ${viewMode === "table" ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"}`}
+                aria-label="Table view"
+              >
+                <LayoutList className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      <div className="grid md:grid-cols-3 gap-5">
-        {quotes.map((q: any) => (
-          <QuoteCard
-            key={q.id}
-            quote={q}
-            onAccept={onAccept}
-            onReject={onReject}
-            accepting={acting === q.id && acceptIsPending}
-            rejecting={acting === q.id && rejectIsPending}
-            isBestValue={bestValue?.id === q.id && submitted.length > 1}
-            isLowest={lowestAmount !== null && Number(q.totalAmount) === lowestAmount && submitted.length > 1 && bestValue?.id !== q.id}
-          />
-        ))}
-      </div>
+
+      {viewMode === "table" ? (
+        <div className="overflow-x-auto rounded-xl border border-border">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/40">
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Vendor</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Rating</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Location</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Amount</th>
+                <th className="text-right px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Deposit</th>
+                <th className="text-left px-4 py-3 font-semibold text-muted-foreground text-xs uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {quotes.map((q: any) => {
+                const isLowest = lowestAmount !== null && Number(q.totalAmount) === lowestAmount && submitted.length > 1;
+                const isBest = bestValue?.id === q.id && submitted.length > 1;
+                const depositPct = Number(q.depositPercent ?? 30);
+                const depositAmt = Math.round(Number(q.totalAmount) * depositPct / 100);
+                return (
+                  <tr key={q.id} className={`transition-colors hover:bg-muted/30 ${q.status === "accepted" ? "bg-primary/5" : q.status === "rejected" ? "opacity-50" : ""}`}>
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        {(isBest || isLowest) && (
+                          <span className={`text-xs font-semibold px-1.5 py-0.5 rounded ${isBest ? "bg-primary/10 text-primary" : "bg-emerald-100 text-emerald-700"}`}>
+                            {isBest ? "Best" : "Lowest"}
+                          </span>
+                        )}
+                        {q.vendorId ? (
+                          <Link href={`/vendors/${q.vendorId}`}>
+                            <span className="font-medium hover:text-primary transition-colors cursor-pointer flex items-center gap-1">
+                              {q.vendorBusinessName ?? "Unknown"}
+                              <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                            </span>
+                          </Link>
+                        ) : (
+                          <span className="font-medium">{q.vendorBusinessName ?? "Unknown"}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      {Number(q.vendorAverageRating) > 0 ? (
+                        <span className="flex items-center gap-1 text-amber-600">
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                          <span className="font-medium">{Number(q.vendorAverageRating).toFixed(1)}</span>
+                          {q.vendorTotalReviews > 0 && <span className="text-muted-foreground text-xs">({q.vendorTotalReviews})</span>}
+                        </span>
+                      ) : <span className="text-muted-foreground text-xs">New</span>}
+                    </td>
+                    <td className="px-4 py-3 text-muted-foreground">{q.vendorCity ?? "—"}</td>
+                    <td className="px-4 py-3 text-right font-bold">KES {Number(q.totalAmount).toLocaleString()}</td>
+                    <td className="px-4 py-3 text-right text-muted-foreground">
+                      {depositPct}% <span className="text-xs">(KES {depositAmt.toLocaleString()})</span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {q.status === "accepted" ? (
+                        <Badge className="bg-primary/10 text-primary border-primary/20 text-xs">Accepted</Badge>
+                      ) : q.status === "rejected" ? (
+                        <Badge variant="outline" className="text-xs text-muted-foreground">Declined</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs">Pending</Badge>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {q.status === "submitted" && (
+                        <div className="flex gap-2 justify-end">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => onReject(q.id)}
+                            disabled={acting === q.id && rejectIsPending}
+                            className="h-7 px-2 text-xs"
+                          >
+                            Decline
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={() => onAccept(q.id)}
+                            disabled={acting === q.id && acceptIsPending}
+                            className="h-7 px-2 text-xs font-semibold"
+                          >
+                            Accept
+                          </Button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-3 gap-5">
+          {quotes.map((q: any) => (
+            <QuoteCard
+              key={q.id}
+              quote={q}
+              onAccept={onAccept}
+              onReject={onReject}
+              accepting={acting === q.id && acceptIsPending}
+              rejecting={acting === q.id && rejectIsPending}
+              isBestValue={bestValue?.id === q.id && submitted.length > 1}
+              isLowest={lowestAmount !== null && Number(q.totalAmount) === lowestAmount && submitted.length > 1 && bestValue?.id !== q.id}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function EventDetail() {
   const { id } = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
   const { data: event, isLoading: loadingEvent } = useGetEvent(id ?? "");
   const { data: quotesData, isLoading: loadingQuotes, refetch } = useGetEventQuotes(id ?? "");
   const acceptQuote = useAcceptQuote();
   const rejectQuote = useRejectQuote();
   const [acting, setActing] = useState<string | null>(null);
+
+  const handleDuplicateEvent = () => {
+    const e = event as any;
+    const prefill = {
+      title: `${e.title} (Copy)`,
+      eventType: e.eventType ?? "corporate",
+      venue: e.venue ?? "",
+      city: e.city ?? "Nairobi",
+      guestCount: e.guestCount ?? 50,
+      budgetMin: e.budgetMin ? String(e.budgetMin) : "",
+      budgetMax: e.budgetMax ? String(e.budgetMax) : "",
+      servicesNeeded: e.servicesNeeded ?? [],
+      description: e.description ?? "",
+    };
+    localStorage.setItem("nairobi_event_prefill", JSON.stringify(prefill));
+    setLocation("/events/new");
+  };
 
   const handleAccept = async (quoteId: string) => {
     setActing(quoteId);
@@ -559,10 +694,14 @@ export default function EventDetail() {
             {e.isEmergency && <Badge variant="destructive">Emergency</Badge>}
           </div>
         </div>
-        <div className="flex items-center gap-3 flex-shrink-0">
+        <div className="flex items-center gap-3 flex-shrink-0 flex-wrap">
           <Button variant="outline" size="sm" className="gap-1.5" onClick={handlePrintBrief}>
             <Printer className="h-3.5 w-3.5" />
             Print Brief
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={handleDuplicateEvent}>
+            <Copy className="h-3.5 w-3.5" />
+            Duplicate
           </Button>
           {e.status === "draft" && (
             <Link href={`/events/${e.id}/edit`}>

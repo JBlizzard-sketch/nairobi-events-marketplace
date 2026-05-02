@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useCreateEvent, useSubmitEventBrief, useBudgetOptimize } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
@@ -53,17 +53,29 @@ export default function EventNew() {
     }
   })();
 
+  // Check for a duplicated event brief stored in localStorage
+  const duplicatePrefill = (() => {
+    try {
+      const raw = localStorage.getItem("nairobi_event_prefill");
+      if (raw) {
+        localStorage.removeItem("nairobi_event_prefill");
+        return JSON.parse(raw);
+      }
+    } catch {}
+    return null;
+  })();
+
   const [form, setForm] = useState({
-    title: "",
-    eventType: "corporate" as string,
+    title: duplicatePrefill?.title ?? "",
+    eventType: (duplicatePrefill?.eventType ?? "corporate") as string,
     eventDate: "",
-    venue: "",
-    city: "Nairobi",
-    guestCount: 50,
-    budgetMin: "",
-    budgetMax: "",
+    venue: duplicatePrefill?.venue ?? "",
+    city: duplicatePrefill?.city ?? "Nairobi",
+    guestCount: duplicatePrefill?.guestCount ?? 50,
+    budgetMin: duplicatePrefill?.budgetMin ?? "",
+    budgetMax: duplicatePrefill?.budgetMax ?? "",
     currency: "KES",
-    servicesNeeded: preselectedService ? [preselectedService] : [] as string[],
+    servicesNeeded: (duplicatePrefill?.servicesNeeded as string[] | undefined) ?? (preselectedService ? [preselectedService] : [] as string[]),
     isEmergency: false,
   });
 
