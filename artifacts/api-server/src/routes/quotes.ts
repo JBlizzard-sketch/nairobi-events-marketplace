@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import {
@@ -20,9 +21,9 @@ const router: IRouter = Router();
 
 // GET /quotes/requests — vendor's incoming quote requests
 router.get("/quotes/requests", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -66,9 +67,9 @@ router.get("/quotes/requests", async (req, res): Promise<void> => {
 
 // POST /quotes/requests/:requestId/submit — vendor submits a quote
 router.post("/quotes/requests/:requestId/submit", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -137,9 +138,9 @@ router.post("/quotes/requests/:requestId/submit", async (req, res): Promise<void
 
 // POST /quotes/:quoteId/accept — planner accepts a quote, creates booking
 router.post("/quotes/:quoteId/accept", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -199,9 +200,9 @@ router.post("/quotes/:quoteId/accept", async (req, res): Promise<void> => {
 
 // POST /quotes/:quoteId/reject
 router.post("/quotes/:quoteId/reject", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 

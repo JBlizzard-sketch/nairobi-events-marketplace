@@ -18,9 +18,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { role, logout } = useAuth();
   const [location, setLocation] = useLocation();
 
-  const handleLogout = () => {
-    logout();
-    setLocation("/login");
+  const handleLogout = async () => {
+    await logout();
+    setLocation("/");
   };
 
   const plannerLinks = [

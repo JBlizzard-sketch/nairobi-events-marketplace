@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { reviews, bookings, vendorProfiles, users } from "@workspace/db";
@@ -8,9 +9,9 @@ const router: IRouter = Router();
 
 // POST /reviews
 router.post("/reviews", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 

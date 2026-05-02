@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import {
@@ -18,9 +19,9 @@ const router: IRouter = Router();
 
 // GET /events
 router.get("/events", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -62,9 +63,9 @@ router.get("/events", async (req, res): Promise<void> => {
 
 // POST /events
 router.post("/events", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -100,9 +101,9 @@ router.post("/events", async (req, res): Promise<void> => {
 
 // GET /events/:eventId
 router.get("/events/:eventId", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -119,9 +120,9 @@ router.get("/events/:eventId", async (req, res): Promise<void> => {
 
 // PATCH /events/:eventId
 router.patch("/events/:eventId", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -172,9 +173,9 @@ router.patch("/events/:eventId", async (req, res): Promise<void> => {
 
 // POST /events/:eventId/submit — submit brief and dispatch quote requests
 router.post("/events/:eventId/submit", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -238,9 +239,9 @@ router.post("/events/:eventId/submit", async (req, res): Promise<void> => {
 
 // GET /events/:eventId/quotes — quotes grouped by category
 router.get("/events/:eventId/quotes", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 

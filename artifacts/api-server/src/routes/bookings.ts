@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { bookings, users, vendorProfiles } from "@workspace/db";
@@ -8,9 +9,9 @@ const router: IRouter = Router();
 
 // GET /bookings
 router.get("/bookings", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -48,9 +49,9 @@ router.get("/bookings", async (req, res): Promise<void> => {
 
 // GET /bookings/:bookingId
 router.get("/bookings/:bookingId", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -88,9 +89,9 @@ router.get("/bookings/:bookingId", async (req, res): Promise<void> => {
 
 // POST /bookings/:bookingId/confirm — confirm booking, mock payment intent
 router.post("/bookings/:bookingId/confirm", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 

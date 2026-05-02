@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { vendorProfiles, users, events, bookings } from "@workspace/db";
@@ -16,7 +17,7 @@ async function requireAdmin(clerkId: string | undefined): Promise<{ id: string }
 
 // GET /admin/vendors/pending
 router.get("/admin/vendors/pending", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   const admin = await requireAdmin(clerkId);
   if (!admin) {
     res.status(403).json({ error: "forbidden", message: "Admin access required" });
@@ -33,7 +34,7 @@ router.get("/admin/vendors/pending", async (req, res): Promise<void> => {
 
 // POST /admin/vendors/:vendorId/approve
 router.post("/admin/vendors/:vendorId/approve", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   const admin = await requireAdmin(clerkId);
   if (!admin) {
     res.status(403).json({ error: "forbidden", message: "Admin access required" });
@@ -58,7 +59,7 @@ router.post("/admin/vendors/:vendorId/approve", async (req, res): Promise<void> 
 
 // POST /admin/vendors/:vendorId/suspend
 router.post("/admin/vendors/:vendorId/suspend", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   const admin = await requireAdmin(clerkId);
   if (!admin) {
     res.status(403).json({ error: "forbidden", message: "Admin access required" });
@@ -89,7 +90,7 @@ router.post("/admin/vendors/:vendorId/suspend", async (req, res): Promise<void> 
 
 // GET /admin/stats
 router.get("/admin/stats", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   const admin = await requireAdmin(clerkId);
   if (!admin) {
     res.status(403).json({ error: "forbidden", message: "Admin access required" });

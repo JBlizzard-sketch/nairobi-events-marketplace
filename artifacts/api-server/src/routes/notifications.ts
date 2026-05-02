@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { notifications, users } from "@workspace/db";
@@ -8,9 +9,9 @@ const router: IRouter = Router();
 
 // GET /notifications
 router.get("/notifications", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -45,9 +46,9 @@ router.get("/notifications", async (req, res): Promise<void> => {
 
 // PATCH /notifications/:notificationId/read
 router.patch("/notifications/:notificationId/read", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -77,9 +78,9 @@ router.patch("/notifications/:notificationId/read", async (req, res): Promise<vo
 
 // POST /notifications/read-all
 router.post("/notifications/read-all", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 

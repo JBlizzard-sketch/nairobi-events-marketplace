@@ -1,49 +1,49 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { useUser, useClerk } from "@clerk/react";
+import { useGetMe, getGetMeQueryKey } from "@workspace/api-client-react";
 
 export type Role = "planner" | "vendor" | "admin" | null;
 
-interface AuthContextType {
-  role: Role;
-  setRole: (role: Role) => void;
-  logout: () => void;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [role, setRoleState] = useState<Role>(null);
-
-  useEffect(() => {
-    const storedRole = localStorage.getItem("userRole") as Role;
-    if (storedRole) {
-      setRoleState(storedRole);
-    }
-  }, []);
-
-  const setRole = (newRole: Role) => {
-    setRoleState(newRole);
-    if (newRole) {
-      localStorage.setItem("userRole", newRole);
-    } else {
-      localStorage.removeItem("userRole");
-    }
-  };
-
-  const logout = () => {
-    setRole(null);
-  };
-
-  return (
-    <AuthContext.Provider value={{ role, setRole, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+export interface DbUser {
+  id: string;
+  clerkId: string;
+  email: string;
+  fullName: string;
+  role: "planner" | "vendor" | "admin";
+  avatarUrl?: string | null;
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
+  const { isSignedIn, isLoaded: clerkLoaded, user: clerkUser } = useUser();
+  const { signOut } = useClerk();
+
+  const {
+    data: dbUser,
+    isLoading: isDbLoading,
+    isError,
+    error,
+  } = useGetMe({
+    query: {
+      queryKey: getGetMeQueryKey(),
+      enabled: clerkLoaded && !!isSignedIn,
+      retry: false,
+    },
+  });
+
+  const isNewUser = isError && (error as any)?.status === 404;
+  const isLoaded = clerkLoaded && (isSignedIn ? !isDbLoading || isError : true);
+  const role: Role = (dbUser as DbUser | undefined)?.role ?? null;
+
+  const logout = async () => {
+    await signOut();
+  };
+
+  return {
+    isSignedIn: !!isSignedIn,
+    isLoaded,
+    clerkUser,
+    dbUser: dbUser as DbUser | undefined,
+    role,
+    isNewUser,
+    logout,
+  };
 }

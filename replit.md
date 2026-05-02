@@ -96,6 +96,33 @@ All wired in `artifacts/web/src/App.tsx` using Wouter:
 - **Platform fee**: 10% hardcoded in `quotes.ts`.
 - **Mock payments**: `bookings.ts` returns `pi_mock_{timestamp}` as Stripe payment intent.
 
+## Auth (Phase 5 — Complete)
+
+Clerk auth is fully integrated (Replit-managed, `app_3DB4cCUF2LPNoR0IhF7HoGYK2IE`).
+
+**Flow:**
+1. Unauthenticated users see the landing page at `/`
+2. Sign in via `/sign-in` (Clerk UI — email/password + Google SSO)
+3. Sign up via `/sign-up` → redirects to `/role-select` after Clerk verification
+4. Role select page calls `POST /api/users/sync` to create the DB user record with chosen role
+5. Redirected to `/dashboard` (planner) or `/vendor/dashboard` (vendor)
+6. Admin users created directly in DB
+
+**Key files:**
+- `artifacts/api-server/src/middlewares/clerkProxyMiddleware.ts` — Clerk proxy for OAuth callbacks
+- `artifacts/api-server/src/app.ts` — `clerkMiddleware()` mounted before API routes
+- `artifacts/web/src/hooks/use-auth.tsx` — uses `useUser()` + `useGetMe()` query for DB role
+- `artifacts/web/src/pages/auth/role-select.tsx` — role selection after sign-up
+- `artifacts/web/public/logo.svg` — branded amber N logo shown on Clerk sign-in/up pages
+
+**Backend auth pattern (all routes):**
+```typescript
+const clerkId = getAuth(req)?.userId ?? undefined;
+if (!clerkId) { res.status(401).json({ error: "unauthorized" }); return; }
+```
+
+**Clerk appearance:** shadcn theme, amber primary `hsl(35 90% 50%)`, Inter font, warm off-white background.
+
 ## Build Status
 
 - Frontend typecheck: CLEAN (0 errors)
@@ -105,7 +132,6 @@ All wired in `artifacts/web/src/App.tsx` using Wouter:
 
 ## Planned Phases (remaining)
 
-- Phase 5: Real auth (Clerk or Replit Auth)
 - Phase 6: AI budget optimization
 - Phase 7: Escrow payment flow (Stripe)
 - Phase 8: Email/SMS notifications

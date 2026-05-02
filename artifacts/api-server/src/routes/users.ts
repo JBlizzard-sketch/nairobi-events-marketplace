@@ -1,3 +1,4 @@
+import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
 import { users } from "@workspace/db";
@@ -8,9 +9,9 @@ const router: IRouter = Router();
 
 // GET /users/me
 router.get("/users/me", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -28,9 +29,9 @@ router.get("/users/me", async (req, res): Promise<void> => {
 
 // PATCH /users/me
 router.patch("/users/me", async (req, res): Promise<void> => {
-  const clerkId = req.headers["x-clerk-user-id"] as string | undefined;
+  const clerkId = getAuth(req)?.userId ?? undefined;
   if (!clerkId) {
-    res.status(401).json({ error: "unauthorized", message: "Missing x-clerk-user-id header" });
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
     return;
   }
 
@@ -54,18 +55,24 @@ router.patch("/users/me", async (req, res): Promise<void> => {
   res.json(updated);
 });
 
-// POST /users/sync — upsert user from Clerk webhook or client
+// POST /users/sync — upsert user (called after Clerk sign-up/sign-in)
+// clerkId comes from the authenticated session, NOT the request body
 router.post("/users/sync", async (req, res): Promise<void> => {
-  const { clerkId, email, fullName, role, avatarUrl } = req.body as {
-    clerkId: string;
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  if (!clerkId) {
+    res.status(401).json({ error: "unauthorized", message: "Authentication required" });
+    return;
+  }
+
+  const { email, fullName, role, avatarUrl } = req.body as {
     email: string;
     fullName: string;
-    role?: "planner" | "vendor" | "admin";
+    role?: "planner" | "vendor";
     avatarUrl?: string;
   };
 
-  if (!clerkId || !email || !fullName) {
-    res.status(400).json({ error: "validation_error", message: "clerkId, email, fullName required" });
+  if (!email || !fullName) {
+    res.status(400).json({ error: "validation_error", message: "email and fullName are required" });
     return;
   }
 
