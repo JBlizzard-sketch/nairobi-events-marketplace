@@ -5,10 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import {
   Briefcase, ChevronRight, ShieldCheck, CheckCircle2,
   XCircle, AlertTriangle, Clock, Calendar, Building2,
-  Star, CreditCard, Download,
+  Star, CreditCard, Download, Search,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -58,12 +59,20 @@ function formatKES(n: number) {
 
 export default function BookingsList() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const { data: bookings, isLoading } = useListMyBookings(
     statusFilter !== "all" ? { status: statusFilter as any } : {}
   );
 
-  const list = (Array.isArray(bookings) ? bookings : []) as any[];
+  const rawList = (Array.isArray(bookings) ? bookings : []) as any[];
+  const list = search.trim()
+    ? rawList.filter(b =>
+        (b.vendorBusinessName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (b.eventTitle ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (`#${b.id.slice(0, 8)}`).toLowerCase().includes(search.toLowerCase())
+      )
+    : rawList;
 
   // Summary counts
   const pendingCount = list.filter(b => b.status === "pending").length;
@@ -78,18 +87,31 @@ export default function BookingsList() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
           <p className="text-muted-foreground mt-1">
-            {isLoading ? "Loading…" : `${list.length} booking${list.length !== 1 ? "s" : ""}`}
+            {isLoading
+              ? "Loading…"
+              : search.trim()
+              ? `${list.length} of ${rawList.length} booking${rawList.length !== 1 ? "s" : ""}`
+              : `${rawList.length} booking${rawList.length !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          {!isLoading && list.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => exportCsv(list)} className="gap-2">
+        <div className="flex gap-2 flex-wrap items-center">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search vendor, event…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 w-52"
+            />
+          </div>
+          {!isLoading && rawList.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => exportCsv(rawList)} className="gap-2">
               <Download className="h-4 w-4" />
               Export CSV
             </Button>
           )}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
+            <SelectTrigger className="w-44">
               <SelectValue placeholder="All statuses" />
             </SelectTrigger>
             <SelectContent>

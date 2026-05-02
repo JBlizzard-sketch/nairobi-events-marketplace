@@ -6,10 +6,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import {
   Briefcase, ChevronRight, ShieldCheck, CheckCircle2,
-  XCircle, AlertTriangle, Clock, Calendar, User, TrendingUp,
+  XCircle, AlertTriangle, Clock, Calendar, User, TrendingUp, Search,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -45,12 +46,19 @@ const CUSTOM_TOOLTIP = ({ active, payload, label }: any) => {
 
 export default function VendorBookings() {
   const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
 
   const { data: bookings, isLoading } = useListMyBookings(
     statusFilter !== "all" ? { status: statusFilter as any } : {}
   );
 
-  const list = (Array.isArray(bookings) ? bookings : []) as any[];
+  const rawList = (Array.isArray(bookings) ? bookings : []) as any[];
+  const list = search.trim()
+    ? rawList.filter(b =>
+        (b.eventTitle ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (`#${b.id.slice(0, 8)}`).toLowerCase().includes(search.toLowerCase())
+      )
+    : rawList;
 
   const totalEarned = list
     .filter(b => b.status === "completed")
@@ -92,20 +100,35 @@ export default function VendorBookings() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">My Bookings</h1>
           <p className="text-muted-foreground mt-1">
-            {isLoading ? "Loading..." : `${list.length} booking${list.length !== 1 ? "s" : ""}`}
+            {isLoading
+              ? "Loading..."
+              : search.trim()
+              ? `${list.length} of ${rawList.length} booking${rawList.length !== 1 ? "s" : ""}`
+              : `${rawList.length} booking${rawList.length !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="All statuses" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
-            {Object.entries(STATUS_CONFIG).map(([val, { label }]) => (
-              <SelectItem key={val} value={val}>{label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2 items-center flex-wrap">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search event or ref…"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="pl-9 w-48"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              {Object.entries(STATUS_CONFIG).map(([val, { label }]) => (
+                <SelectItem key={val} value={val}>{label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Stats cards */}

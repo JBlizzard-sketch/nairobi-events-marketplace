@@ -13,8 +13,32 @@ import {
 } from "@/components/ui/dialog";
 import {
   Briefcase, ShieldCheck, CheckCircle2, XCircle, AlertTriangle,
-  Clock, CreditCard, Building2, Calendar, User, Gavel,
+  Clock, CreditCard, Building2, Calendar, User, Gavel, Download,
 } from "lucide-react";
+
+function exportBookingsCSV(bookings: any[]) {
+  const headers = ["Ref", "Status", "Event", "Category", "Vendor", "Planner", "Amount (KES)", "Platform Fee (KES)", "Payout (KES)", "Booked Date"];
+  const rows = bookings.map(b => [
+    `#${b.id.slice(0, 8).toUpperCase()}`,
+    b.status,
+    b.eventTitle ?? "",
+    b.category ?? "",
+    b.vendorBusinessName ?? "",
+    b.plannerName ?? "",
+    Number(b.totalAmount ?? 0).toFixed(2),
+    Number(b.platformFeeAmount ?? 0).toFixed(2),
+    Number(b.vendorPayoutAmount ?? 0).toFixed(2),
+    b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-KE") : "",
+  ]);
+  const csv = [headers, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 const STATUS_CONFIG: Record<string, { label: string; icon: any; className: string }> = {
   pending: { label: "Pending Payment", icon: Clock, className: "bg-muted text-muted-foreground" },
@@ -170,11 +194,24 @@ export default function AdminBookings() {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">All Bookings</h1>
-        <p className="text-muted-foreground mt-1">
-          {isLoading ? "Loading..." : `${data?.total ?? 0} total bookings`}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">All Bookings</h1>
+          <p className="text-muted-foreground mt-1">
+            {isLoading ? "Loading..." : `${data?.total ?? 0} total bookings`}
+          </p>
+        </div>
+        {bookingList.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 flex-shrink-0"
+            onClick={() => exportBookingsCSV(bookingList)}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {/* Summary cards */}

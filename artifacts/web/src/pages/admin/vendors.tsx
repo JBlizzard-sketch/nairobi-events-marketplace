@@ -16,8 +16,31 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   CheckCircle2, XCircle, PauseCircle, Users, Building2,
-  Globe, Instagram, Mail, AlertTriangle, ShieldCheck,
+  Globe, Instagram, Mail, AlertTriangle, ShieldCheck, Search, Download,
 } from "lucide-react";
+
+function exportVendorsCSV(vendors: any[]) {
+  const headers = ["Business Name", "Category", "Status", "City", "Email", "Website", "Avg Rating", "Total Reviews", "Applied Date"];
+  const rows = vendors.map(v => [
+    `"${(v.businessName ?? "").replace(/"/g, '""')}"`,
+    v.category ?? "",
+    v.status ?? "",
+    v.city ?? "",
+    v.userEmail ?? "",
+    v.websiteUrl ?? "",
+    v.averageRating ? Number(v.averageRating).toFixed(1) : "",
+    v.totalReviews ?? 0,
+    v.createdAt ? new Date(v.createdAt).toLocaleDateString("en-KE") : "",
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `vendors-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 type DialogMode = "reject" | "suspend" | "approve";
 
@@ -38,6 +61,7 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
 
 export default function AdminVendors() {
   const [activeTab, setActiveTab] = useState<string>("pending_review");
+  const [search, setSearch] = useState("");
 
   const statusFilter = activeTab === "all" ? undefined : activeTab;
   const { data: vendors, isLoading, refetch } = useAdminListVendors(
@@ -53,8 +77,6 @@ export default function AdminVendors() {
   const [reason, setReason] = useState("");
   const [approveNote, setApproveNote] = useState("");
   const [processing, setProcessing] = useState<string | null>(null);
-
-  const vendorList = (Array.isArray(vendors) ? vendors : []) as any[];
 
   const openDialog = (id: string, name: string, mode: DialogMode) => {
     setDialogTarget({ id, name, mode });
@@ -89,11 +111,45 @@ export default function AdminVendors() {
     {} as Record<string, string>,
   );
 
+  const vendorList = (Array.isArray(vendors) ? vendors : []) as any[];
+  const filteredVendors = search.trim()
+    ? vendorList.filter(v =>
+        (v.businessName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (v.city ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (v.userEmail ?? "").toLowerCase().includes(search.toLowerCase()) ||
+        (v.category ?? "").toLowerCase().includes(search.toLowerCase())
+      )
+    : vendorList;
+
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Vendor Management</h1>
-        <p className="text-muted-foreground mt-1">Review applications, approve, reject, or manage active vendors</p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Vendor Management</h1>
+          <p className="text-muted-foreground mt-1">Review applications, approve, reject, or manage active vendors</p>
+        </div>
+        {vendorList.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 flex-shrink-0"
+            onClick={() => exportVendorsCSV(vendorList)}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
+      </div>
+
+      {/* Search bar */}
+      <div className="relative max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+        <Input
+          placeholder="Search name, city, email, category…"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="pl-9"
+        />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -112,22 +168,32 @@ export default function AdminVendors() {
               <div className="space-y-4">
                 {[1, 2, 3].map(i => <Skeleton key={i} className="h-44 w-full rounded-lg" />)}
               </div>
-            ) : vendorList.length === 0 ? (
+            ) : filteredVendors.length === 0 ? (
               <Card className="border-dashed">
                 <CardContent className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="bg-primary/10 p-4 rounded-full mb-4">
                     <Users className="h-8 w-8 text-primary" />
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">No vendors here</h3>
+                  <h3 className="text-xl font-semibold mb-2">
+                    {search.trim() ? "No vendors match your search" : "No vendors here"}
+                  </h3>
                   <p className="text-muted-foreground text-sm">
-                    {value === "pending_review" ? "No vendors awaiting review right now." : `No ${value.replace(/_/g, " ")} vendors found.`}
+                    {search.trim()
+                      ? `Try a different search term`
+                      : value === "pending_review"
+                      ? "No vendors awaiting review right now."
+                      : `No ${value.replace(/_/g, " ")} vendors found.`}
                   </p>
                 </CardContent>
               </Card>
             ) : (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground font-medium">{vendorList.length} vendor{vendorList.length !== 1 ? "s" : ""}</p>
-                {vendorList.map((vendor: any) => (
+                <p className="text-sm text-muted-foreground font-medium">
+                  {search.trim()
+                    ? `${filteredVendors.length} of ${vendorList.length} vendor${vendorList.length !== 1 ? "s" : ""}`
+                    : `${vendorList.length} vendor${vendorList.length !== 1 ? "s" : ""}`}
+                </p>
+                {filteredVendors.map((vendor: any) => (
                   <Card key={vendor.id} className="shadow-sm hover:shadow-md transition-shadow">
                     <CardContent className="p-6">
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">

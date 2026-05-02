@@ -5,9 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp, Printer } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil, CheckCheck, FileText, DollarSign, ThumbsUp, Printer, ExternalLink, ShieldCheck } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "secondary",
@@ -96,6 +100,10 @@ function EventStepper({ status }: { status: string }) {
 }
 
 function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValue, isLowest }: any) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const depositPct = Number(quote.depositPercent ?? 30);
+  const total = Number(quote.totalAmount ?? 0);
+  const depositAmount = Math.round((total * depositPct) / 100);
   return (
     <div className={`rounded-lg border p-5 space-y-4 transition-all relative ${
       quote.status === "accepted" ? "border-primary bg-primary/5 shadow-md" :
@@ -120,9 +128,18 @@ function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValu
 
       <div className="flex items-start justify-between">
         <div className="min-w-0 flex-1">
-          <h4 className="font-semibold text-foreground truncate">
-            {quote.vendorBusinessName ?? "Unknown Vendor"}
-          </h4>
+          {quote.vendorId ? (
+            <Link href={`/vendors/${quote.vendorId}`}>
+              <h4 className="font-semibold text-foreground truncate hover:text-primary transition-colors flex items-center gap-1 cursor-pointer">
+                {quote.vendorBusinessName ?? "Unknown Vendor"}
+                <ExternalLink className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+              </h4>
+            </Link>
+          ) : (
+            <h4 className="font-semibold text-foreground truncate">
+              {quote.vendorBusinessName ?? "Unknown Vendor"}
+            </h4>
+          )}
           <div className="flex items-center gap-2 mt-0.5 flex-wrap">
             <span className="text-xs text-muted-foreground capitalize">
               {quote.category?.replace(/_/g, " ")}
@@ -199,7 +216,7 @@ function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValu
         <div className="flex gap-3 pt-1">
           <Button
             size="sm"
-            onClick={() => onAccept(quote.id)}
+            onClick={() => setConfirmOpen(true)}
             disabled={accepting}
             className="flex-1 font-semibold"
           >
@@ -224,6 +241,61 @@ function QuoteCard({ quote, onAccept, onReject, accepting, rejecting, isBestValu
           Accepted — Booking Created
         </Badge>
       )}
+
+      {/* ── Accept confirmation dialog ───────────────────────────────────── */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <div className="flex items-center gap-2 mb-1">
+              <div className="p-2 bg-primary/10 rounded-lg">
+                <ShieldCheck className="h-5 w-5 text-primary" />
+              </div>
+              <DialogTitle>Confirm booking?</DialogTitle>
+            </div>
+            <DialogDescription>
+              You're about to create a binding booking with{" "}
+              <span className="font-semibold text-foreground">
+                {quote.vendorBusinessName ?? "this vendor"}
+              </span>
+              . They'll be notified immediately.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3 py-1">
+            <div className="bg-muted/50 rounded-xl p-4 space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Quote total</span>
+                <span className="font-semibold">KES {total.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Deposit ({depositPct}%)</span>
+                <span className="font-semibold text-primary">KES {depositAmount.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between border-t border-border/50 pt-2">
+                <span className="text-muted-foreground">Remaining on delivery</span>
+                <span className="font-semibold">KES {(total - depositAmount).toLocaleString()}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Payment is held in escrow and only released to the vendor when you confirm the event is delivered.
+            </p>
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setConfirmOpen(false)} disabled={accepting}>
+              Cancel
+            </Button>
+            <Button
+              onClick={() => { setConfirmOpen(false); onAccept(quote.id); }}
+              disabled={accepting}
+              className="font-semibold gap-2"
+            >
+              <ShieldCheck className="h-4 w-4" />
+              {accepting ? "Confirming…" : "Confirm Booking"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

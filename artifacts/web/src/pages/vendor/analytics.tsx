@@ -7,9 +7,31 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   LineChart, Line,
 } from "recharts";
+import { Button } from "@/components/ui/button";
 import {
-  TrendingUp, Briefcase, Star, FileText, DollarSign, Trophy, Target,
+  TrendingUp, Briefcase, Star, FileText, DollarSign, Trophy, Target, Download,
 } from "lucide-react";
+
+function exportVendorCsv(bookings: any[]) {
+  const headers = ["Booking Ref", "Status", "Event", "Event Date", "Amount (KES)", "Payout (KES)", "Booked Date"];
+  const rows = bookings.map(b => [
+    `#${b.id.slice(0, 8).toUpperCase()}`,
+    b.status,
+    `"${(b.eventTitle ?? "").replace(/"/g, '""')}"`,
+    b.eventDate ? new Date(b.eventDate).toLocaleDateString("en-KE") : "",
+    Number(b.totalAmount ?? 0).toFixed(2),
+    Number(b.vendorPayoutAmount ?? 0).toFixed(2),
+    b.createdAt ? new Date(b.createdAt).toLocaleDateString("en-KE") : "",
+  ]);
+  const csv = [headers, ...rows].map(r => r.join(",")).join("\n");
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `vendor-bookings-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function formatKES(n: number) {
   if (n >= 1_000_000) return `KES ${(n / 1_000_000).toFixed(1)}M`;
@@ -169,11 +191,24 @@ export default function VendorAnalytics() {
   return (
     <div className="space-y-8 animate-in fade-in duration-500 max-w-4xl">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
-        <p className="text-muted-foreground mt-1">
-          Performance overview for {profile?.businessName ?? "your business"}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
+          <p className="text-muted-foreground mt-1">
+            Performance overview for {profile?.businessName ?? "your business"}
+          </p>
+        </div>
+        {bookings.length > 0 && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="gap-2 flex-shrink-0"
+            onClick={() => exportVendorCsv(bookings)}
+          >
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        )}
       </div>
 
       {/* KPI cards */}
