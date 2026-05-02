@@ -203,11 +203,11 @@ export default function VendorAvailability() {
       <Card className="shadow-sm">
         <CardHeader className="border-b border-border/50">
           <div className="flex items-center justify-between">
-            <Button variant="ghost" size="sm" onClick={prevMonth}>
+            <Button variant="ghost" size="sm" onClick={prevMonth} aria-label="Previous month">
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <CardTitle className="text-xl">{MONTH_NAMES[month]} {year}</CardTitle>
-            <Button variant="ghost" size="sm" onClick={nextMonth}>
+            <Button variant="ghost" size="sm" onClick={nextMonth} aria-label="Next month">
               <ChevronRight className="h-5 w-5" />
             </Button>
           </div>

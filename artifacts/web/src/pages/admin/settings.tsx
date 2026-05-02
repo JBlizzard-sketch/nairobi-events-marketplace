@@ -138,6 +138,7 @@ export default function AdminSettings() {
                 <Input
                   id="fee-percent"
                   type="number"
+                  inputMode="decimal"
                   min={0}
                   max={50}
                   step={0.5}

@@ -81,6 +81,7 @@ function LineItemRow({
       />
       <Input
         type="number"
+        inputMode="numeric"
         min={1}
         placeholder="Qty"
         value={item.quantity}
@@ -89,6 +90,7 @@ function LineItemRow({
       />
       <Input
         type="number"
+        inputMode="numeric"
         min={0}
         placeholder="Unit price"
         value={item.unitPrice || ""}
@@ -223,6 +225,7 @@ function TemplateDialog({
             <div className="flex items-center gap-3">
               <Input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 max={100}
                 value={draft.depositPercent}

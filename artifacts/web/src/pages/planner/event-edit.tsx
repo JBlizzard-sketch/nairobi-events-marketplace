@@ -256,6 +256,7 @@ export default function EventEdit() {
             <Label>Expected Guests</Label>
             <Input
               type="number"
+              inputMode="numeric"
               min={1}
               value={form.guestCount}
               onChange={e => set("guestCount", Number(e.target.value))}
@@ -275,6 +276,7 @@ export default function EventEdit() {
               <Label>Minimum (KES)</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 value={form.budgetMin}
                 onChange={e => set("budgetMin", e.target.value)}
@@ -285,6 +287,7 @@ export default function EventEdit() {
               <Label>Maximum (KES)</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 min={0}
                 value={form.budgetMax}
                 onChange={e => set("budgetMax", e.target.value)}

@@ -572,6 +572,7 @@ export default function VendorRequests() {
                     <div className="col-span-2">
                       <Input
                         type="number"
+                        inputMode="numeric"
                         placeholder="Qty"
                         min={1}
                         value={item.quantity}
@@ -581,6 +582,8 @@ export default function VendorRequests() {
                     <div className="col-span-3">
                       <Input
                         type="number"
+                        inputMode="numeric"
+                        min={0}
                         placeholder="Unit price (KES)"
                         value={item.unitPrice || ""}
                         onChange={e => updateLineItem(i, "unitPrice", parseFloat(e.target.value) || 0)}
@@ -631,6 +634,7 @@ export default function VendorRequests() {
                   <div className="flex items-center gap-3">
                     <Input
                       type="number"
+                      inputMode="numeric"
                       min={0}
                       max={100}
                       value={depositPercent}

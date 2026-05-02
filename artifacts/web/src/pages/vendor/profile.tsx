@@ -331,6 +331,7 @@ export default function VendorProfileEdit() {
             <Label>Business Name</Label>
             <Input
               placeholder="e.g. Savanna Catering Co."
+              autoComplete="organization"
               value={form.businessName}
               onChange={e => set("businessName", e.target.value)}
             />
@@ -379,6 +380,8 @@ export default function VendorProfileEdit() {
           <div className="space-y-2">
             <Label>Website URL</Label>
             <Input
+              type="url"
+              autoComplete="url"
               placeholder="https://yourwebsite.co.ke"
               value={form.websiteUrl}
               onChange={e => set("websiteUrl", e.target.value)}
@@ -387,6 +390,7 @@ export default function VendorProfileEdit() {
           <div className="space-y-2">
             <Label>Instagram Handle</Label>
             <Input
+              autoComplete="off"
               placeholder="@yourhandle"
               value={form.instagramHandle}
               onChange={e => set("instagramHandle", e.target.value.replace("@", ""))}

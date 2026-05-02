@@ -141,6 +141,7 @@ export default function BudgetOptimizer() {
               <Label>Expected Guest Count</Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 min="1"
                 placeholder="e.g. 150"
                 value={guestCount}
@@ -154,6 +155,7 @@ export default function BudgetOptimizer() {
               </Label>
               <Input
                 type="number"
+                inputMode="numeric"
                 min="0"
                 placeholder="Leave blank for AI suggestion"
                 value={budget}

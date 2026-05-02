@@ -297,8 +297,8 @@ export default function EventNew() {
                 <Input
                   type="date"
                   value={form.eventDate}
-                  onChange={e => set("eventDate", e.target.value)}
                   min={new Date().toISOString().split("T")[0]}
+                  onChange={e => set("eventDate", e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -331,6 +331,7 @@ export default function EventNew() {
                 <Label>Expected Guests</Label>
                 <Input
                   type="number"
+                  inputMode="numeric"
                   min={1}
                   value={form.guestCount}
                   onChange={e => set("guestCount", parseInt(e.target.value))}
@@ -341,6 +342,8 @@ export default function EventNew() {
                   <Label>Minimum Budget (KES)</Label>
                   <Input
                     type="number"
+                    inputMode="numeric"
+                    min="0"
                     placeholder="e.g. 200000"
                     value={form.budgetMin}
                     onChange={e => set("budgetMin", e.target.value)}
@@ -350,6 +353,8 @@ export default function EventNew() {
                   <Label>Maximum Budget (KES)</Label>
                   <Input
                     type="number"
+                    inputMode="numeric"
+                    min="0"
                     placeholder="e.g. 800000"
                     value={form.budgetMax}
                     onChange={e => set("budgetMax", e.target.value)}
