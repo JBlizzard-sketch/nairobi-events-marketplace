@@ -20,6 +20,7 @@ import RoleSelect from "@/pages/auth/role-select";
 import PlannerDashboard from "@/pages/planner/dashboard";
 import EventsList from "@/pages/planner/events-list";
 import EventNew from "@/pages/planner/event-new";
+import EventEdit from "@/pages/planner/event-edit";
 import EventDetail from "@/pages/planner/event-detail";
 import VendorsDirectory from "@/pages/planner/vendors";
 import VendorProfile from "@/pages/planner/vendor-profile";
@@ -222,6 +223,9 @@ function Router() {
       </Route>
       <Route path="/events/new">
         <ProtectedRoute component={EventNew} allowedRoles={["planner"]} />
+      </Route>
+      <Route path="/events/:id/edit">
+        <ProtectedRoute component={EventEdit} allowedRoles={["planner"]} />
       </Route>
       <Route path="/events/:id">
         <ProtectedRoute component={EventDetail} allowedRoles={["planner"]} />

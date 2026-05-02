@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle } from "lucide-react";
+import { CheckCircle2, XCircle, Calendar, MapPin, Users, Clock, Star, Trophy, TrendingDown, Circle, Pencil } from "lucide-react";
 import { useState } from "react";
+import { Link } from "wouter";
 
 const STATUS_COLORS: Record<string, string> = {
   draft: "secondary",
@@ -337,14 +338,24 @@ export default function EventDetail() {
             {e.isEmergency && <Badge variant="destructive">Emergency</Badge>}
           </div>
         </div>
-        {totalAccepted > 0 && (
-          <Card className="shadow-sm border-primary/30 bg-primary/5 flex-shrink-0">
-            <CardContent className="px-4 py-3">
-              <p className="text-xs text-primary font-semibold uppercase tracking-wider">Total Committed</p>
-              <p className="text-xl font-bold">KES {totalAccepted.toLocaleString()}</p>
-            </CardContent>
-          </Card>
-        )}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {e.status === "draft" && (
+            <Link href={`/events/${e.id}/edit`}>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Pencil className="h-3.5 w-3.5" />
+                Edit Brief
+              </Button>
+            </Link>
+          )}
+          {totalAccepted > 0 && (
+            <Card className="shadow-sm border-primary/30 bg-primary/5">
+              <CardContent className="px-4 py-3">
+                <p className="text-xs text-primary font-semibold uppercase tracking-wider">Total Committed</p>
+                <p className="text-xl font-bold">KES {totalAccepted.toLocaleString()}</p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       </div>
 
       <EventStepper status={e.status} />

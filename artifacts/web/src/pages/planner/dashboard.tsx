@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useListMyEvents, useListMyBookings } from "@workspace/api-client-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -5,10 +6,66 @@ import { Link } from "wouter";
 import {
   Calendar as CalendarIcon, Clock, ChevronRight, FileText,
   Sparkles, Plus, ArrowRight, CheckCircle2, AlertCircle,
-  Briefcase, TrendingUp,
+  Briefcase, TrendingUp, X, ShieldCheck,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const WELCOME_DISMISSED_KEY = "nairobi_welcome_dismissed";
+
+function WelcomeBanner({ onDismiss }: { onDismiss: () => void }) {
+  const steps = [
+    { icon: FileText, label: "Create an event brief", desc: "Tell us what you need in 2 minutes" },
+    { icon: AlertCircle, label: "Receive 3 competing quotes", desc: "Vetted vendors respond within 4 hours" },
+    { icon: ShieldCheck, label: "Book securely with escrow", desc: "Pay only when you're satisfied" },
+  ];
+
+  return (
+    <Card className="shadow-sm border-primary/20 bg-gradient-to-br from-amber-50 to-orange-50">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle className="text-lg">Welcome to Nairobi Events</CardTitle>
+            <CardDescription className="mt-1">Here's how it works — get started in minutes.</CardDescription>
+          </div>
+          <button
+            onClick={onDismiss}
+            className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 mt-0.5"
+            aria-label="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent className="pb-5">
+        <div className="grid sm:grid-cols-3 gap-4 mb-5">
+          {steps.map(({ icon: Icon, label, desc }, i) => (
+            <div key={i} className="flex gap-3 items-start">
+              <div className="flex-shrink-0 w-7 h-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-bold text-xs">
+                {i + 1}
+              </div>
+              <div>
+                <p className="font-semibold text-sm">{label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-3">
+          <Link href="/events/new">
+            <Button size="sm" className="gap-2 font-semibold shadow-sm">
+              <Plus className="h-4 w-4" />
+              Create Your First Event
+            </Button>
+          </Link>
+          <Link href="/vendors">
+            <Button size="sm" variant="outline">Browse Vendors</Button>
+          </Link>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const EVENT_STATUS_BADGE: Record<string, { label: string; variant: any; className?: string }> = {
   draft: { label: "Draft", variant: "outline" },
@@ -38,6 +95,14 @@ function formatEventDate(dateStr: string) {
 export default function PlannerDashboard() {
   const { data: events, isLoading: loadingEvents } = useListMyEvents({ limit: 10 });
   const { data: bookings, isLoading: loadingBookings } = useListMyBookings({});
+  const [welcomeDismissed, setWelcomeDismissed] = useState(
+    () => localStorage.getItem(WELCOME_DISMISSED_KEY) === "1"
+  );
+
+  const handleDismissWelcome = () => {
+    localStorage.setItem(WELCOME_DISMISSED_KEY, "1");
+    setWelcomeDismissed(true);
+  };
 
   const eventList = events?.events ?? [];
   const bookingList = Array.isArray(bookings) ? bookings : [];
@@ -101,6 +166,11 @@ export default function PlannerDashboard() {
           </Link>
         </div>
       </div>
+
+      {/* First-run welcome banner */}
+      {!loadingEvents && !welcomeDismissed && eventList.length === 0 && (
+        <WelcomeBanner onDismiss={handleDismissWelcome} />
+      )}
 
       {/* Stats row */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

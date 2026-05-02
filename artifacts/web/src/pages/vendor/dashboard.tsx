@@ -9,8 +9,100 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGri
 import {
   FileText, ChevronRight, Star, Briefcase, Clock,
   Clock3, AlertTriangle, XCircle, PauseCircle, CheckCircle2,
-  TrendingUp,
+  TrendingUp, Circle, UserCog,
 } from "lucide-react";
+
+function OnboardingChecklist({ profile }: { profile: any }) {
+  if (!profile || profile.status === "approved") return null;
+
+  const steps = [
+    {
+      label: "Create your vendor profile",
+      done: !!profile,
+      href: "/vendor/profile",
+    },
+    {
+      label: "Write a business description",
+      done: !!(profile?.description && profile.description.trim().length > 20),
+      href: "/vendor/profile",
+    },
+    {
+      label: "Add service areas",
+      done: !!(profile?.serviceAreas && profile.serviceAreas.length > 0),
+      href: "/vendor/profile",
+    },
+    {
+      label: "Submit profile for review",
+      done: ["pending_review", "approved", "rejected", "suspended"].includes(profile?.status),
+      href: "/vendor/profile",
+    },
+    {
+      label: "Get approved and start earning",
+      done: profile?.status === "approved",
+      href: "/vendor/profile",
+    },
+  ];
+
+  const completedCount = steps.filter(s => s.done).length;
+  const pct = Math.round((completedCount / steps.length) * 100);
+  const nextStep = steps.find(s => !s.done);
+
+  return (
+    <Card className="shadow-sm border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex items-center gap-2.5">
+            <div className="bg-primary/10 p-2 rounded-lg">
+              <UserCog className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <CardTitle className="text-base">Getting Started</CardTitle>
+              <CardDescription className="text-xs mt-0.5">{completedCount} of {steps.length} steps complete</CardDescription>
+            </div>
+          </div>
+          <div className="text-right flex-shrink-0">
+            <span className="text-2xl font-bold text-primary">{pct}%</span>
+          </div>
+        </div>
+        <div className="w-full bg-muted rounded-full h-1.5 mt-2">
+          <div
+            className="bg-primary rounded-full h-1.5 transition-all duration-500"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2 pb-4">
+        {steps.map((step, i) => (
+          <Link key={i} href={step.href}>
+            <div className={`flex items-center gap-3 p-2.5 rounded-lg transition-all cursor-pointer ${
+              step.done
+                ? "opacity-60"
+                : nextStep === step
+                ? "bg-primary/10 border border-primary/20 hover:bg-primary/15"
+                : "hover:bg-muted/50"
+            }`}>
+              <div className="flex-shrink-0">
+                {step.done ? (
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                ) : nextStep === step ? (
+                  <div className="h-4 w-4 rounded-full border-2 border-primary bg-primary/20" />
+                ) : (
+                  <Circle className="h-4 w-4 text-muted-foreground/40" />
+                )}
+              </div>
+              <span className={`text-sm flex-1 ${step.done ? "line-through text-muted-foreground" : nextStep === step ? "font-semibold text-primary" : "text-muted-foreground"}`}>
+                {step.label}
+              </span>
+              {!step.done && nextStep === step && (
+                <ChevronRight className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+              )}
+            </div>
+          </Link>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
 
 function VettingBanner({ profile }: { profile: any }) {
   if (!profile) return null;
@@ -141,6 +233,7 @@ export default function VendorDashboard() {
         )}
       </div>
 
+      {!loadingProfile && <OnboardingChecklist profile={profile_} />}
       {!loadingProfile && <VettingBanner profile={profile_} />}
 
       <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-4">
