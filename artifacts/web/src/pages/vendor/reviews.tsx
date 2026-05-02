@@ -47,7 +47,7 @@ function ReviewCard({ review }: { review: any }) {
   });
 
   return (
-    <Card className={`shadow-sm ${review.isNoShow ? "border-red-200 bg-red-50/30" : "border-border"}`}>
+    <Card className={`shadow-sm ${review.isNoShow ? "border-red-200 bg-red-50/30 dark:border-red-900/50 dark:bg-red-950/10" : "border-border"}`}>
       <CardContent className="p-5 space-y-3">
         {/* Header row */}
         <div className="flex items-start justify-between gap-3">

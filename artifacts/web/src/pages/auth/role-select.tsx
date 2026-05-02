@@ -136,7 +136,7 @@ export default function RoleSelect() {
           {isSubmitting ? "Setting up your account…" : "Continue"}
         </Button>
 
-        <p className="text-center text-xs text-gray-400 mt-4">
+        <p className="text-center text-xs text-gray-400 dark:text-muted-foreground mt-4">
           Signed in as {user?.primaryEmailAddress?.emailAddress}
         </p>
       </div>

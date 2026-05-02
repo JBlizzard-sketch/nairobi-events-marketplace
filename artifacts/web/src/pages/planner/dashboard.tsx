@@ -397,13 +397,13 @@ export default function PlannerDashboard() {
                     return (
                       <Link key={b.id} href={`/bookings/${b.id}`}>
                         <div className={`flex items-center gap-3 p-2.5 rounded-lg border transition-all cursor-pointer hover:shadow-sm ${
-                          isUrgent ? "border-red-200 bg-red-50/50" :
-                          isSoon ? "border-amber-200 bg-amber-50/50" :
+                          isUrgent ? "border-red-200 bg-red-50/50 dark:border-red-900/50 dark:bg-red-950/20" :
+                          isSoon ? "border-amber-200 bg-amber-50/50 dark:border-amber-800/50 dark:bg-amber-950/20" :
                           "border-border hover:border-primary/30 hover:bg-muted/30"
                         }`}>
                           <div className={`flex-shrink-0 w-9 h-9 rounded-lg flex flex-col items-center justify-center text-xs font-black leading-none ${
-                            isUrgent ? "bg-red-100 text-red-700" :
-                            isSoon ? "bg-amber-100 text-amber-700" :
+                            isUrgent ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400" :
+                            isSoon ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-400" :
                             "bg-primary/10 text-primary"
                           }`}>
                             <span className="text-base">{days === 0 ? "!" : days}</span>

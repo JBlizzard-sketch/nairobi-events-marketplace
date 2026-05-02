@@ -54,13 +54,13 @@ const STATUS_BADGE: Record<string, { variant: any; className?: string }> = {
 // Calendar chip colours (simpler, more distinct per status)
 const CAL_CHIP: Record<string, string> = {
   draft: "bg-muted text-muted-foreground",
-  brief_submitted: "bg-blue-100 text-blue-800",
-  quotes_requested: "bg-amber-100 text-amber-800",
+  brief_submitted: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+  quotes_requested: "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
   quotes_received: "bg-primary/90 text-primary-foreground",
-  vendor_selected: "bg-violet-100 text-violet-800",
-  booked: "bg-emerald-100 text-emerald-800",
-  completed: "bg-slate-200 text-slate-700",
-  cancelled: "bg-red-100 text-red-700 line-through",
+  vendor_selected: "bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300",
+  booked: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
+  completed: "bg-slate-200 text-slate-700 dark:bg-slate-700/50 dark:text-slate-300",
+  cancelled: "bg-red-100 text-red-700 line-through dark:bg-red-900/30 dark:text-red-400",
 };
 
 const CHIP_FILTERS = [
@@ -395,7 +395,7 @@ export default function EventsList() {
                   }`}
                 >
                   <Link href={`/events/${event.id}`} className="flex items-start gap-4 flex-1 min-w-0 cursor-pointer">
-                    <div className={`p-2.5 rounded-md hidden sm:flex items-center justify-center flex-shrink-0 ${isUrgent ? "bg-red-100 text-red-600" : "bg-primary/10 text-primary"}`}>
+                    <div className={`p-2.5 rounded-md hidden sm:flex items-center justify-center flex-shrink-0 ${isUrgent ? "bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400" : "bg-primary/10 text-primary"}`}>
                       {isUrgent ? <AlertTriangle className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                     </div>
                     <div className="min-w-0">
@@ -404,7 +404,7 @@ export default function EventsList() {
                           {event.title}
                         </h3>
                         {isUrgent && (
-                          <Badge className="bg-red-100 text-red-700 border border-red-300 text-xs gap-1">
+                          <Badge className="bg-red-100 text-red-700 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-700/50 text-xs gap-1">
                             <AlertTriangle className="h-3 w-3" />
                             {daysUntilEvent === 0 ? "Today" : `${daysUntilEvent}d away`} — no vendor
                           </Badge>

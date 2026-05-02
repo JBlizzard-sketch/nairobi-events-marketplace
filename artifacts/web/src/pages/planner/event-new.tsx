@@ -414,7 +414,7 @@ export default function EventNew() {
                         variant="outline"
                         onClick={handleAiOptimize}
                         disabled={budgetOptimize.isPending}
-                        className="border-amber-300 bg-white text-amber-800 hover:bg-amber-50 hover:border-amber-400 text-xs h-7 gap-1.5"
+                        className="border-amber-300 bg-white dark:bg-card text-amber-800 dark:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950/30 hover:border-amber-400 text-xs h-7 gap-1.5"
                       >
                         {budgetOptimize.isPending ? (
                           <><Loader2 className="h-3 w-3 animate-spin" /> Analysing…</>

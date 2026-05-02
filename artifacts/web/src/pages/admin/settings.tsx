@@ -91,17 +91,17 @@ export default function AdminSettings() {
       </div>
 
       {saveStatus === "saved" && (
-        <Alert className="border-green-200 bg-green-50">
-          <CheckCircle className="h-4 w-4 text-green-600" />
-          <AlertDescription className="text-green-800">
+        <Alert className="border-green-200 bg-green-50 dark:border-green-800/50 dark:bg-green-950/20">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-300">
             Settings saved successfully.
           </AlertDescription>
         </Alert>
       )}
       {saveStatus === "error" && (
-        <Alert className="border-red-200 bg-red-50">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
-          <AlertDescription className="text-red-800">
+        <Alert className="border-red-200 bg-red-50 dark:border-red-900/50 dark:bg-red-950/20">
+          <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+          <AlertDescription className="text-red-800 dark:text-red-300">
             Failed to save settings. Check values and try again.
           </AlertDescription>
         </Alert>
@@ -182,7 +182,7 @@ export default function AdminSettings() {
               <div className="flex items-center gap-2">
                 <CardTitle className="text-base">Maintenance Mode</CardTitle>
                 {maintenanceMode && (
-                  <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 text-xs">
+                  <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:text-amber-400 dark:border-amber-700/50 dark:bg-amber-950/30 text-xs">
                     Active
                   </Badge>
                 )}
@@ -216,9 +216,9 @@ export default function AdminSettings() {
             />
           </div>
           {maintenanceMode && (
-            <Alert className="border-amber-200 bg-amber-50">
-              <AlertTriangle className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800 text-xs">
+            <Alert className="border-amber-200 bg-amber-50 dark:border-amber-800/50 dark:bg-amber-950/20">
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-amber-800 dark:text-amber-300 text-xs">
                 Maintenance mode is currently <strong>active</strong>. Users will see your maintenance message.
               </AlertDescription>
             </Alert>

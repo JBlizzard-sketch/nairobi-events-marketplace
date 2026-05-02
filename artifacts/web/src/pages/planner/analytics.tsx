@@ -444,7 +444,7 @@ export default function PlannerAnalytics() {
           insights.push({
             icon: TrendingUp,
             color: up ? "text-emerald-600" : "text-red-500",
-            bg: up ? "bg-emerald-50" : "bg-red-50",
+            bg: up ? "bg-emerald-50 dark:bg-emerald-950/40" : "bg-red-50 dark:bg-red-950/40",
             text: up
               ? `Spend up ${trendPct}% this month vs last month`
               : `Spend down ${Math.abs(trendPct)}% this month vs last month`,
@@ -454,7 +454,7 @@ export default function PlannerAnalytics() {
           insights.push({
             icon: Calendar,
             color: "text-violet-600",
-            bg: "bg-violet-50",
+            bg: "bg-violet-50 dark:bg-violet-950/40",
             text: `Highest spend month: ${bestMonth.label} (${formatKES(bestMonth.spend)})`,
           });
         }
@@ -462,7 +462,7 @@ export default function PlannerAnalytics() {
           insights.push({
             icon: Building2,
             color: "text-amber-600",
-            bg: "bg-amber-50",
+            bg: "bg-amber-50 dark:bg-amber-950/40",
             text: `Top category: ${topCat.name} — ${formatKES(topCat.value)} (${totalSpend > 0 ? Math.round((topCat.value / totalSpend) * 100) : 0}% of spend)`,
           });
         }
