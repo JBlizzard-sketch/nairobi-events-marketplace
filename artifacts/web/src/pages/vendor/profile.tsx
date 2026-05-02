@@ -298,10 +298,10 @@ export default function VendorProfileEdit() {
 
       {statusInfo && (
         <Alert className={
-          p?.status === "approved" ? "border-emerald-300 bg-emerald-50" :
-          p?.status === "pending_review" ? "border-amber-300 bg-amber-50" :
-          p?.status === "rejected" ? "border-red-300 bg-red-50" :
-          "border-slate-300 bg-slate-50"
+          p?.status === "approved" ? "border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30" :
+          p?.status === "pending_review" ? "border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30" :
+          p?.status === "rejected" ? "border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30" :
+          "border-slate-300 bg-slate-50 dark:border-slate-600 dark:bg-slate-800/30"
         }>
           <statusInfo.icon className={`h-4 w-4 ${statusInfo.color}`} />
           <AlertTitle className="font-semibold">{statusInfo.title}</AlertTitle>

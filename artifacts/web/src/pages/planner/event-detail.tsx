@@ -797,6 +797,32 @@ export default function EventDetail() {
         ))}
       </div>
 
+      {/* ── Brief Details (description + services) ── */}
+      {(e.description || (Array.isArray(e.servicesNeeded) && e.servicesNeeded.length > 0)) && (
+        <Card className="shadow-sm">
+          <CardContent className="pt-5 pb-4 space-y-4">
+            {Array.isArray(e.servicesNeeded) && e.servicesNeeded.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Services Needed</p>
+                <div className="flex flex-wrap gap-2">
+                  {e.servicesNeeded.map((s: string) => (
+                    <Badge key={s} variant="secondary" className="capitalize text-xs">
+                      {s.replace(/_/g, " ")}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+            {e.description && (
+              <div className={Array.isArray(e.servicesNeeded) && e.servicesNeeded.length > 0 ? "border-t border-border/50 pt-4" : ""}>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">Brief Notes</p>
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line">{e.description}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
       {/* ── Budget tracker ── */}
       {e.budgetMax && allQuotes.length > 0 && (() => {
         const budget = Number(e.budgetMax);
