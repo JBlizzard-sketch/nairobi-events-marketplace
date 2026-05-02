@@ -344,7 +344,7 @@ export default function VendorDashboard() {
                 <CardTitle>Active Bookings</CardTitle>
                 <CardDescription>Confirmed events you're working</CardDescription>
               </div>
-              <Link href="/vendor/requests">
+              <Link href="/vendor/bookings">
                 <Button variant="outline" size="sm">View All</Button>
               </Link>
             </CardHeader>

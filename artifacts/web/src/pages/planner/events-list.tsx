@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { Calendar, ChevronRight, Plus, FileText, Pencil, CalendarDays, List, ChevronLeft, Search, X } from "lucide-react";
+import { Calendar, ChevronRight, Plus, FileText, Pencil, CalendarDays, List, ChevronLeft, Search, X, AlertTriangle } from "lucide-react";
 
 const STATUS_LABELS: Record<string, string> = {
   draft: "Draft",
@@ -349,23 +349,40 @@ export default function EventsList() {
               const badge = STATUS_BADGE[event.status] ?? { variant: "secondary" };
               const isDraft = event.status === "draft";
               const hasActionNeeded = event.status === "quotes_received";
+              const daysUntilEvent = Math.ceil(
+                (new Date(event.eventDate).setHours(0,0,0,0) - new Date().setHours(0,0,0,0)) / 86400000
+              );
+              const isUrgent =
+                daysUntilEvent >= 0 &&
+                daysUntilEvent <= 7 &&
+                !["booked", "completed", "cancelled", "vendor_selected"].includes(event.status);
               return (
                 <div
                   key={event.id}
                   className={`flex items-center justify-between p-5 rounded-lg border bg-card hover:border-primary/50 hover:shadow-sm transition-all group ${
-                    hasActionNeeded ? "border-primary/30 bg-primary/5" : ""
+                    isUrgent
+                      ? "border-red-300 bg-red-50/40 dark:bg-red-950/20"
+                      : hasActionNeeded
+                      ? "border-primary/30 bg-primary/5"
+                      : ""
                   }`}
                 >
                   <Link href={`/events/${event.id}`} className="flex items-start gap-4 flex-1 min-w-0 cursor-pointer">
-                    <div className="bg-primary/10 text-primary p-2.5 rounded-md hidden sm:flex items-center justify-center flex-shrink-0">
-                      <FileText className="h-5 w-5" />
+                    <div className={`p-2.5 rounded-md hidden sm:flex items-center justify-center flex-shrink-0 ${isUrgent ? "bg-red-100 text-red-600" : "bg-primary/10 text-primary"}`}>
+                      {isUrgent ? <AlertTriangle className="h-5 w-5" /> : <FileText className="h-5 w-5" />}
                     </div>
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap mb-1">
                         <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                           {event.title}
                         </h3>
-                        {hasActionNeeded && (
+                        {isUrgent && (
+                          <Badge className="bg-red-100 text-red-700 border border-red-300 text-xs gap-1">
+                            <AlertTriangle className="h-3 w-3" />
+                            {daysUntilEvent === 0 ? "Today" : `${daysUntilEvent}d away`} — no vendor
+                          </Badge>
+                        )}
+                        {!isUrgent && hasActionNeeded && (
                           <Badge className="bg-primary text-primary-foreground text-xs animate-pulse">
                             Action Required
                           </Badge>

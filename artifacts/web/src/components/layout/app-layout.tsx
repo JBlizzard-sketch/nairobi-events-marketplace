@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useTheme } from "@/hooks/use-theme";
+import { useAdminGetSettings } from "@workspace/api-client-react";
 import { Button } from "@/components/ui/button";
 import {
   Calendar,
@@ -28,6 +29,7 @@ import {
   HelpCircle,
   BookTemplate,
   Bell,
+  WrenchIcon,
 } from "lucide-react";
 import { NotificationBell } from "@/components/notification-bell";
 import { CommandPalette } from "@/components/command-palette";
@@ -41,6 +43,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const [location, setLocation] = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
+  const { data: platformSettings } = useAdminGetSettings({
+    query: { enabled: role === "admin", retry: 0 } as any,
+  });
+  const settings = platformSettings as any;
+  const showMaintenanceBanner =
+    role === "admin" && !bannerDismissed && settings?.maintenanceMode === true;
 
   // Close drawer whenever the route changes
   useEffect(() => {
@@ -287,8 +297,31 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* ── Main content ────────────────────────────────────────────────── */}
         <main className="flex-1 overflow-hidden">
-          <div ref={scrollRef} className="h-full overflow-y-auto p-5 md:p-8">
-            <div className="max-w-6xl mx-auto">{children}</div>
+          <div ref={scrollRef} className="h-full overflow-y-auto">
+            {showMaintenanceBanner && (
+              <div className="sticky top-0 z-30 bg-amber-500 text-white px-4 py-2.5 flex items-center gap-3">
+                <WrenchIcon className="h-4 w-4 flex-shrink-0" />
+                <p className="text-sm font-medium flex-1">
+                  <span className="font-bold">Maintenance mode is ON.</span>
+                  {settings?.maintenanceMessage ? ` ${settings.maintenanceMessage}` : " Users will see this notice when a public endpoint is available."}
+                </p>
+                <Link href="/admin/settings">
+                  <span className="text-xs underline underline-offset-2 font-semibold hover:opacity-80 cursor-pointer">
+                    Settings
+                  </span>
+                </Link>
+                <button
+                  onClick={() => setBannerDismissed(true)}
+                  className="ml-1 hover:opacity-70 transition-opacity"
+                  aria-label="Dismiss"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            )}
+            <div className="p-5 md:p-8">
+              <div className="max-w-6xl mx-auto">{children}</div>
+            </div>
           </div>
         </main>
       </div>
