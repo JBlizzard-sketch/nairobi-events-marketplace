@@ -8,6 +8,11 @@
 
 export * from "./adminActionWithReasonBody";
 export * from "./adminApproveVendorBody";
+export * from "./adminEvent";
+export * from "./adminListBookings200";
+export * from "./adminListBookingsParams";
+export * from "./adminListEvents200";
+export * from "./adminListEventsParams";
 export * from "./adminListVendorsParams";
 export * from "./adminListVendorsStatus";
 export * from "./adminStats";

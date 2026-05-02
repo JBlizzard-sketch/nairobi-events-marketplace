@@ -313,9 +313,15 @@ export interface Booking {
   currency: string;
   stripePaymentIntentId?: string | null;
   contractUrl?: string | null;
+  cancellationReason?: string | null;
   confirmedAt?: string | null;
   completedAt?: string | null;
   createdAt: string;
+  vendorBusinessName?: string | null;
+  eventTitle?: string | null;
+  eventDate?: string | null;
+  category?: string | null;
+  plannerName?: string | null;
 }
 
 /**
@@ -443,10 +449,30 @@ export interface AdminStats {
   totalUsers: number;
   totalVendors: number;
   pendingVendors: number;
+  approvedVendors?: number;
+  rejectedVendors?: number;
   totalEvents: number;
   totalBookings: number;
   totalRevenue: string;
   activeEvents: number;
+}
+
+export interface AdminEvent {
+  id: string;
+  title: string;
+  eventType: string;
+  status: string;
+  eventDate: string;
+  city?: string | null;
+  venue?: string | null;
+  guestCount: number;
+  budgetMax?: string | null;
+  isEmergency?: boolean;
+  plannerName?: string | null;
+  plannerEmail?: string | null;
+  quoteCount: number;
+  bookingCount: number;
+  createdAt: string;
 }
 
 export interface BudgetOptimizeBody {
@@ -562,3 +588,25 @@ export const AdminListVendorsStatus = {
   rejected: "rejected",
   suspended: "suspended",
 } as const;
+
+export type AdminListEventsParams = {
+  status?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type AdminListEvents200 = {
+  events: AdminEvent[];
+  total: number;
+};
+
+export type AdminListBookingsParams = {
+  status?: string;
+  page?: number;
+  limit?: number;
+};
+
+export type AdminListBookings200 = {
+  bookings: Booking[];
+  total: number;
+};

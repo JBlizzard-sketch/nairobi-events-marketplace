@@ -1,8 +1,8 @@
 import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { vendorProfiles, users, events, bookings } from "@workspace/db";
-import { eq, sql } from "drizzle-orm";
+import { vendorProfiles, users, events, bookings, quoteRequests } from "@workspace/db";
+import { eq, sql, and } from "drizzle-orm";
 import { notify } from "../services/notify";
 
 const router: IRouter = Router();
@@ -163,6 +163,91 @@ router.post("/admin/vendors/:vendorId/suspend", async (req, res): Promise<void> 
   }
 
   res.json(updated);
+});
+
+// ── GET /admin/events ─────────────────────────────────────────────────────────
+
+router.get("/admin/events", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  const admin = await requireAdmin(clerkId);
+  if (!admin) { res.status(403).json({ error: "forbidden", message: "Admin access required" }); return; }
+
+  const page = Math.max(1, parseInt(String(req.query.page ?? "1")));
+  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? "50"))));
+  const offset = (page - 1) * limit;
+  const statusFilter = typeof req.query.status === "string" ? req.query.status : undefined;
+
+  const conditions = statusFilter ? [eq(events.status, statusFilter as any)] : [];
+
+  const [eventList, [{ count: total }]] = await Promise.all([
+    db.query.events.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: (ev, { desc }) => [desc(ev.createdAt)],
+      limit,
+      offset,
+    }),
+    db.select({ count: sql<number>`count(*)` }).from(events).where(conditions.length > 0 ? and(...conditions) : undefined),
+  ]);
+
+  const enriched = await Promise.all(eventList.map(async ev => {
+    const [planner, [{ count: quoteCount }], [{ count: bookingCount }]] = await Promise.all([
+      db.query.users.findFirst({ where: eq(users.id, ev.plannerId) }),
+      db.select({ count: sql<number>`count(*)` }).from(quoteRequests).where(eq(quoteRequests.eventId, ev.id)),
+      db.select({ count: sql<number>`count(*)` }).from(bookings).where(eq(bookings.eventId, ev.id)),
+    ]);
+    return {
+      ...ev,
+      plannerName: planner ? (planner.fullName?.trim() || planner.email) : null,
+      plannerEmail: planner?.email ?? null,
+      quoteCount: Number(quoteCount ?? 0),
+      bookingCount: Number(bookingCount ?? 0),
+    };
+  }));
+
+  res.json({ events: enriched, total: Number(total ?? 0) });
+});
+
+// ── GET /admin/bookings ───────────────────────────────────────────────────────
+
+router.get("/admin/bookings", async (req, res): Promise<void> => {
+  const clerkId = getAuth(req)?.userId ?? undefined;
+  const admin = await requireAdmin(clerkId);
+  if (!admin) { res.status(403).json({ error: "forbidden", message: "Admin access required" }); return; }
+
+  const page = Math.max(1, parseInt(String(req.query.page ?? "1")));
+  const limit = Math.min(100, Math.max(1, parseInt(String(req.query.limit ?? "50"))));
+  const offset = (page - 1) * limit;
+  const statusFilter = typeof req.query.status === "string" ? req.query.status : undefined;
+
+  const conditions = statusFilter ? [eq(bookings.status, statusFilter as any)] : [];
+
+  const [bookingList, [{ count: total }]] = await Promise.all([
+    db.query.bookings.findMany({
+      where: conditions.length > 0 ? and(...conditions) : undefined,
+      orderBy: (b, { desc }) => [desc(b.createdAt)],
+      limit,
+      offset,
+    }),
+    db.select({ count: sql<number>`count(*)` }).from(bookings).where(conditions.length > 0 ? and(...conditions) : undefined),
+  ]);
+
+  const enriched = await Promise.all(bookingList.map(async b => {
+    const [vp, ev, planner] = await Promise.all([
+      db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.id, b.vendorId) }),
+      db.query.events.findFirst({ where: eq(events.id, b.eventId) }),
+      db.query.users.findFirst({ where: eq(users.id, b.plannerId) }),
+    ]);
+    return {
+      ...b,
+      vendorBusinessName: vp?.businessName ?? null,
+      eventTitle: ev?.title ?? null,
+      eventDate: ev?.eventDate ?? null,
+      category: vp?.category ?? null,
+      plannerName: planner ? (planner.fullName?.trim() || planner.email) : null,
+    };
+  }));
+
+  res.json({ bookings: enriched, total: Number(total ?? 0) });
 });
 
 // ── GET /admin/stats ──────────────────────────────────────────────────────────

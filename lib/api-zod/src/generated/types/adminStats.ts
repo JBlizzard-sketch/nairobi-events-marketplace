@@ -10,6 +10,8 @@ export interface AdminStats {
   totalUsers: number;
   totalVendors: number;
   pendingVendors: number;
+  approvedVendors?: number;
+  rejectedVendors?: number;
   totalEvents: number;
   totalBookings: number;
   totalRevenue: string;

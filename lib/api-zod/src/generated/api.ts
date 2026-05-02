@@ -899,9 +899,15 @@ export const AcceptQuoteResponse = zod.object({
   currency: zod.string(),
   stripePaymentIntentId: zod.string().nullish(),
   contractUrl: zod.string().nullish(),
+  cancellationReason: zod.string().nullish(),
   confirmedAt: zod.coerce.date().nullish(),
   completedAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
+  vendorBusinessName: zod.string().nullish(),
+  eventTitle: zod.string().nullish(),
+  eventDate: zod.coerce.date().nullish(),
+  category: zod.string().nullish(),
+  plannerName: zod.string().nullish(),
 });
 
 /**
@@ -1028,9 +1034,15 @@ export const ListMyBookingsResponseItem = zod.object({
   currency: zod.string(),
   stripePaymentIntentId: zod.string().nullish(),
   contractUrl: zod.string().nullish(),
+  cancellationReason: zod.string().nullish(),
   confirmedAt: zod.coerce.date().nullish(),
   completedAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
+  vendorBusinessName: zod.string().nullish(),
+  eventTitle: zod.string().nullish(),
+  eventDate: zod.coerce.date().nullish(),
+  category: zod.string().nullish(),
+  plannerName: zod.string().nullish(),
 });
 export const ListMyBookingsResponse = zod.array(ListMyBookingsResponseItem);
 
@@ -1062,9 +1074,15 @@ export const GetBookingResponse = zod.object({
   currency: zod.string(),
   stripePaymentIntentId: zod.string().nullish(),
   contractUrl: zod.string().nullish(),
+  cancellationReason: zod.string().nullish(),
   confirmedAt: zod.coerce.date().nullish(),
   completedAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
+  vendorBusinessName: zod.string().nullish(),
+  eventTitle: zod.string().nullish(),
+  eventDate: zod.coerce.date().nullish(),
+  category: zod.string().nullish(),
+  plannerName: zod.string().nullish(),
 });
 
 /**
@@ -1125,9 +1143,15 @@ export const ConfirmBookingResponse = zod.object({
     currency: zod.string(),
     stripePaymentIntentId: zod.string().nullish(),
     contractUrl: zod.string().nullish(),
+    cancellationReason: zod.string().nullish(),
     confirmedAt: zod.coerce.date().nullish(),
     completedAt: zod.coerce.date().nullish(),
     createdAt: zod.coerce.date(),
+    vendorBusinessName: zod.string().nullish(),
+    eventTitle: zod.string().nullish(),
+    eventDate: zod.coerce.date().nullish(),
+    category: zod.string().nullish(),
+    plannerName: zod.string().nullish(),
   }),
   clientSecret: zod.string(),
 });
@@ -1160,9 +1184,15 @@ export const ReleaseEscrowResponse = zod.object({
   currency: zod.string(),
   stripePaymentIntentId: zod.string().nullish(),
   contractUrl: zod.string().nullish(),
+  cancellationReason: zod.string().nullish(),
   confirmedAt: zod.coerce.date().nullish(),
   completedAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
+  vendorBusinessName: zod.string().nullish(),
+  eventTitle: zod.string().nullish(),
+  eventDate: zod.coerce.date().nullish(),
+  category: zod.string().nullish(),
+  plannerName: zod.string().nullish(),
 });
 
 /**
@@ -1199,9 +1229,15 @@ export const DisputeBookingResponse = zod.object({
   currency: zod.string(),
   stripePaymentIntentId: zod.string().nullish(),
   contractUrl: zod.string().nullish(),
+  cancellationReason: zod.string().nullish(),
   confirmedAt: zod.coerce.date().nullish(),
   completedAt: zod.coerce.date().nullish(),
   createdAt: zod.coerce.date(),
+  vendorBusinessName: zod.string().nullish(),
+  eventTitle: zod.string().nullish(),
+  eventDate: zod.coerce.date().nullish(),
+  category: zod.string().nullish(),
+  plannerName: zod.string().nullish(),
 });
 
 /**
@@ -1539,12 +1575,98 @@ export const SubmitVendorProfileForReviewResponse = zod.object({
 });
 
 /**
+ * @summary List all events (admin)
+ */
+export const adminListEventsQueryPageDefault = 1;
+export const adminListEventsQueryLimitDefault = 50;
+
+export const AdminListEventsQueryParams = zod.object({
+  status: zod.coerce.string().optional(),
+  page: zod.coerce.number().default(adminListEventsQueryPageDefault),
+  limit: zod.coerce.number().default(adminListEventsQueryLimitDefault),
+});
+
+export const AdminListEventsResponse = zod.object({
+  events: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      title: zod.string(),
+      eventType: zod.string(),
+      status: zod.string(),
+      eventDate: zod.coerce.date(),
+      city: zod.string().nullish(),
+      venue: zod.string().nullish(),
+      guestCount: zod.number(),
+      budgetMax: zod.string().nullish(),
+      isEmergency: zod.boolean().optional(),
+      plannerName: zod.string().nullish(),
+      plannerEmail: zod.string().nullish(),
+      quoteCount: zod.number(),
+      bookingCount: zod.number(),
+      createdAt: zod.coerce.date(),
+    }),
+  ),
+  total: zod.number(),
+});
+
+/**
+ * @summary List all bookings (admin)
+ */
+export const adminListBookingsQueryPageDefault = 1;
+export const adminListBookingsQueryLimitDefault = 50;
+
+export const AdminListBookingsQueryParams = zod.object({
+  status: zod.coerce.string().optional(),
+  page: zod.coerce.number().default(adminListBookingsQueryPageDefault),
+  limit: zod.coerce.number().default(adminListBookingsQueryLimitDefault),
+});
+
+export const AdminListBookingsResponse = zod.object({
+  bookings: zod.array(
+    zod.object({
+      id: zod.string().uuid(),
+      eventId: zod.string().uuid(),
+      quoteId: zod.string().uuid(),
+      vendorId: zod.string().uuid(),
+      plannerId: zod.string().uuid(),
+      status: zod.enum([
+        "pending",
+        "confirmed",
+        "in_escrow",
+        "completed",
+        "disputed",
+        "cancelled",
+        "refunded",
+      ]),
+      totalAmount: zod.string(),
+      platformFeeAmount: zod.string(),
+      vendorPayoutAmount: zod.string(),
+      currency: zod.string(),
+      stripePaymentIntentId: zod.string().nullish(),
+      contractUrl: zod.string().nullish(),
+      cancellationReason: zod.string().nullish(),
+      confirmedAt: zod.coerce.date().nullish(),
+      completedAt: zod.coerce.date().nullish(),
+      createdAt: zod.coerce.date(),
+      vendorBusinessName: zod.string().nullish(),
+      eventTitle: zod.string().nullish(),
+      eventDate: zod.coerce.date().nullish(),
+      category: zod.string().nullish(),
+      plannerName: zod.string().nullish(),
+    }),
+  ),
+  total: zod.number(),
+});
+
+/**
  * @summary Platform-wide stats
  */
 export const AdminGetStatsResponse = zod.object({
   totalUsers: zod.number(),
   totalVendors: zod.number(),
   pendingVendors: zod.number(),
+  approvedVendors: zod.number().optional(),
+  rejectedVendors: zod.number().optional(),
   totalEvents: zod.number(),
   totalBookings: zod.number(),
   totalRevenue: zod.string(),

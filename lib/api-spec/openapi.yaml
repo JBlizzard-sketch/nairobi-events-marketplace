@@ -833,6 +833,78 @@ paths:
         "401":
           $ref: "#/components/responses/Unauthorized"
 
+  /admin/events:
+    get:
+      operationId: adminListEvents
+      tags: [admin]
+      summary: List all events (admin)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: All events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/AdminEvent"
+                  total:
+                    type: integer
+                required: [events, total]
+
+  /admin/bookings:
+    get:
+      operationId: adminListBookings
+      tags: [admin]
+      summary: List all bookings (admin)
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+      responses:
+        "200":
+          description: All bookings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookings:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Booking"
+                  total:
+                    type: integer
+                required: [bookings, total]
+
   /admin/stats:
     get:
       operationId: adminGetStats
@@ -1455,6 +1527,9 @@ components:
         contractUrl:
           type: string
           nullable: true
+        cancellationReason:
+          type: string
+          nullable: true
         confirmedAt:
           type: string
           format: date-time
@@ -1466,6 +1541,22 @@ components:
         createdAt:
           type: string
           format: date-time
+        vendorBusinessName:
+          type: string
+          nullable: true
+        eventTitle:
+          type: string
+          nullable: true
+        eventDate:
+          type: string
+          format: date-time
+          nullable: true
+        category:
+          type: string
+          nullable: true
+        plannerName:
+          type: string
+          nullable: true
       required: [id, eventId, quoteId, vendorId, plannerId, status, totalAmount, platformFeeAmount, vendorPayoutAmount, currency, createdAt]
 
     CreatePaymentIntentBody:
@@ -1661,6 +1752,10 @@ components:
           type: integer
         pendingVendors:
           type: integer
+        approvedVendors:
+          type: integer
+        rejectedVendors:
+          type: integer
         totalEvents:
           type: integer
         totalBookings:
@@ -1670,6 +1765,49 @@ components:
         activeEvents:
           type: integer
       required: [totalUsers, totalVendors, pendingVendors, totalEvents, totalBookings, totalRevenue, activeEvents]
+
+    AdminEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        eventType:
+          type: string
+        status:
+          type: string
+        eventDate:
+          type: string
+          format: date-time
+        city:
+          type: string
+          nullable: true
+        venue:
+          type: string
+          nullable: true
+        guestCount:
+          type: integer
+        budgetMax:
+          type: string
+          nullable: true
+        isEmergency:
+          type: boolean
+        plannerName:
+          type: string
+          nullable: true
+        plannerEmail:
+          type: string
+          nullable: true
+        quoteCount:
+          type: integer
+        bookingCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, title, eventType, status, eventDate, guestCount, quoteCount, bookingCount, createdAt]
 
     # ─── AI ────────────────────────────────────────────────────────────────────
 

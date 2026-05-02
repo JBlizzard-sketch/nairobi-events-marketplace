@@ -44,17 +44,17 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 Key enums: `user_role` (planner|vendor|admin), `event_status`, `quote_status`, `booking_status`, `vendor_category` (9 types), `notification_type` (6 types)
 
-## API Routes (30+ endpoints)
+## API Routes (45+ endpoints)
 
 Grouped by domain in `artifacts/api-server/src/routes/`:
 - **users.ts** — registration, profile CRUD
 - **events.ts** — create/list/update/submit brief (planner flow)
 - **quotes.ts** — submit/accept/decline quotes, platform fee 10%
 - **vendors.ts** — profile CRUD, availability calendar, search+filter
-- **bookings.ts** — create booking, payment intent (mock/Stripe), confirm→in_escrow, release escrow, dispute
+- **bookings.ts** — create booking, payment intent (mock/Stripe), confirm→in_escrow, release escrow, dispute; GET enriched with vendorBusinessName, eventTitle, eventDate, category, plannerName
 - **reviews.ts** — post and list vendor reviews
 - **notifications.ts** — list and mark-read
-- **admin.ts** — stats dashboard, vendor approval queue
+- **admin.ts** — stats, vendor approval queue, `GET /admin/events` (paginated, enriched with planner/quote/booking counts), `GET /admin/bookings` (paginated, enriched with vendor/event/planner context)
 
 Auth: simulated via `x-clerk-user-id` header (localStorage `userRole` in frontend).
 

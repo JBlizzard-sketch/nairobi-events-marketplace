@@ -1,7 +1,7 @@
 import { getAuth } from "@clerk/express";
 import { Router, type IRouter } from "express";
 import { db } from "@workspace/db";
-import { bookings, users, vendorProfiles, payments, events } from "@workspace/db";
+import { bookings, users, vendorProfiles, payments, events, quotes } from "@workspace/db";
 import { eq, and, or } from "drizzle-orm";
 import {
   ListMyBookingsQueryParams,
@@ -51,7 +51,24 @@ router.get("/bookings", async (req, res): Promise<void> => {
     orderBy: bookings.createdAt,
   });
 
-  res.json(bookingList);
+  // Enrich with vendor business name, event title/date, category, and planner name
+  const enriched = await Promise.all(bookingList.map(async b => {
+    const [vp, ev, planner] = await Promise.all([
+      db.query.vendorProfiles.findFirst({ where: eq(vendorProfiles.id, b.vendorId) }),
+      db.query.events.findFirst({ where: eq(events.id, b.eventId) }),
+      db.query.users.findFirst({ where: eq(users.id, b.plannerId) }),
+    ]);
+    return {
+      ...b,
+      vendorBusinessName: vp?.businessName ?? null,
+      eventTitle: ev?.title ?? null,
+      eventDate: ev?.eventDate ?? null,
+      category: vp?.category ?? null,
+      plannerName: planner ? (planner.fullName?.trim() || planner.email) : null,
+    };
+  }));
+
+  res.json(enriched);
 });
 
 // ── GET /bookings/:bookingId ───────────────────────────────────────────────────

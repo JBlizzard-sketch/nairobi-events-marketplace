@@ -20,7 +20,13 @@ export interface Booking {
   currency: string;
   stripePaymentIntentId?: string | null;
   contractUrl?: string | null;
+  cancellationReason?: string | null;
   confirmedAt?: Date | null;
   completedAt?: Date | null;
   createdAt: Date;
+  vendorBusinessName?: string | null;
+  eventTitle?: string | null;
+  eventDate?: Date | null;
+  category?: string | null;
+  plannerName?: string | null;
 }

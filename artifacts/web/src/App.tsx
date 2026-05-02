@@ -33,10 +33,13 @@ import VendorDashboard from "@/pages/vendor/dashboard";
 import VendorRequests from "@/pages/vendor/requests";
 import VendorProfileEdit from "@/pages/vendor/profile";
 import VendorAvailability from "@/pages/vendor/availability";
+import VendorBookings from "@/pages/vendor/bookings";
 
 // Pages — admin
 import AdminStats from "@/pages/admin/stats";
 import AdminVendors from "@/pages/admin/vendors";
+import AdminEvents from "@/pages/admin/events";
+import AdminBookings from "@/pages/admin/bookings";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -250,6 +253,9 @@ function Router() {
       <Route path="/vendor/requests">
         <ProtectedRoute component={VendorRequests} allowedRoles={["vendor"]} />
       </Route>
+      <Route path="/vendor/bookings">
+        <ProtectedRoute component={VendorBookings} allowedRoles={["vendor"]} />
+      </Route>
       <Route path="/vendor/profile">
         <ProtectedRoute component={VendorProfileEdit} allowedRoles={["vendor"]} />
       </Route>
@@ -260,6 +266,12 @@ function Router() {
       {/* Admin routes */}
       <Route path="/admin/vendors">
         <ProtectedRoute component={AdminVendors} allowedRoles={["admin"]} />
+      </Route>
+      <Route path="/admin/events">
+        <ProtectedRoute component={AdminEvents} allowedRoles={["admin"]} />
+      </Route>
+      <Route path="/admin/bookings">
+        <ProtectedRoute component={AdminBookings} allowedRoles={["admin"]} />
       </Route>
       <Route path="/admin">
         <ProtectedRoute component={AdminStats} allowedRoles={["admin"]} />

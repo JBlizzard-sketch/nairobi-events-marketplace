@@ -3,18 +3,26 @@ import { useListMyBookings } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Briefcase, ChevronRight } from "lucide-react";
-import { useState } from "react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Briefcase, ChevronRight, ShieldCheck, CheckCircle2,
+  XCircle, AlertTriangle, Clock, Calendar, Building2,
+} from "lucide-react";
+import { useState } from "react";
 
-const STATUS_COLORS: Record<string, any> = {
-  pending: "outline",
-  confirmed: "default",
-  in_escrow: "default",
-  completed: "secondary",
-  cancelled: "destructive",
-  refunded: "destructive",
+const STATUS_CONFIG: Record<string, { label: string; icon: any; className: string }> = {
+  pending: { label: "Pending Payment", icon: Clock, className: "bg-muted text-muted-foreground" },
+  confirmed: { label: "Confirmed", icon: CheckCircle2, className: "bg-blue-100 text-blue-800 border-blue-200" },
+  in_escrow: { label: "In Escrow", icon: ShieldCheck, className: "bg-primary/10 text-primary border-primary/20" },
+  completed: { label: "Completed", icon: CheckCircle2, className: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  disputed: { label: "Disputed", icon: AlertTriangle, className: "bg-red-100 text-red-800 border-red-200" },
+  cancelled: { label: "Cancelled", icon: XCircle, className: "bg-muted text-muted-foreground" },
+  refunded: { label: "Refunded", icon: XCircle, className: "bg-orange-100 text-orange-800 border-orange-200" },
 };
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+}
 
 export default function BookingsList() {
   const [statusFilter, setStatusFilter] = useState("all");
@@ -30,24 +38,26 @@ export default function BookingsList() {
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
-          <p className="text-muted-foreground mt-1">{list.length} booking{list.length !== 1 ? "s" : ""}</p>
+          <p className="text-muted-foreground mt-1">
+            {isLoading ? "Loading…" : `${list.length} booking${list.length !== 1 ? "s" : ""}`}
+          </p>
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
-            <SelectValue />
+          <SelectTrigger className="w-48">
+            <SelectValue placeholder="All statuses" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All statuses</SelectItem>
-            {Object.keys(STATUS_COLORS).map(s => (
-              <SelectItem key={s} value={s} className="capitalize">{s.replace(/_/g, " ")}</SelectItem>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {Object.entries(STATUS_CONFIG).map(([val, { label }]) => (
+              <SelectItem key={val} value={val}>{label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
       {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
+        <div className="space-y-3">
+          {[1, 2, 3].map(i => <Skeleton key={i} className="h-28 w-full rounded-xl" />)}
         </div>
       ) : list.length === 0 ? (
         <Card className="border-dashed">
@@ -56,41 +66,81 @@ export default function BookingsList() {
               <Briefcase className="h-8 w-8 text-primary" />
             </div>
             <h3 className="text-xl font-semibold mb-2">No bookings yet</h3>
-            <p className="text-muted-foreground text-sm max-w-sm">Accept a quote on one of your events to create your first booking.</p>
+            <p className="text-muted-foreground text-sm max-w-sm">
+              Accept a quote on one of your events to create your first booking.
+            </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-3">
-          {list.map((booking: any) => (
-            <Link key={booking.id} href={`/bookings/${booking.id}`}>
-              <div className="flex items-center justify-between p-5 rounded-lg border bg-card hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer group">
-                <div className="flex items-start gap-4">
-                  <div className="bg-primary/10 text-primary p-2.5 rounded-md hidden sm:flex items-center justify-center">
-                    <Briefcase className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold group-hover:text-primary transition-colors">
-                      Booking #{booking.id.slice(0, 8).toUpperCase()}
-                    </h3>
-                    <div className="flex flex-wrap gap-3 text-sm text-muted-foreground mt-1">
-                      <span>KES {Number(booking.totalAmount).toLocaleString()}</span>
-                      <span>·</span>
-                      <span>Platform fee: KES {Number(booking.platformFeeAmount).toLocaleString()}</span>
+          {list.map((booking: any) => {
+            const cfg = STATUS_CONFIG[booking.status] ?? { label: booking.status, icon: Briefcase, className: "bg-muted text-muted-foreground" };
+            const Icon = cfg.icon;
+            const isDisputed = booking.status === "disputed";
+
+            return (
+              <Link key={booking.id} href={`/bookings/${booking.id}`}>
+                <div className={`flex items-start justify-between p-5 rounded-xl border bg-card hover:border-primary/40 hover:shadow-md transition-all cursor-pointer group ${isDisputed ? "border-red-200 bg-red-50/30" : ""}`}>
+                  <div className="flex items-start gap-4 min-w-0 flex-1">
+                    <div className={`p-2.5 rounded-lg flex-shrink-0 ${isDisputed ? "bg-red-100" : "bg-muted/60"}`}>
+                      <Icon className={`h-5 w-5 ${isDisputed ? "text-red-500" : "text-muted-foreground"}`} />
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {new Date(booking.createdAt).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
-                    </p>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 flex-wrap mb-1.5">
+                        <h3 className="font-semibold group-hover:text-primary transition-colors">
+                          Booking #{booking.id.slice(0, 8).toUpperCase()}
+                        </h3>
+                        <Badge className={`text-xs ${cfg.className}`}>
+                          {cfg.label}
+                        </Badge>
+                        {isDisputed && (
+                          <Badge className="bg-red-600 text-white text-xs gap-1">
+                            <AlertTriangle className="h-3 w-3" /> Under Review
+                          </Badge>
+                        )}
+                      </div>
+
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                        {booking.eventTitle && (
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span className="font-medium text-foreground">{booking.eventTitle}</span>
+                          </span>
+                        )}
+                        {booking.vendorBusinessName && (
+                          <span className="flex items-center gap-1.5">
+                            <Building2 className="h-3.5 w-3.5" />
+                            {booking.vendorBusinessName}
+                            {booking.category && (
+                              <span className="text-xs capitalize">({booking.category.replace(/_/g, " ")})</span>
+                            )}
+                          </span>
+                        )}
+                        {booking.eventDate && (
+                          <span className="text-xs">Event: {formatDate(booking.eventDate)}</span>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-muted-foreground mt-1.5">
+                        Booked {formatDate(booking.createdAt)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4 ml-4 flex-shrink-0">
+                    <div className="text-right">
+                      <p className="font-bold">KES {Number(booking.totalAmount).toLocaleString()}</p>
+                      <p className="text-xs text-muted-foreground">
+                        Fee: KES {Number(booking.platformFeeAmount).toLocaleString()}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   </div>
                 </div>
-                <div className="flex items-center gap-4 ml-4 flex-shrink-0">
-                  <Badge variant={STATUS_COLORS[booking.status] ?? "secondary"} className="capitalize">
-                    {booking.status.replace(/_/g, " ")}
-                  </Badge>
-                  <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
