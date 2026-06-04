@@ -236,8 +236,26 @@ Go to **GitHub → your repo → Settings → Secrets and variables → Actions*
 | Name | Kind | Value |
 |---|---|---|
 | `RAILWAY_TOKEN` | **Secret** | Your Railway API token (Railway dashboard → Account → Tokens) |
+| `SLACK_WEBHOOK_URL` | **Secret** | Incoming Webhook URL for your Slack channel (see below) |
 | `RAILWAY_API_SERVICE` | Variable (optional) | Railway service name for the API (default: `api-server`) |
 | `RAILWAY_WEB_SERVICE` | Variable (optional) | Railway service name for the frontend (default: `web`) |
+
+### Setting up the Slack failure alert
+
+When any deploy step fails, the workflow posts a message to Slack that includes the branch, actor, full commit SHA, and a direct link to the failed run. This fires regardless of individual GitHub email notification settings.
+
+**Steps to create the webhook:**
+
+1. Go to **https://api.slack.com/apps** → **Create New App** → **From scratch**
+2. Name the app (e.g. `Nairobi Events CI`) and choose your workspace
+3. In the left sidebar select **Incoming Webhooks** → toggle **Activate Incoming Webhooks** on
+4. Click **Add New Webhook to Workspace**, pick the channel to post to (e.g. `#deployments`), and click **Allow**
+5. Copy the generated **Webhook URL** (starts with `https://hooks.slack.com/services/…`)
+6. In GitHub go to **Settings → Secrets and variables → Actions → New repository secret**
+   - Name: `SLACK_WEBHOOK_URL`
+   - Value: the URL you copied in step 5
+
+> **Note:** If `SLACK_WEBHOOK_URL` is not set, the `curl` command in the failure step will silently no-op — all other CI and deploy steps are unaffected.
 
 ### Getting your Railway token
 
@@ -260,7 +278,13 @@ git push origin main
 
 ### Failure notifications
 
-GitHub Actions emails the committer automatically when a workflow fails (if email notifications are enabled in your GitHub settings). The deploy job also prints the failed-run URL to the workflow log as a warning, making it easy to find from the Actions tab.
+When the deploy job fails, the workflow posts a Slack message to the channel linked to `SLACK_WEBHOOK_URL`. The message includes:
+
+- **Branch** and **actor** (who triggered the deploy)
+- **Full commit SHA**
+- **Direct link** to the failed GitHub Actions run
+
+This ensures the right people are notified immediately regardless of individual GitHub email notification settings. See [Setting up the Slack failure alert](#setting-up-the-slack-failure-alert) above for setup instructions.
 
 ---
 
