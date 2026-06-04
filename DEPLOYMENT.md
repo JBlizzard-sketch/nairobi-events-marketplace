@@ -237,8 +237,11 @@ Go to **GitHub → your repo → Settings → Secrets and variables → Actions*
 | Name | Kind | Value |
 |---|---|---|
 | `RAILWAY_TOKEN` | **Secret** | Your Railway API token (Railway dashboard → Account → Tokens) |
+| `CLERK_SECRET_KEY` | **Secret** | Clerk backend secret key (same key used by the API server) |
 | `SLACK_WEBHOOK_URL` | **Secret** | Incoming Webhook URL for your Slack channel (see below) |
 | `RAILWAY_PRODUCTION_URL` | **Variable** | Root URL of your Railway production deployment, e.g. `https://nairobi-events.up.railway.app` — no trailing slash |
+| `CLERK_FRONTEND_API_URL` | **Variable** | Clerk Frontend API base URL for your app, e.g. `https://app-xxx.clerk.accounts.dev` — no trailing slash |
+| `SMOKE_TEST_USER_ID` | **Variable** | Clerk user ID (`user_xxx`) of a dedicated smoke-test account (see below) |
 | `RAILWAY_API_SERVICE` | Variable (optional) | Railway service name for the API (default: `api-server`) |
 | `RAILWAY_WEB_SERVICE` | Variable (optional) | Railway service name for the frontend (default: `web`) |
 
@@ -249,6 +252,25 @@ Go to **GitHub → your repo → Settings → Secrets and variables → Actions*
 3. Go to **Settings → Networking → Public Networking**
 4. Copy the generated domain (e.g. `https://nairobi-events-api.up.railway.app`)
 5. Add it as a **Variable** (not a secret) named `RAILWAY_PRODUCTION_URL` in GitHub Actions
+
+#### Finding your `CLERK_FRONTEND_API_URL`
+
+1. Go to [Clerk dashboard](https://dashboard.clerk.com) → your application
+2. In the left sidebar select **API Keys**
+3. The **Frontend API URL** is listed there (e.g. `https://app-3DB4cCUF2LPNoR0IhF7HoGYK2IE.clerk.accounts.dev`)
+4. Add it as a **Variable** named `CLERK_FRONTEND_API_URL` (no trailing slash)
+
+#### Creating the smoke-test Clerk user
+
+The smoke-test job signs in as a dedicated planner account to verify the authenticated events endpoint. Create it once:
+
+1. Go to [Clerk dashboard](https://dashboard.clerk.com) → your application → **Users** → **Create user**
+2. Set email to something like `smoke-test@your-domain.com`, choose a strong password
+3. After creating the user, copy the **User ID** (starts with `user_`)
+4. In GitHub go to **Settings → Secrets and variables → Actions → Variables** and add `SMOKE_TEST_USER_ID` with that value
+5. The user also needs a DB record with the `planner` role — sign in once via the app's `/sign-in` page to trigger the `/api/users/sync` call, then you can ignore that account
+
+> **Note:** The smoke-test user never signs in interactively during CI — the workflow uses Clerk's Backend API to issue a short-lived sign-in token (valid for 120 s) and exchanges it for a session JWT automatically.
 
 ### Setting up the Slack failure alert
 
@@ -287,20 +309,22 @@ git push origin main
                     └── smoke-test job  (needs: deploy)
                           ├── GET /api/healthz        → must return 200
                           ├── GET /api/vendors        → must return 200 + JSON array
-                          └── GET /api/events         → must return 200 or 401
+                          └── GET /api/events         → must return 200 + list (authenticated)
 ```
 
 ### Smoke tests
 
-After a successful deploy, the `smoke-test` job waits 30 seconds for Railway to finish rolling out the new containers, then hits three endpoints on `RAILWAY_PRODUCTION_URL`:
+After a successful deploy, the `smoke-test` job waits 30 seconds for Railway to finish rolling out the new containers, then runs three checks against `RAILWAY_PRODUCTION_URL`:
 
-| Endpoint | Expected | Why |
-|---|---|---|
-| `GET /api/healthz` | `200` | Confirms the server process started and DB connection works |
-| `GET /api/vendors` | `200` + JSON array | Confirms the database is reachable and public routes respond |
-| `GET /api/events` | `200` or `401` | Confirms the router is mounted and auth middleware is active |
+| Endpoint | Auth | Expected | What it catches |
+|---|---|---|---|
+| `GET /api/healthz` | None | `200` + `{ status: "ok" }` | Server crashed, DB connection lost |
+| `GET /api/vendors` | None | `200` + JSON array | Public routes broken, DB query failure |
+| `GET /api/events` | Clerk JWT | `200` + `{ events: [] }` | Auth middleware broken, router misconfigured |
 
-Any unexpected status code (e.g. `500`, `502`, `503`) fails the job immediately and sends a Slack alert. A `401` on `/api/events` is intentional — it means auth is working correctly without requiring CI credentials.
+Any non-200 response or unexpected payload shape fails the job immediately and sends a Slack alert.
+
+**Auth for `/api/events`:** The workflow uses Clerk's Backend API to issue a short-lived sign-in token (120 s) for the `SMOKE_TEST_USER_ID` account, then exchanges it for a session JWT via the Clerk Frontend API (ticket strategy). The JWT is masked in all log output. See [Creating the smoke-test Clerk user](#creating-the-smoke-test-clerk-user) for one-time setup.
 
 ### Failure notifications
 
