@@ -107,3 +107,149 @@ jobs:
             ]
           }
           EOF
+
+  smoke-test:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    needs: [deploy]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    env:
+      BASE_URL: ${{ vars.RAILWAY_PRODUCTION_URL }}
+
+    steps:
+      - name: Validate required variables
+        run: |
+          MISSING=""
+          [ -z "$BASE_URL" ]                              && MISSING="$MISSING RAILWAY_PRODUCTION_URL"
+          [ -z "${{ vars.SMOKE_TEST_USER_ID }}" ]         && MISSING="$MISSING SMOKE_TEST_USER_ID"
+          [ -z "${{ vars.CLERK_FRONTEND_API_URL }}" ]     && MISSING="$MISSING CLERK_FRONTEND_API_URL"
+          [ -z "${{ secrets.CLERK_SECRET_KEY }}" ]        && MISSING="$MISSING CLERK_SECRET_KEY"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing required GitHub variables/secrets:$MISSING"
+            echo "See DEPLOYMENT.md → CI/CD → Smoke tests for setup instructions."
+            exit 1
+          fi
+          echo "Targeting: $BASE_URL"
+
+      - name: Wait for Railway deployment to become ready
+        run: sleep 30
+
+      - name: Health check — GET /api/healthz
+        run: |
+          STATUS=$(curl -s -o /tmp/healthz.json -w "%{http_code}" "$BASE_URL/api/healthz")
+          echo "Response body:"
+          cat /tmp/healthz.json
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::/api/healthz returned HTTP $STATUS (expected 200)"
+            exit 1
+          fi
+          echo "/api/healthz → $STATUS ✓"
+
+      - name: Vendors list — GET /api/vendors
+        run: |
+          STATUS=$(curl -s -o /tmp/vendors.json -w "%{http_code}" "$BASE_URL/api/vendors")
+          echo "Response body (first 500 chars):"
+          head -c 500 /tmp/vendors.json
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::/api/vendors returned HTTP $STATUS (expected 200)"
+            exit 1
+          fi
+          # Response shape: { vendors: [...], total: N, page: N, limit: N }
+          if ! jq -e '.vendors | type == "array"' /tmp/vendors.json > /dev/null 2>&1; then
+            echo "::error::/api/vendors did not return { vendors: [] } payload"
+            exit 1
+          fi
+          COUNT=$(jq '.vendors | length' /tmp/vendors.json)
+          TOTAL=$(jq '.total' /tmp/vendors.json)
+          echo "/api/vendors → $STATUS, $COUNT item(s) (total: $TOTAL) ✓"
+
+      - name: Authenticate smoke-test user with Clerk
+        env:
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          SMOKE_TEST_USER_ID: ${{ vars.SMOKE_TEST_USER_ID }}
+          CLERK_FRONTEND_API_URL: ${{ vars.CLERK_FRONTEND_API_URL }}
+        run: |
+          # Step 1: Create a short-lived sign-in token for the smoke-test Clerk user
+          SIT_RESPONSE=$(curl -s -X POST "https://api.clerk.com/v1/sign_in_tokens" \
+            -H "Authorization: Bearer $CLERK_SECRET_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{\"user_id\":\"$SMOKE_TEST_USER_ID\",\"expires_in_seconds\":120}")
+
+          SIT=$(echo "$SIT_RESPONSE" | jq -r '.token // empty')
+          if [ -z "$SIT" ]; then
+            echo "::error::Failed to create Clerk sign-in token. Response:"
+            echo "$SIT_RESPONSE"
+            exit 1
+          fi
+
+          # Step 2: Exchange the sign-in token for a session JWT via Clerk Frontend API
+          # (ticket strategy completes sign-in in one round-trip)
+          CLIENT_RESPONSE=$(curl -s -X POST "$CLERK_FRONTEND_API_URL/v1/client/sign_ins" \
+            -H "Content-Type: application/x-www-form-urlencoded" \
+            -d "strategy=ticket&ticket=$SIT")
+
+          JWT=$(echo "$CLIENT_RESPONSE" | jq -r '.client.sessions[0].last_active_token.jwt // empty')
+          if [ -z "$JWT" ]; then
+            echo "::error::Failed to exchange sign-in token for session JWT. Response:"
+            echo "$CLIENT_RESPONSE" | jq '.' 2>/dev/null || echo "$CLIENT_RESPONSE"
+            exit 1
+          fi
+
+          # Mask the JWT so it never appears in the log
+          echo "::add-mask::$JWT"
+          echo "CLERK_SESSION_JWT=$JWT" >> "$GITHUB_ENV"
+          echo "Clerk session JWT obtained ✓"
+
+      - name: Events list — GET /api/events
+        run: |
+          STATUS=$(curl -s -o /tmp/events.json -w "%{http_code}" \
+            -H "Authorization: Bearer $CLERK_SESSION_JWT" \
+            "$BASE_URL/api/events")
+          echo "Response body (first 500 chars):"
+          head -c 500 /tmp/events.json
+          if [ "$STATUS" != "200" ]; then
+            echo "::error::/api/events returned HTTP $STATUS (expected 200)"
+            exit 1
+          fi
+          # Response shape: { events: [...], total: N, page: N, limit: N }
+          if ! jq -e '.events | type == "array"' /tmp/events.json > /dev/null 2>&1; then
+            echo "::error::/api/events did not return { events: [] } payload"
+            exit 1
+          fi
+          COUNT=$(jq '.events | length' /tmp/events.json)
+          TOTAL=$(jq '.total' /tmp/events.json)
+          echo "/api/events → $STATUS, $COUNT item(s) (total: $TOTAL) ✓"
+
+      - name: Notify Slack on smoke-test failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          if [ -z "$SLACK_WEBHOOK_URL" ]; then
+            echo "::warning::SLACK_WEBHOOK_URL secret is not set — skipping Slack notification."
+            exit 0
+          fi
+          curl -s -X POST "$SLACK_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d @- <<'EOF'
+          {
+            "text": ":fire: *Smoke tests failed after deployment* — ${{ github.repository }}",
+            "attachments": [
+              {
+                "color": "danger",
+                "fields": [
+                  { "title": "Branch", "value": "${{ github.ref_name }}", "short": true },
+                  { "title": "Actor",  "value": "${{ github.actor }}",    "short": true },
+                  { "title": "Commit", "value": "${{ github.sha }}",      "short": false },
+                  {
+                    "title": "Failed run",
+                    "value": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                    "short": false
+                  }
+                ],
+                "footer": "GitHub Actions · ${{ github.repository }}"
+              }
+            ]
+          }
+          EOF

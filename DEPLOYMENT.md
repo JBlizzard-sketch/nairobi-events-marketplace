@@ -225,9 +225,10 @@ pm2 restart nairobi-api
 Every push to `main` automatically:
 1. Runs the full typecheck (`pnpm run typecheck`)
 2. Only if typecheck passes, builds all packages and deploys to Railway
-3. Sends a GitHub Actions failure notification if the deploy step fails
+3. After the deploy, runs smoke tests against the live production URL
+4. Sends a Slack notification if either the deploy or smoke tests fail
 
-This is wired in `.github/workflows/ci.yml`. PRs only run the typecheck; the deploy job is skipped.
+This is wired in `.github/workflows/ci.yml`. PRs only run the typecheck; the deploy and smoke-test jobs are skipped.
 
 ### Required GitHub secrets and variables
 
@@ -237,8 +238,17 @@ Go to **GitHub → your repo → Settings → Secrets and variables → Actions*
 |---|---|---|
 | `RAILWAY_TOKEN` | **Secret** | Your Railway API token (Railway dashboard → Account → Tokens) |
 | `SLACK_WEBHOOK_URL` | **Secret** | Incoming Webhook URL for your Slack channel (see below) |
+| `RAILWAY_PRODUCTION_URL` | **Variable** | Root URL of your Railway production deployment, e.g. `https://nairobi-events.up.railway.app` — no trailing slash |
 | `RAILWAY_API_SERVICE` | Variable (optional) | Railway service name for the API (default: `api-server`) |
 | `RAILWAY_WEB_SERVICE` | Variable (optional) | Railway service name for the frontend (default: `web`) |
+
+#### Finding your `RAILWAY_PRODUCTION_URL`
+
+1. Open your Railway project dashboard
+2. Click on the **API server** service
+3. Go to **Settings → Networking → Public Networking**
+4. Copy the generated domain (e.g. `https://nairobi-events-api.up.railway.app`)
+5. Add it as a **Variable** (not a secret) named `RAILWAY_PRODUCTION_URL` in GitHub Actions
 
 ### Setting up the Slack failure alert
 
@@ -269,16 +279,32 @@ When any deploy step fails, the workflow posts a message to Slack that includes 
 ```
 git push origin main
   └── GitHub Actions
-        ├── typecheck job   (runs on push + PRs)
-        └── deploy job      (push to main only, needs: typecheck)
+        ├── typecheck job    (runs on push + PRs)
+        └── deploy job       (push to main only, needs: typecheck)
               ├── pnpm install + pnpm run build
               ├── railway up --service api-server --detach
               └── railway up --service web --detach
+                    └── smoke-test job  (needs: deploy)
+                          ├── GET /api/healthz        → must return 200
+                          ├── GET /api/vendors        → must return 200 + JSON array
+                          └── GET /api/events         → must return 200 or 401
 ```
+
+### Smoke tests
+
+After a successful deploy, the `smoke-test` job waits 30 seconds for Railway to finish rolling out the new containers, then hits three endpoints on `RAILWAY_PRODUCTION_URL`:
+
+| Endpoint | Expected | Why |
+|---|---|---|
+| `GET /api/healthz` | `200` | Confirms the server process started and DB connection works |
+| `GET /api/vendors` | `200` + JSON array | Confirms the database is reachable and public routes respond |
+| `GET /api/events` | `200` or `401` | Confirms the router is mounted and auth middleware is active |
+
+Any unexpected status code (e.g. `500`, `502`, `503`) fails the job immediately and sends a Slack alert. A `401` on `/api/events` is intentional — it means auth is working correctly without requiring CI credentials.
 
 ### Failure notifications
 
-When the deploy job fails, the workflow posts a Slack message to the channel linked to `SLACK_WEBHOOK_URL`. The message includes:
+When the deploy or smoke-test job fails, the workflow posts a Slack message to the channel linked to `SLACK_WEBHOOK_URL`. The message includes:
 
 - **Branch** and **actor** (who triggered the deploy)
 - **Full commit SHA**
