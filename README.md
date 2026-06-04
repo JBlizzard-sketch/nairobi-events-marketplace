@@ -1,5 +1,7 @@
 # Nairobi Events Marketplace
 
+[![CI](https://github.com/JBlizzard-sketch/nairobi-events-marketplace/actions/workflows/ci.yml/badge.svg)](https://github.com/JBlizzard-sketch/nairobi-events-marketplace/actions/workflows/ci.yml)
+
 > **The structured vendor discovery and quoting platform for Nairobi's corporate and social events market.**
 
 ---
