@@ -31,3 +31,65 @@ jobs:
 
       - name: Typecheck
         run: pnpm run typecheck
+
+  deploy:
+    name: Deploy to Railway
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    # Only deploy on pushes to main, not on pull requests
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm run build
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli@latest
+
+      - name: Deploy API server to Railway
+        run: railway up --service "$RAILWAY_API_SERVICE" --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_API_SERVICE: ${{ vars.RAILWAY_API_SERVICE || 'api-server' }}
+
+      - name: Deploy web frontend to Railway
+        run: railway up --service "$RAILWAY_WEB_SERVICE" --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          RAILWAY_WEB_SERVICE: ${{ vars.RAILWAY_WEB_SERVICE || 'web' }}
+
+      - name: Notify on deployment failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const run_url = `https://github.com/${owner}/${repo}/actions/runs/${context.runId}`;
+            const sha_short = context.sha.slice(0, 7);
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.payload.head_commit
+                ? undefined
+                : context.payload.pull_request?.number,
+            }).catch(() => {});
+            core.warning(
+              `Deployment failed for commit ${sha_short}. ` +
+              `View the failed run at: ${run_url}`
+            );

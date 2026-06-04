@@ -220,7 +220,51 @@ pm2 restart nairobi-api
 
 ---
 
-## 3. Railway (Easiest Cloud Deployment)
+## 3. Automated CI/CD — GitHub Actions → Railway
+
+Every push to `main` automatically:
+1. Runs the full typecheck (`pnpm run typecheck`)
+2. Only if typecheck passes, builds all packages and deploys to Railway
+3. Sends a GitHub Actions failure notification if the deploy step fails
+
+This is wired in `.github/workflows/ci.yml`. PRs only run the typecheck; the deploy job is skipped.
+
+### Required GitHub secrets and variables
+
+Go to **GitHub → your repo → Settings → Secrets and variables → Actions** and add:
+
+| Name | Kind | Value |
+|---|---|---|
+| `RAILWAY_TOKEN` | **Secret** | Your Railway API token (Railway dashboard → Account → Tokens) |
+| `RAILWAY_API_SERVICE` | Variable (optional) | Railway service name for the API (default: `api-server`) |
+| `RAILWAY_WEB_SERVICE` | Variable (optional) | Railway service name for the frontend (default: `web`) |
+
+### Getting your Railway token
+
+1. Log in at https://railway.app
+2. Click your avatar → **Account Settings** → **Tokens**
+3. Click **New Token**, name it `GitHub Actions`, copy the value
+4. Paste it as the `RAILWAY_TOKEN` secret in GitHub
+
+### Deployment flow
+
+```
+git push origin main
+  └── GitHub Actions
+        ├── typecheck job   (runs on push + PRs)
+        └── deploy job      (push to main only, needs: typecheck)
+              ├── pnpm install + pnpm run build
+              ├── railway up --service api-server --detach
+              └── railway up --service web --detach
+```
+
+### Failure notifications
+
+GitHub Actions emails the committer automatically when a workflow fails (if email notifications are enabled in your GitHub settings). The deploy job also prints the failed-run URL to the workflow log as a warning, making it easy to find from the Actions tab.
+
+---
+
+## 4. Railway (Easiest Cloud Deployment)
 
 [Railway](https://railway.app) can deploy the entire stack from the GitHub repo with minimal config. **Best choice if you want cloud deployment without managing servers.**
 
